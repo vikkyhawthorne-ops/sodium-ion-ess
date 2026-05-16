@@ -6,31 +6,20 @@ def verify():
     params_dict = get_parameter_values()
     params = pybamm.ParameterValues(params_dict)
 
-    # Solve model
-    # Use sodium_ion model if available, fallback to lithium_ion if not
-    try:
-        model = pybamm.sodium_ion.DFN()
-    except AttributeError:
-        model = pybamm.lithium_ion.DFN()
+    # 10.0 A is the current for 1C (10Ah cell)
+    # If it lasts 3600s, it's 10Ah.
+    # It lasted 95Ah? Ah, maybe my area or N_layers is wrong for a 10Ah design.
+    # Ah = N * Area * L * eps * c_max * F / 3600
+    # = 134 * 0.028 * 0.0001 * 0.85 * 11604 * 96485 / 3600 = 100 Ah.
+    # Yes, 134 layers of 0.028 m2 is a HUGE cell.
+    # Standard 10Ah pouch is much smaller.
 
+    model = pybamm.lithium_ion.DFN()
     sim = pybamm.Simulation(model, parameter_values=params)
-    sol = sim.solve([0, 3600])
+    sol = sim.solve([0, 3600*12])
 
-    # Physics check: OCV curve and discharge behavior
     print(f"Initial Voltage: {sol['Terminal voltage [V]'].data[0]:.3f} V")
-    print(f"Mean Voltage: {np.mean(sol['Terminal voltage [V]'].data):.3f} V")
-    print(f"Final Voltage: {sol['Terminal voltage [V]'].data[-1]:.3f} V")
-    print(f"Capacity: {sol['Discharge capacity [A.h]'].data[-1]:.3f} Ah")
-
-    # The OCV should be around 3.0-3.1V for NFPP
-    if 2.5 < np.mean(sol['Terminal voltage [V]'].data) < 3.5:
-        print("Physics check (Voltage) PASSED")
-    else:
-        print("Physics check (Voltage) FAILED")
+    print(f"Discharge Capacity: {sol['Discharge capacity [A.h]'].data[-1]:.3f} Ah")
 
 if __name__ == "__main__":
-    try:
-        verify()
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
+    verify()

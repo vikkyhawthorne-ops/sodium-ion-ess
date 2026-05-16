@@ -2,9 +2,8 @@ from dataclasses import dataclass
 
 @dataclass
 class SwellingCoefficientsModel:
-    # SOC-driven expansion for Hard Carbon and NFPP
-    negative_electrode_swelling_coefficient: float = 0.1 # HC expands ~10%
-    positive_electrode_swelling_coefficient: float = 0.05 # NFPP is stable
+    negative_electrode_swelling_coefficient: float = 0.1
+    positive_electrode_swelling_coefficient: float = 0.05
 
     def as_dict(self) -> dict:
         return {
