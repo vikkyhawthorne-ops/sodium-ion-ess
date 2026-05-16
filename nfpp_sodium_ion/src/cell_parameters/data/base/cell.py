@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 
-
 @dataclass
 class CellParameters:
     name: str = "NFPP Sodium-ion Pouch Cell"
     nominal_voltage: float = 3.1
-    capacity_ah: float = 10.0
+    capacity_ah: float = 1.0
     form_factor: str = "stacked pouch"
     cathode_collector_thickness_um: float = 15.0
     anode_collector_thickness_um: float = 10.0

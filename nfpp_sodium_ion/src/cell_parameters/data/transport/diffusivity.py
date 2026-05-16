@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-
+import numpy as np
 
 @dataclass
 class DiffusivityModel:
@@ -7,7 +7,10 @@ class DiffusivityModel:
     activation_energy_j_mol: float = 30000.0
 
     def effective_diffusivity(self, temperature_k: float, porosity: float) -> float:
-        return self.reference_diffusivity_m2_s * porosity * (temperature_k / 298.15) ** 1.5
+        R = 8.314
+        arrhenius = np.exp(self.activation_energy_j_mol / R * (1 / 298.15 - 1 / temperature_k))
+        # Bruggeman correction for porosity
+        return self.reference_diffusivity_m2_s * arrhenius * porosity**1.5
 
     def as_dict(self) -> dict:
         return {

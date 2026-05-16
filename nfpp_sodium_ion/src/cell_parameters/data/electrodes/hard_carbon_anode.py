@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 
-
 @dataclass
 class HardCarbonAnodeParameters:
     active_material_fraction: float = 0.88
     conductive_carbon_fraction: float = 0.06
     binder_fraction: float = 0.06
-    practical_capacity_mAh_g: float = 275.0
+    practical_capacity_mAh_g: float = 300.0
+    density_kg_m3: float = 1500.0
     current_collector: str = "Copper"
 
     def composition(self) -> dict:
@@ -20,5 +20,6 @@ class HardCarbonAnodeParameters:
         return {
             "composition": self.composition(),
             "practical_capacity_mAh_g": self.practical_capacity_mAh_g,
+            "density_kg_m3": self.density_kg_m3,
             "current_collector": self.current_collector,
         }

@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 
-
 @dataclass
 class ThermalExpansionModel:
-    alpha_ref: float = 1e-5
-
-    def expansion_coefficient(self, temperature_k: float) -> float:
-        return self.alpha_ref * (1 + 0.0002 * (temperature_k - 298.15))
+    # Typical values for polyanionic cathodes
+    thermal_expansion_coefficient: float = 1.5e-5
 
     def as_dict(self) -> dict:
-        return {"alpha_ref": self.alpha_ref}
+        return {
+            "thermal_expansion_coefficient": self.thermal_expansion_coefficient,
+        }
