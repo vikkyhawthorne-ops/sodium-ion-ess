@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 
-
 @dataclass
 class SwellingCoefficientModel:
-    swelling_coefficient: float = 5e-5
-
-    def strain_from_soc(self, soc: float) -> float:
-        return self.swelling_coefficient * soc
+    negative_electrode_swelling_coefficient: float = 0.1
+    positive_electrode_swelling_coefficient: float = 0.05
 
     def as_dict(self) -> dict:
-        return {"swelling_coefficient": self.swelling_coefficient}
+        return {
+            "negative_electrode_swelling_coefficient": self.negative_electrode_swelling_coefficient,
+            "positive_electrode_swelling_coefficient": self.positive_electrode_swelling_coefficient,
+        }
