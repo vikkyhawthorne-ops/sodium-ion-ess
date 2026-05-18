@@ -2,9 +2,9 @@
 % Ref: docs/paper.md
 
 function [I_cmd] = bms_control_logic(SOC, V_t, T, SOH, Grid_Stress, params)
-    % params: Optimized cell parameters struct (consumed from JSON)
+    % params: Validated cell parameters struct (loaded from optimized_params.mat)
 
-    Q_n = params.capacity_ah;
+    Q_n = params.Nominal_cell_capacity_Ah;
     T_safe = 85; % Celsius
     lambda = 0.5;
 
@@ -13,7 +13,6 @@ function [I_cmd] = bms_control_logic(SOC, V_t, T, SOH, Grid_Stress, params)
     I_ref = C_ref * Q_n;
 
     %% 5. THERMAL LIMITER
-    % I_cmd_th = I_cmd * exp(-lambda * (T - T_safe)^+)
     if T > T_safe
         thermal_scaling = exp(-lambda * (T - T_safe));
     else
@@ -27,21 +26,19 @@ function [I_cmd] = bms_control_logic(SOC, V_t, T, SOH, Grid_Stress, params)
     end
 
     %% 6. GRID STRESS DERATING
-    % Stress metric D_k = alpha*|dV| + beta*|df| + gamma*B
-    % Current scaling I_cmd_grid = I_cmd * exp(-mu * D_k)
     mu = 0.2;
     grid_scaling = exp(-mu * Grid_Stress);
     I_grid = I_ref * grid_scaling;
 
     %% Current Arbitration
-    % I = min(I_C_rate, I_thermal, I_grid, I_SOH)
     I_cmd = min([I_ref, I_thermal, I_grid]);
 
 end
 
-function load_optimized_params(filename)
-    % Reads JSON exported from optimization pipeline
-    val = jsondecode(fileread(filename));
-    disp('Consuming Optimized Cell Parameters:');
-    disp(val);
+function params = load_optimized_data(filename)
+    % Loads the .mat file exported by the validation pipeline
+    data = load(filename);
+    params = data.optimized_params;
+    disp('Consuming Validated and Merged Cell Parameters:');
+    disp(params);
 end
