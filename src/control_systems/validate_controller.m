@@ -50,6 +50,19 @@ inputs.T_cells = [70, 25];
 [I_cmd, ~] = bms_control_logic(inputs, params);
 fprintf('Optimal Arbitration (T=70C): I_cmd = %.2f A\n', I_cmd);
 
+%% 5. Estimator Convergence (EKF)
+% Verifies the ability of the EKF to recover from an incorrect initial condition.
+soc_true = 0.5;
+soc_est = 0.8; % 30% error
+P = 0.1;
+v_meas = 3.2; i_meas = 0;
+
+fprintf('Testing EKF Convergence (Initial Error: 30%%)...\n');
+for i = 1:20
+    [soc_est, P] = ekf_estimator(v_meas, i_meas, soc_est, P, params);
+end
+fprintf('  Final SOC Estimate: %.4f (Error: %.2f%%)\n', soc_est, abs(soc_est - soc_true)*100);
+
 %% Helper Functions
 function params = load_optimized_data(filename)
     if ~exist(filename, 'file')

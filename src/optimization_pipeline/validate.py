@@ -83,6 +83,12 @@ class StabilityValidator:
         capacity_ah = sol_base["Discharge capacity [A.h]"].data[-1]
         soc = 1.0 - (sol_base["Discharge capacity [A.h]"].data / (capacity_ah + 1e-6))
 
+        # Thermoelastic Strain (Ref: paper.md Section 3.2)
+        # Combination of Thermal Expansion and SOC-driven Concentration Expansion
+        alpha_thermal = 1e-5
+        beta_soc = 0.02
+        thermoelastic_strain = alpha_thermal * (temp_k - temp_k[0]) + beta_soc * soc
+
         sei_rate = 2e-10 * (10.0**0.5) * np.exp(-35000 / (8.314 * temp_k)) * (1.0 + soc)
         sei_total = trapezoid(sei_rate, sol_base["Time [s]"].data)
         cycle_life = int(0.2 / (sei_total + 1e-15))
@@ -102,7 +108,8 @@ class StabilityValidator:
             "robustness_passed": robustness_passed,
             "resistance_profile": {
                 "temperature": temp_k.tolist(),
-                "resistance": (0.01 * np.exp(5000 / (8.314 * temp_k)) + 0.02 * soc).tolist()
+                "thermoelastic_strain": thermoelastic_strain.tolist(),
+                "resistance": (0.01 * np.exp(5000 / (8.314 * temp_k)) + 0.5 * thermoelastic_strain).tolist()
             },
             "merged_params": params_to_test
         }
