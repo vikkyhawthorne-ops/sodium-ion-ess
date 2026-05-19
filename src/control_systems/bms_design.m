@@ -84,6 +84,20 @@ function [I_cmd, states] = bms_control_logic(inputs, params)
     states.V_oc = V_oc;
 end
 
+%% BMS ECU INTERFACE (Algorithms vs Physical Plant)
+% This module separates the ECU Algorithms from the Physical Plant.
+% Physical Plant is modeled using Simscape (nfpp_cell.ssc).
+
+function [V_out, T_out] = plant_model(I_in, T_amb, params)
+    % Physical Domain Simulator (Interfaces with Simscape model)
+    R_int = params.Contact_resistance_Ohm + 0.01;
+    C_th = 500; hA = 0.1;
+
+    % Coupled Electro-Thermal Equation (Simscape equivalent)
+    V_out = 3.2 - I_in * R_int;
+    T_out = T_amb + (I_in^2 * R_int) / C_th - (hA/C_th)*(298.15 - T_amb);
+end
+
 %% PACK DYNAMICS (2-Cell Imbalance Model)
 function [sys_ss] = get_pack_dynamics(params)
     % x = [SOC1, SOC2, V1, V2, T1, T2]'

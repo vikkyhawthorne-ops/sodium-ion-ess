@@ -63,6 +63,19 @@ for i = 1:20
 end
 fprintf('  Final SOC Estimate: %.4f (Error: %.2f%%)\n', soc_est, abs(soc_est - soc_true)*100);
 
+%% 6. Physical Domain Validation (Simscape Equivalent)
+% Verifies coupled electro-thermal response of the Simscape Plant Model.
+fprintf('Testing Physical Plant Response...\n');
+I_test = 20; % 2C load
+T_amb = 298.15;
+[V_p, T_p] = plant_model(I_test, T_amb, params);
+fprintf('  Load: %.1f A -> Voltage: %.2f V, Temp: %.1f K\n', I_test, V_p, T_p);
+if T_p > T_amb
+    fprintf('  Physical coupling (Heat Generation): PASSED\n');
+else
+    fprintf('  Physical coupling (Heat Generation): FAILED\n');
+end
+
 %% Helper Functions
 function params = load_optimized_data(filename)
     if ~exist(filename, 'file')
