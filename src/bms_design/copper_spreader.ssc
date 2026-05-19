@@ -23,8 +23,8 @@ equations
     T == thermal_in.T;
     T == thermal_out.T;
 
-    % Lumped 2D plate approximation for a single cell segment
-    (rho * cp * area * thickness) * T.der == thermal_in.Q - thermal_out.Q;
+    % Energy balance: Heat accumulation = Net heat into component
+    (rho * cp * area * thickness) * T.der == thermal_in.Q + thermal_out.Q;
 end
 
 end

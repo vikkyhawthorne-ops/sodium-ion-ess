@@ -185,7 +185,24 @@ Hard cutoff: T_{max}>85^∘ C⇒I=0
 \omega_{pump}=k_1(T_{max}-T_{safe})+k_2|\nabla T|+k_3I
 Atomizer state: Active if T_{reject} > T_{threshold}
 
-7. GRID STRESS DERATING BLOCK
+7. POWER ELECTRONICS & POWER CONDITIONING
+The ESS is coupled to the grid via a bidirectional power conditioning system (PCS) designed for grid-tie and islanded operation.
+
+7.1 System Topology
+The interface includes:
+* AC Grid (Three-phase source)
+* Static Transfer Switch (STS) for fast grid/island transition
+* Power Quality Conditioner (PQC) for voltage sag compensation (DVR-equivalent) and frequency stabilization
+* Active Rectifier / PFC Stage
+* DC Link Capacitor (Bus stabilization)
+* Bidirectional Isolated DC/DC Converter (Buck-boost stage for CC-CV charging and discharge regulation)
+* EMI and LC Filters
+
+7.2 Power Quality Control Layers
+* **Voltage Sag Compensation:** DVR-equivalent logic utilizing a voltage sag detector and transient injection support to maintain sensitive load operation during grid faults.
+* **Frequency Instability Compensation:** High-fidelity SRF-PLL (Synchronous Reference Frame Phase-Locked Loop) for frequency and ROCOF (Rate of Change of Frequency) estimation, enabling active power response to frequency fluctuations.
+
+7.3 Grid Stress Derating
 Pure supervisory constraint modifier.
 Stress metric D_k=α∣ΔV∣+β∣Δf∣+γB
 Current scaling I_cmd^grid=I_cmd e^(-μD_k )
