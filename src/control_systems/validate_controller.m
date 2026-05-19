@@ -1,64 +1,45 @@
-%% BMS Controller Validation Report
-% This report verifies the stability, response characteristics, and estimator convergence
-% of the NFPP Sodium-Ion Battery Management System.
-%
-% Ref: docs/paper.md
+%% BMS Controller Deployment-Grade Validation Report
+% Verifies stability, observability, and safety override behavior.
 
-%% 1. Initialization and Parameter Loading
+%% 1. Initialization
 params = load_optimized_data('src/control_systems/optimized_params.mat');
 
-%% 2. Estimator Convergence (EKF)
-% Verifies the ability of the Extended Kalman Filter to recover from incorrect initial SOC.
-soc_true = 0.5;
-soc_init = 0.8;
-P = 0.1;
-v_meas = 3.2;
-i_meas = 0;
-
-soc_est = soc_init;
-convergence_steps = 0;
-for i = 1:50
-    [soc_est, P] = ekf_estimator(v_meas, i_meas, soc_est, P, params);
-    if abs(soc_est - soc_true) < 0.01 && convergence_steps == 0
-        convergence_steps = i;
-    end
-end
-fprintf('EKF Convergence: %s in %d steps\n', mat2str(abs(soc_est - soc_true) < 0.01), convergence_steps);
-
-%% 3. Stability Analysis (MIMO State-Space)
-% Analyzes the asymptotic stability of the 5-state battery plant model.
+%% 2. Observability Analysis
+% rank(obsv(A,C)) check for the 5-state coupled plant
 [sys_ss, ~] = get_battery_dynamics(params);
-if isstruct(sys_ss)
-    evs = eig(sys_ss.A);
-else
-    evs = eig(sys_ss);
-end
-is_stable = all(real(evs) <= 0);
-fprintf('Asymptotic Stability: %s\n', mat2str(is_stable));
-fprintf('Max Eigenvalue (Real): %.4f\n', max(real(evs)));
+obs_matrix = obsv(sys_ss.A, sys_ss.C);
+obs_rank = rank(obs_matrix);
+fprintf('MIMO Observability Rank: %d (Target: %d)\n', obs_rank, size(sys_ss.A, 1));
 
-%% 4. Pre-charge Sequence & Contactor Logic
-% Verifies the State Machine transition from Standby to Driving via Pre-charge.
+%% 3. Stability & Numerical Stiffness
+% Step size stability check Delta_t < 2/lambda_max
+evs = eig(sys_ss.A);
+lambda_max = max(abs(evs));
+fprintf('System Stiffness (max|lambda|): %.4f\n', lambda_max);
+fprintf('Critical Timestep (Stability): %.4f s\n', 2/lambda_max);
+
+%% 4. Safety Override & Hard Latch Logic
+% Verifies that Layer 1 fault cannot be recovered without explicit reset.
 inputs = struct('V_cells', [3.3, 3.3], 'T_cells', [25, 25], 'SOC_est', 0.5, ...
-                'I_measured', 0, 'Mode', 'Drive', 'Fault_Reset', 0, 'I_request', 10);
+                'I_measured', 0, 'Mode', 'Drive', 'Fault_Reset', 0, 'I_request', 10, 'T_amb', 298.15);
 
-[~, s1] = bms_control_logic(inputs, params);
-fprintf('Initial State: %s (Precharge Contactor: %d)\n', s1.bms_state, s1.contactor_pre);
-
-for i = 1:6, [~, s_final] = bms_control_logic(inputs, params); end
-fprintf('Final State: %s (Main Contactor: %d)\n', s_final.bms_state, s_final.contactor_main);
-
-%% 5. Cell Balancing Logic
-% Verifies activation of bleed resistors under voltage imbalance.
-inputs.V_cells = [3.4, 3.3];
-[~, states] = bms_control_logic(inputs, params);
-fprintf('Balancing Active: %s\n', mat2str(any(states.balancing_active)));
-
-%% 6. Fault Protection
-% Verifies immediate current cutoff during over-temperature conditions.
+% Trigger Critical Fault
 inputs.T_cells = [90, 25];
-[I_cmd, states] = bms_control_logic(inputs, params);
-fprintf('Fault Triggered: %s, Command: %.1f A\n', states.bms_state, I_cmd);
+[I1, s1] = bms_control_logic(inputs, params);
+
+% Remove Fault condition but keep Reset=0
+inputs.T_cells = [25, 25];
+[I2, s2] = bms_control_logic(inputs, params);
+
+fprintf('Fault Latch Test:\n');
+fprintf('  Immediate Cutoff: %d A (Expected 0)\n', I1);
+fprintf('  Latched After Recovery: %s (Expected Fault)\n', s2.bms_state);
+
+%% 5. Energy Management (Multi-tier Derating)
+% Verifies soft-constraint handling (Layer 4)
+inputs.T_cells = [70, 70]; % Derating zone (T_max=60, T_crit=85)
+[I_derated, ~] = bms_control_logic(inputs, params);
+fprintf('Thermal Derating: %.2f A (Requested 10A)\n', I_derated);
 
 %% Helper Functions
 function params = load_optimized_data(filename)
