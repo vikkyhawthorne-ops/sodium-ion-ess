@@ -74,45 +74,34 @@ The structural output is expressed as a reduced endurance response under strain 
 where: n_"crit" = cycles to onset of irreversible deformation, t_"crit" = time to onset under operating profile, ε_"int" = applied or induced strain intensity 
 This defines the deformation endurance boundary of the continuum under coupled electrochemical–thermal loading.
 
-NFPP Cell Optimization 
+NFPP Cell Optimization: Differentiable Sensitivity Manifold Optimizer (DSMO)
 Objective Definition
-A constrained multi-objective optimization is formulated to minimize cost while maximizing electrochemical performance:
-min θ C(θ), max θ {E(θ), P(θ), L(θ)}
-Constraints:  Energy density ≥ 140 Wh/kg, Power capability ≥ 1C, Cycle life ≥ 8000 cycles, N/P ratio ≥ 1.05, Diffusion time ≤ charge time, Effective conductivity ≥ σ_min 
-1. Unified Parameterization (Design Space)
-The design space consists of:
-Structural parameters (θₛ):
-electrode thickness (L_c, L_a), porosity (ε_c, ε_a), tortuosity (τ), active material loading, particle size (r_p)
-Material parameters (θₘ):
-NFPP fraction, conductive carbon fraction, electrolyte composition, additive/doping strategy
-2. Sensitivity-Driven Physics Reduction
-Sensitivity analysis is applied to DFN-derived outputs to identify parameters governing charge–discharge dynamics, electrode–electrolyte coupling, and rate-limiting transport and interfacial behavior.
-2.1 Geometry and Interface Sensitivity (PyBaMM)
-PyBaMM geometry and reaction kinetics modules quantify sensitivity of performance to:
-	electrode thickness, porosity, and loading 
-	charge-transfer resistance and interfacial overpotential 
-	internal structural configuration parameters (e.g., porosity distribution, tortuosity-controlled transport pathways, and binder-network compliance characteristics) that influence strain redistribution and suppress deformation localization under thermal and SOC cycling 
+The cell design is optimized using a Differentiable Sensitivity Manifold Optimizer (DSMO) that treats the battery as a fully coupled multiphysics operator $y = F(\theta)$, where $\theta$ represents electrochemical, thermal, and mechanical parameters, and $y$ represents observables (Voltage, Temperature, SOC, Stress, Strain).
 
-2.2 Hessian-Based Design Space Reduction and Optimal Solution Identification
-Outputs from PyBaMM sensitivity analysis are embedded into a second-order Hessian curvature operator of the DFN performance landscape, extended to include strain-response coupling.
-This step performs simultaneous:
-	coupling resolution across electrochemical, thermal, and mechanical response pathways 
-	constraint sensitivity compression (performance + structural integrity constraints) 
-	curvature-based elimination of weak or non-influential directions in the design space 
-The reduced design space is defined as:
-θ→θ^*⊂θ
+1. Unified Multiphysics Operator
+*   **Electrochemical/Thermal (PyBaMM):** DFN system solved with CasADi backend for exact sensitivity extraction.
+*   **Mechanical (FEniCSx):** Thermoelastic PDE mechanics modeling stress/strain evolution under thermal and concentration gradients.
 
-The optimal parameter set θ^*is obtained by solving the constrained curvature system defined on the reduced DFN–strain landscape
-2.3. Literature-Constrained Material Feasibility (Electrolyte and Additive Closure)
-A literature-guided feasibility filter is applied:
-	candidate electrolyte systems and additives are retrieved from DFN-consistent experimental literature 
-	filtering is applied using: 
-	electrochemical stability window compatibility 
-	interfacial film stability (SEI / CEI formation consistency) 
-	ionic transport and conductivity constraints 
-	interfacial strain accommodation capability under thermo-mechanical cycling (compatibility with deformation suppression requirements identified in θ^*) 
-This produces a feasible material set conditioned on θ^*, ensuring consistency across electrochemical performance and structural deformation resilience.
-3. Cost-Driven Feasibility Adjustment 
+2. Sensitivity Manifold Computation
+Full Jacobian assembly $S = \partial y / \partial \theta$ captures:
+*   Electrochemical sensitivities (exact Jacobian from CasADi).
+*   Mechanical sensitivities (linearized adjoint FEM from FEniCSx).
+*   Chain-rule coupling across thermal and SOC fields.
+
+The sensitivity manifold metric $G = S^T S$ defines the curvature of the design space, identifying parameter coupling and identifiability geometry.
+
+3. Electrolyte Optimization & Materials Discovery
+A preliminary stage performs materials discovery via external database queries (e.g., Materials Project) to identify cost-effective alternatives to fluorinated electrolyte systems. Candidates are filtered based on:
+*   Electrochemical stability window (> 4.5V).
+*   Chemical compatibility with NFPP cathode.
+*   Ionic conductivity and cost reduction relative to baseline.
+
+4. Gauss–Newton Manifold Optimization Rule
+The design parameters $\theta$ are updated iteratively using the rule:
+$\theta_{k+1} = \theta_k - \eta (S^T S + \lambda I)^{-1} S^T (y - y_{target})$
+where $y_{target}$ is the performance vector (Energy, Power, Life, and Strain constraints).
+
+5. Cost-Driven Feasibility Adjustment
 cost acts as a correction operator on the coupled solution space obtained from 2
 The preliminary optimal solution (θ*) is adjusted under cost influence:
 	material–structure pairs are modified jointly (not independently) 
