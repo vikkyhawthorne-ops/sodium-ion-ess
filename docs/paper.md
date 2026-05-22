@@ -133,6 +133,7 @@ The plant model represents the physical hardware of the 16S1P sodium-ion battery
 *   **Topology:** 16S1P (48V nominal, 10Ah).
 *   **Heterogeneity:** Stochastic parameter variation ($\pm 2-5\%$ capacity, $\pm 1-3\%$ resistance) to model real-world manufacturing spread.
 *   **Casing:** Poly-material moisture barrier (aluminum-free) with no secondary coating.
+*   **Coating Thickness:** Specified at 50–150 $\mu$m, governing internal thermal conductance.
 *   **Internal Dynamics:** Core-casing distributed thermal nodes with DFN-informed concentration states ($c_s, c_e$) and 2-RC polarization branches.
 
 1.2 Thermal & Fluid Network

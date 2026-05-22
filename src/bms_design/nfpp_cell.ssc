@@ -21,8 +21,13 @@ parameters
 
     % Thermal Parameters (Distributed)
     C_th_core = {400, 'J/K'};
-    C_th_casing = {150, 'J/K'}; % Increased for Poly material
-    K_int = {1.5, 'W/K'};       % Reduced for Poly material (lower conductivity than Al)
+    C_th_casing = {150, 'J/K'};
+    t_coating = {100e-6, 'm'};  % Cell coating thickness (e.g. 100 um)
+    k_poly = {0.2, 'W/(m*K)'};   % Thermal conductivity of Poly material
+    A_surface = {0.13 * 0.07, 'm^2'};
+
+    % Internal Conductance (Core-to-Casing) governed by coating thickness
+    K_int = k_poly * A_surface / t_coating;
 
     % Electrochemical / Aging
     E_act = {20000, 'J/mol'};
