@@ -1,18 +1,32 @@
 component copper_spreader
-% Copper Spreader (Lateral Equalization Plate)
+% Copper Spreader (Enhanced Chassis-Integrated Plate)
 % Ref: docs/paper.md section 2
 
 nodes
-    thermal_in  = foundation.thermal.thermal; % Surface in:left
-    thermal_out = foundation.thermal.thermal; % Surface out:right
+    cell_node    = foundation.thermal.thermal; % Cell interface:left
+    chassis_l    = foundation.thermal.thermal; % Chassis left:right
+    chassis_r    = foundation.thermal.thermal; % Chassis right:right
+    air_node     = foundation.thermal.thermal; % Convection air:top
 end
 
 parameters
-    k_cu = {400, 'W/(m*K)'};   % Thermal conductivity (OFHC Copper)
-    rho = {8960, 'kg/m^3'};    % Density
-    cp = {385, 'J/(kg*K)'};    % Specific heat
-    thickness = {0.003, 'm'};  % 3mm thickness
-    area = {0.13 * 0.07, 'm^2'}; % Active area
+    k_cu = {400, 'W/(m*K)'};      % Thermal conductivity
+    rho = {8960, 'kg/m^3'};       % Density
+    cp = {385, 'J/(kg*K)'};       % Specific heat
+
+    % Geometry
+    L_base = {0.13, 'm'};         % Base length (cell)
+    W_base = {0.07, 'm'};         % Base width (cell)
+    t_base = {0.003, 'm'};        % Plate thickness
+
+    % Chassis extensions
+    W_ext = {0.02, 'm'};          % Extension to reach chassis sides
+
+    % Fin parameters
+    fin_height = {0.015, 'm'};
+    fin_thickness = {0.001, 'm'};
+    fin_pitch = {0.003, 'm'};     % Distance between fins
+    h_conv = {50, 'W/(m^2*K)'};   % Convection coeff
 end
 
 variables
@@ -20,11 +34,29 @@ variables
 end
 
 equations
-    T == thermal_in.T;
-    T == thermal_out.T;
+    T == cell_node.T;
+    T == chassis_l.T;
+    T == chassis_r.T;
 
-    % Energy balance: Heat accumulation = Net heat into component
-    (rho * cp * area * thickness) * T.der == thermal_in.Q + thermal_out.Q;
+    let
+        % Volume Accounting
+        vol_base = L_base * (W_base + {2, '1'} * W_ext) * t_base;
+        num_fins = L_base / fin_pitch;
+        vol_fins = num_fins * (W_base + {2, '1'} * W_ext) * fin_height * fin_thickness;
+        total_vol = vol_base + vol_fins;
+        total_mass = rho * total_vol;
+
+        % Surface Area for convection
+        A_base = L_base * (W_base + {2, '1'} * W_ext);
+        A_fins = num_fins * {2, '1'} * fin_height * (W_base + {2, '1'} * W_ext);
+        total_area = A_base + A_fins;
+
+        % Convection heat flow
+        Q_conv = h_conv * total_area * (T - air_node.T);
+    in
+        total_mass * cp * T.der == cell_node.Q + chassis_l.Q + chassis_r.Q - Q_conv;
+        air_node.Q == Q_conv;
+    end
 end
 
 end

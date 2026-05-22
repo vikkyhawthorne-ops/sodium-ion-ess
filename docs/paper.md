@@ -188,6 +188,15 @@ Atomizer state: Active if T_{reject} > T_{threshold}
 7. POWER ELECTRONICS & POWER CONDITIONING
 The ESS is coupled to the grid via a bidirectional power conditioning system (PCS) designed for grid-tie and islanded operation.
 
+2. COPPER SPREADER & CHASSIS INTEGRATION
+The system utilizes an OFHC copper spreader (390–401 W/m·K) for lateral thermal equalization. The spreader is physically integrated to touch both the battery pack and the two sides of the chassis, acting as a structural and thermal bridge.
+
+2.1 Spreader Geometry & Fin System
+*   **Coverage:** ≥65% cell overlap.
+*   **Chassis Coupling:** Direct contact with both lateral walls of the enclosure.
+*   **Heat Dissipation:** Integrated fin array with high surface-area-to-volume ratio to maximize airflow and turbulent heat flow.
+*   **Material Accounting:** Total volume and mass are derived from active area, wall-contact extensions, and fin density (18–32 fins/in).
+
 7.1 System Topology
 The interface includes:
 * AC Grid (Three-phase source)
