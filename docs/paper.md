@@ -123,95 +123,55 @@ Metric	Baseline	Optimized
 Energy density	140 Wh/kg	155–165 Wh/kg
 Cycle life	5000	8000–9000
 		
-BMS Design
-System Overview
-The Battery Management System (BMS) is designed as a model-based, constraint-driven control system for sodium-ion ESS operation under unstable grid conditions. 
-Pack Model 
-Electrical Specification Cell Configuration 16S1P
-Thermal Management Architecture
-The system utilizes a multiphysics electro-thermal-thermo-fluid digital twin for active thermal regulation. This architecture replaces lumped thermal models with a distributed propagation network capturing cell-cell conduction, spreader transport, and tubing convection. Each cell is coupled to an OFHC copper spreader (390–401 W/m·K) for lateral equalization.
+ESS Unit Model: Multiphysics Digital Twin
+The ESS is implemented as a high-fidelity digital twin coupling electrochemical, thermal, fluid, and mechanical domains.
 
-Heat extraction is performed by a dual-tube network of Aluminum Alloy 3003 microtubes tracing a sinusoidal path. The working fluid is a 60% deionized water and 40% ethylene glycol mixture. Approximately 45% of the battery surface is in contact with the tubing.
+1. PHYSICAL PLANT MODEL
+The plant model represents the physical hardware of the 16S1P sodium-ion battery pack and its associated infrastructure.
 
-The system features a 3-airway topology:
-*   **Inlet Airways:** Two airways located at the 30% length position of the unit, composed of small oblong rectangles.
-*   **Exit Airway:** Located at the back of the unit.
-*   **Coverage:** Airways cover approximately 45% of the unit height.
+1.1 Cell Configuration & Packaging
+*   **Topology:** 16S1P (48V nominal, 10Ah).
+*   **Heterogeneity:** Stochastic parameter variation ($\pm 2-5\%$ capacity, $\pm 1-3\%$ resistance) to model real-world manufacturing spread.
+*   **Casing:** Poly-material moisture barrier (aluminum-free) with no secondary coating.
+*   **Internal Dynamics:** Core-casing distributed thermal nodes with DFN-informed concentration states ($c_s, c_e$) and 2-RC polarization branches.
 
-Coolant flow is driven by a magnetically coupled BLDC centrifugal micropump (1–5 L/min). Final heat rejection is achieved via an aerosol-enhanced system utilizing two ultrasonic piezoelectric atomizers (80–150 kHz) on each side. This configuration creates a draft of air that enters at the 1/3 position inlets and exits through the back, with sufficient spacing maintained between in-draft and exit airways to optimize heat exchange.
+1.2 Thermal & Fluid Network
+*   **Copper Spreader:** OFHC copper structural bridge touching the battery pack and chassis walls, featuring high-density fins (18–32 fins/in).
+*   **Coolant Loop:** Dual-tube sinusoidal Aluminum Alloy 3003 microtube network (~45% surface contact) carrying 60/40 Water-Glycol.
+*   **Pump:** Magnetically coupled BLDC centrifugal micropump (1–5 L/min).
+*   **Airway Topology:** 3-airway draft system (two inlets at 30% length, one exit at back) covering 45% of unit height with oblong rectangular orifices.
+*   **Rejection Port:** Four ultrasonic piezoelectric atomizers (80–150 kHz) for aerosol-enhanced evaporative cooling.
 
-SIMULINK BMS CONTROL SYSTEM MODEL
-The ESS is a constrained nonlinear plant:▭(P_cell={SOC,V_1,V_2,T,SOH,R_0^eff})
+1.3 Power Electronics & Conditioning
+*   **Grid Interface:** Static Transfer Switch (STS) for <4ms grid/island transition.
+*   **PQC:** Series-injected DVR-equivalent sag compensator.
+*   **Conversion:** Bidirectional isolated buck-boost DC/DC stage with integrated PWM and LC filtering.
+*   **DC Link:** Stabilized link with 2200$\mu$F capacitance and bleed resistance.
 
-Control is applied through current: u=I_cmd
+1.4 Interconnects, Sensors & Faults
+*   **Busbars:** Nickel-plated copper with $I^2R$ Joule heating modeling.
+*   **Sensors:** 16-bit voltage ADCs (<2mV noise), NTC thermistors (every 2 cells), and Hall-effect current sensors.
+*   **Fault Injection:** Hooks for internal shorts, coolant leaks, pump degradation, sensor drift, and converter efficiency drops.
 
-2. CELLS (PHYSICAL PLANT)
-State vector
-x=[█(SOC@V_1@V_2@T_{core}@T_{casing}@c_s@c_e@SOH)]
+2. SIMULINK BMS CONTROL SYSTEM MODEL
+The BMS is designed as a model-based, constraint-driven control system for sodium-ion ESS operation under unstable grid conditions.
 
-Dynamics: SOC evolution (pure state, not controlled) dSOC/dt=-I/(Q_n^eff )
-Electrical dynamics (Enhanced ECM + DFN Hybrid)
-V_t=OCV(SOC, T)-IR_0^eff-V_1-V_2-\eta_{ct}-\eta_{diff}
-V ̇_1=-V_1/(R_1 C_1 )+I/C_1 ,V ̇_2=-V_2/(R_2 C_2 )+I/C_2 
-Thermal dynamics (Distributed Network)
-C\dot{T}=KT+Q_{gen}-Q_{fluid}-Q_{conv}
-where Q_{gen} = I^2R + Q_{side reactions}
-SOH evolution (aging state) (SOH) ̇=-f(I,T,SOC) including SEI growth and capacity loss.
+2.1 Plant State Representation
+State vector: $x = [SOC, V_1, V_2, T_{core}, T_{casing}, c_s, c_e, SOH]^T$
 
-3. C-RATE CONTROLLER (PRIMARY CONTROL BLOCK)
- Control objective C=I/Q_n 
-Track power request while respecting constraints: I_cmd=C_ref⋅Q_n
+2.2 Core Dynamics
+*   **Electrical (Enhanced ECM + DFN Hybrid):** $V_t = OCV(SOC, T) - IR_0^{eff} - V_1 - V_2 - \eta_{ct} - \eta_{diff}$
+*   **Thermal (Distributed):** $C\dot{T} = KT + Q_{gen} - Q_{fluid} - Q_{conv}$
+*   **Aging (SOH):** $(SOH) \dot{} = -f(I, T, SOC)$ including SEI growth kinetics.
 
-Constraint-limited control law I_cmd="sat"(I_ref,I_min (SOC,SOH),I_max (T,SOH))
+2.3 Control Layers
+*   **C-Rate Controller:** $I_{cmd} = sat(I_{ref}, I_{min}, I_{max})$
+*   **Cell Equalizer:** Minimized SOC dispersion via passive bleed or active shuttle.
+*   **Thermal Limiter:** $I_{cmd}^{th} = I_{cmd} \cdot e^{-\lambda(T_{max}-T_{safe})^+ - \gamma|\nabla T|}$
+*   **Pump & Atomizer Control:** $\omega_{pump} = k_1(T_{max}-T_{safe}) + k_2|\nabla T| + k_3I$; Atomizers active if $T > T_{threshold}$.
+*   **Power Quality Control:** DVR-equivalent sag compensation and frequency stabilization via SRF-PLL feedback.
+*   **Grid Stress Derating:** $I_{cmd}^{grid} = I_{cmd} \cdot e^{-\mu D_k}$ where $D_k = \alpha|\Delta V| + \beta|\Delta f| + \gamma B$
 
-
-4. CELL EQUALIZER CONTROLLER (FOR PACK)
-Objective: Minimize SOC dispersion, min⁡∑_i▒〖(SO〗 C_i-(SOC) ˉ)^2
-Equalization law
-For cell i I_(eq,i)=k(SOC_i-(SOC) ˉ)
-Control mechanism
-Two implementations:
-(A) Passive balancing: resistor bleed, no active energy transfer 
-(B) Active balancing; DC/DC shuttle between cells, controlled switching network 
-
-5. THERMAL LIMITER (SECONDARY CONTROL)
-A constraint scaler based on peak cell temperature and gradient:
-I_cmd^th=I_cmd⋅e^(-λ(T_{max}-T_{safe} )^+ - \gamma|\nabla T|)
-Hard cutoff: T_{max}>85^∘ C⇒I=0
-
-6. PUMP & ATOMIZER CONTROL
-\omega_{pump}=k_1(T_{max}-T_{safe})+k_2|\nabla T|+k_3I
-Atomizer state: Active if T_{reject} > T_{threshold}
-
-7. POWER ELECTRONICS & POWER CONDITIONING
-The ESS is coupled to the grid via a bidirectional power conditioning system (PCS) designed for grid-tie and islanded operation.
-
-2. COPPER SPREADER & CHASSIS INTEGRATION
-The system utilizes an OFHC copper spreader (390–401 W/m·K) for lateral thermal equalization. The spreader is physically integrated to touch both the battery pack and the two sides of the chassis, acting as a structural and thermal bridge.
-
-2.1 Spreader Geometry & Fin System
-*   **Coverage:** ≥65% cell overlap.
-*   **Chassis Coupling:** Direct contact with both lateral walls of the enclosure.
-*   **Heat Dissipation:** Integrated fin array with high surface-area-to-volume ratio to maximize airflow and turbulent heat flow.
-*   **Material Accounting:** Total volume and mass are derived from active area, wall-contact extensions, and fin density (18–32 fins/in).
-
-7.1 System Topology
-The interface includes:
-* AC Grid (Three-phase source)
-* Static Transfer Switch (STS) for fast grid/island transition
-* Power Quality Conditioner (PQC) for voltage sag compensation (DVR-equivalent) and frequency stabilization
-* Active Rectifier / PFC Stage
-* DC Link Capacitor (Bus stabilization)
-* Bidirectional Isolated DC/DC Converter (Buck-boost stage for CC-CV charging and discharge regulation)
-* EMI and LC Filters
-
-7.2 Power Quality Control Layers
-* **Voltage Sag Compensation:** DVR-equivalent logic utilizing a voltage sag detector and transient injection support to maintain sensitive load operation during grid faults.
-* **Frequency Instability Compensation:** High-fidelity SRF-PLL (Synchronous Reference Frame Phase-Locked Loop) for frequency and ROCOF (Rate of Change of Frequency) estimation, enabling active power response to frequency fluctuations.
-
-7.3 Grid Stress Derating
-Pure supervisory constraint modifier.
-Stress metric D_k=α∣ΔV∣+β∣Δf∣+γB
-Current scaling I_cmd^grid=I_cmd e^(-μD_k )
-
-All constraints collapse into current arbitration: ▭(I=min⁡(I_(C-rate),I_thermal,I_grid,I_SOH))
+3. Final Plant Arbitration
+All constraints collapse into current arbitration to ensure safe operation under grid instability:
+$I = min(I_{C-rate}, I_{thermal}, I_{grid}, I_{SOH})$
