@@ -102,8 +102,14 @@ $\theta' = \theta_{base} (1 + \Delta \theta_{material})$
 This ensures DFN simulation validity by maintaining compatibility with the calibrated baseline.
 
 3. Stage E-F: Differentiable Sensitivity Manifold Optimizer (DSMO)
-The projected design space is optimized using a coupled multiphysics operator $y = F(\theta)$.
-*   **Electrochemical/Thermal (PyBaMM):** DFN system with CasADi backend for exact sensitivity extraction.
+The projected design space ($\theta = [\theta_s, \theta_m]$) is optimized using a coupled multiphysics operator $y = F(\theta)$.
+
+**Refined Design Space:**
+*   **Structural Parameters ($\theta_s$):** Electrode thickness ($L_c, L_a$), porosity ($\epsilon_c, \epsilon_a$), tortuosity ($\tau$), active material loading, and particle size ($r_p$).
+*   **Material Parameters ($\theta_m$):** NFPP fraction, conductive carbon fraction, and electrolyte composition (concentration/salts).
+
+**Optimization Engine:**
+*   **Electrochemical/Thermal (PyBaMM):** DFN system with CasADi backend for exact symbolic sensitivity extraction.
 *   **Mechanical (FEniCSx):** Adjoint linearized FEM sensitivities ($S_{mech}$) modeling thermoelastic and intercalation strain.
 *   **Update Rule:** Gauss–Newton (Levenberg-Marquardt) update on the sensitivity manifold:
     $\theta_{k+1} = \theta_k - \eta (S^T S + \lambda I)^{-1} S^T (y - y_{target})$
