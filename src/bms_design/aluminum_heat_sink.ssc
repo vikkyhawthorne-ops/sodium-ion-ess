@@ -6,7 +6,7 @@ nodes
     cell_node    = foundation.thermal.thermal; % Cell interface:left
     chassis_l    = foundation.thermal.thermal; % Chassis left:right
     chassis_r    = foundation.thermal.thermal; % Chassis right:right
-    air_node     = foundation.thermal.thermal; % Convection air:top
+    air_node     = foundation.thermal.thermal; % Convection air:back
 end
 
 parameters

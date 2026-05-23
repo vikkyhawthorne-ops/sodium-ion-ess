@@ -88,8 +88,13 @@ class OQMDClient:
 
 class DSMOptimizer:
     """
-    Differentiable Sensitivity Manifold Optimizer (DSMO)
-    Concrete solver-level PyBaMM (CasADi) + FEniCSx (Adjoint Linearized FEM).
+    Differentiable Sensitivity Manifold Optimizer (DSMO).
+    Optimizes cell design as a coupled multiphysics operator (PyBaMM + FEniCSx).
+
+    The optimization covers:
+    1. Material selection (DFT-driven discovery).
+    2. Structural parameters (thickness, porosity, etc.).
+    3. Manufacturing process refinements (cross-cutting optimization).
     """
 
     def __init__(self, target_values):

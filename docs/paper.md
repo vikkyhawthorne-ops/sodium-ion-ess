@@ -76,7 +76,9 @@ This defines the deformation endurance boundary of the continuum under coupled e
 
 NFPP Cell Optimization: Differentiable Sensitivity Manifold Optimizer (DSMO)
 Objective Definition
-The cell design is optimized using a Differentiable Sensitivity Manifold Optimizer (DSMO) that treats the battery as a fully coupled multiphysics operator $y = F(\theta)$, where $\theta$ represents electrochemical, thermal, and mechanical parameters, and $y$ represents observables (Voltage, Temperature, SOC, Stress, Strain). Cost reduction is primarily achieved during the electrolyte material selection phase, with further potential for optimization through manufacturing process improvements.
+The cell design is optimized using a Differentiable Sensitivity Manifold Optimizer (DSMO) that treats the battery as a fully coupled multiphysics operator $y = F(\theta)$, where $\theta$ represents electrochemical, thermal, and mechanical parameters, and $y$ represents observables (Voltage, Temperature, SOC, Stress, Strain).
+
+A critical aspect of the framework is that cost reduction and performance gains are not isolated to the material selection phase; rather, they are further enhanced through **manufacturing process optimization**. This cross-cutting optimization applies both to the selection of electrolyte/electrode materials and the fine-tuning of cell structural parameters (e.g., electrode thickness, porosity, and compaction density), ensuring the final design is both high-performing and manufacturable at scale.
 
 1. Electrolyte Material Selection & Discovery
 A preliminary stage performs automated materials discovery by querying external databases (AFLOW, OQMD, Materials Project) to identify cost-effective alternatives for every system component (Anode, Cathode, Salt, Solvent). Material ranking is performed using a multi-criteria objective function:
@@ -137,7 +139,7 @@ $C\dot{T} = KT + Q_{gen} - Q_{fluid} - Q_{conv}$
 | **Coolant Loop** | Dual-tube sinusoidal Aluminum Alloy 3003 microtubes (~45% surface contact) carrying 60/40 Water-Glycol. |
 | **Tubing Spacing** | Differentiated: 6–9 mm at indraft inlets, 10–15 mm at cell coating contact. |
 | **Pump Actuator** | Magnetically coupled BLDC centrifugal micropump (1–5 L/min, 3–15 W). |
-| **Draft Topology** | 3-airway system (two inlets at 30% length, one exit at back) covering 45% height with oblong rectangular orifices. |
+| **Draft Topology** | 3-airway system (two inlets on left and right at 30% length, one exit at back) covering 45% height with oblong rectangular orifices. |
 | **Rejection Port** | Two ultrasonic piezoelectric atomizers (80–150 kHz) for aerosol-enhanced evaporative cooling ($Q = hA\Delta T + \dot{m}L_v$). |
 
 **Thermal Node Topology:**
@@ -155,6 +157,12 @@ The interface layer regulates bidirectional energy flow and grid stability.
 *   **Busbars:** Nickel-plated copper with $I^2R$ Joule heating modeling.
 *   **Sensors:** 16-bit voltage ADCs (<2mV noise), NTC thermistors (every 2 cells), and Hall-effect current sensors.
 *   **Fault Injection:** Hooks for internal shorts, coolant leaks, pump degradation, sensor drift, and converter efficiency drops.
+
+1.5 ESS Unit Physical Dimensions
+The integrated ESS unit, housing the 16S1P pack and the power conversion system, is designed with the following external dimensions:
+*   **Height:** 450 mm (includes cell stack, air draft spacing, and top-mounted PCCS).
+*   **Length:** 180 mm (aligned with 130 mm cell length plus manifold clearances).
+*   **Width:** 140 mm (aligned with 70 mm cell width plus finned chassis thickness).
 
 2. SIMULINK BMS CONTROL SYSTEM MODEL
 The BMS is designed as a model-based, constraint-driven control system for sodium-ion ESS operation under unstable grid conditions.
