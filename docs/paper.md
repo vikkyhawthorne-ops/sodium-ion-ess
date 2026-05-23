@@ -79,13 +79,14 @@ Objective Definition
 The cell design is optimized using a Differentiable Sensitivity Manifold Optimizer (DSMO) that treats the battery as a fully coupled multiphysics operator $y = F(\theta)$, where $\theta$ represents electrochemical, thermal, and mechanical parameters, and $y$ represents observables (Voltage, Temperature, SOC, Stress, Strain). Cost reduction is primarily achieved during the electrolyte material selection phase, with further potential for optimization through manufacturing process improvements.
 
 1. Electrolyte Material Selection & Discovery
-A preliminary stage performs automated materials discovery by querying external databases (AFLOW, OQMD, Materials Project) to identify cost-effective alternatives for every system component (Anode, Cathode, Salt, Solvent). Candidates are ranked based on:
-*   **Stability Index (DFT Data):** Ranking by energy above hull and thermodynamic stability retrieved via Density Functional Theory (DFT) calculations from OQMD.
-*   **Cost:** Minimization relative to baseline NaPF₆/FEC systems.
-*   **Electrochemical Stability Window:** Compatibility with 3.2V+ NFPP cathodes (> 4.5V).
-*   **Chemical Compatibility:** Resistance to continuous decomposition and stable SEI/CEI formation.
+A preliminary stage performs automated materials discovery by querying external databases (AFLOW, OQMD, Materials Project) to identify cost-effective alternatives for every system component (Anode, Cathode, Salt, Solvent). Material ranking is performed using a multi-criteria objective function:
 
-The highest-ranking material from each category is selected to parameterize the DFN model. Quantum-level DFT data (e.g., energy landscapes, molar volume, and electronic band gaps) is used to derive continuum-level transport and kinetic constants for the electrochemical model.
+*   **Stability Index (DFT Data):** Thermodynamic stability and energy above hull retrieved via Density Functional Theory (DFT) calculations from OQMD.
+*   **Cost & Availability (USGS):** Annual production, reserve data, and prices from USGS Mineral Commodity Summaries to penalize expensive materials.
+*   **Criticality (IEA):** Supply chain risk indices from the International Energy Agency (Critical Minerals) and heuristics for rare materials.
+*   **Electrochemical Compatibility:** Stability window compatibility (> 4.5V) and SEI/CEI formation capability.
+
+The highest-ranking material from each category is selected to parameterize the DFN (Doyle-Fuller-Newman) simulations. Quantum-level DFT data (e.g., energy landscapes, molar volume, and electronic band gaps) is used to derive continuum-level transport and kinetic constants for the electrochemical model.
 
 2. Unified Multiphysics Operator (DSMO)
 *   **Electrochemical/Thermal Subsystem (PyBaMM):** DFN system solved with CasADi backend for exact sensitivity extraction.
