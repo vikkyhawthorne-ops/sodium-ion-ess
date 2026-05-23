@@ -1,6 +1,6 @@
-component copper_spreader
-% Copper Spreader (Enhanced Chassis-Integrated Plate)
-% Ref: docs/paper.md section 2
+component aluminum_heat_sink
+% Aluminum Heat Sink (Enclosure Integrated)
+% Ref: docs/paper.md section 1.2
 
 nodes
     cell_node    = foundation.thermal.thermal; % Cell interface:left
@@ -10,23 +10,21 @@ nodes
 end
 
 parameters
-    k_cu = {400, 'W/(m*K)'};      % Thermal conductivity
-    rho = {8960, 'kg/m^3'};       % Density
-    cp = {385, 'J/(kg*K)'};       % Specific heat
+    k_al = {163, 'W/(m*K)'};      % Thermal conductivity (Aluminum Alloy 3003)
+    rho = {2730, 'kg/m^3'};       % Density
+    cp = {893, 'J/(kg*K)'};       % Specific heat
 
     % Geometry
-    L_base = {0.13, 'm'};         % Base length (cell)
-    W_base = {0.07, 'm'};         % Base width (cell)
-    t_base = {0.003, 'm'};        % Plate thickness
-
-    % Chassis extensions
-    W_ext = {0.02, 'm'};          % Extension to reach chassis sides
+    L_base = {0.13, 'm'};
+    W_base = {0.07, 'm'};
+    t_base = {0.003, 'm'};
+    W_ext = {0.02, 'm'};
 
     % Fin parameters
     fin_height = {0.015, 'm'};
     fin_thickness = {0.001, 'm'};
-    fin_pitch = {0.003, 'm'};     % Distance between fins
-    h_conv = {50, 'W/(m^2*K)'};   % Convection coeff
+    fin_pitch = {0.003, 'm'};
+    h_conv = {65, 'W/(m^2*K)'};
 end
 
 variables
@@ -39,19 +37,16 @@ equations
     T == chassis_r.T;
 
     let
-        % Volume Accounting
         vol_base = L_base * (W_base + {2, '1'} * W_ext) * t_base;
         num_fins = L_base / fin_pitch;
         vol_fins = num_fins * (W_base + {2, '1'} * W_ext) * fin_height * fin_thickness;
         total_vol = vol_base + vol_fins;
         total_mass = rho * total_vol;
 
-        % Surface Area for convection
         A_base = L_base * (W_base + {2, '1'} * W_ext);
         A_fins = num_fins * {2, '1'} * fin_height * (W_base + {2, '1'} * W_ext);
         total_area = A_base + A_fins;
 
-        % Convection heat flow
         Q_conv = h_conv * total_area * (T - air_node.T);
     in
         total_mass * cp * T.der == cell_node.Q + chassis_l.Q + chassis_r.Q - Q_conv;

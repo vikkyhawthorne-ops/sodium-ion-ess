@@ -76,43 +76,30 @@ This defines the deformation endurance boundary of the continuum under coupled e
 
 NFPP Cell Optimization: Differentiable Sensitivity Manifold Optimizer (DSMO)
 Objective Definition
-The cell design is optimized using a Differentiable Sensitivity Manifold Optimizer (DSMO) that treats the battery as a fully coupled multiphysics operator $y = F(\theta)$, where $\theta$ represents electrochemical, thermal, and mechanical parameters, and $y$ represents observables (Voltage, Temperature, SOC, Stress, Strain).
+The cell design is optimized using a Differentiable Sensitivity Manifold Optimizer (DSMO) that treats the battery as a fully coupled multiphysics operator $y = F(\theta)$, where $\theta$ represents electrochemical, thermal, and mechanical parameters, and $y$ represents observables (Voltage, Temperature, SOC, Stress, Strain). Cost reduction is primarily achieved during the electrolyte material selection phase, with further potential for optimization through manufacturing process improvements.
 
-1. Unified Multiphysics Operator
-*   **Electrochemical/Thermal (PyBaMM):** DFN system solved with CasADi backend for exact sensitivity extraction.
-*   **Mechanical (FEniCSx):** Thermoelastic PDE mechanics modeling stress/strain evolution under thermal and concentration gradients.
+1. Electrolyte Material Selection & Discovery
+A preliminary stage performs automated materials discovery by querying external databases (AFLOW, OQMD, Materials Project) to identify cost-effective alternatives to fluorinated electrolyte systems. Candidates are ranked based on:
+*   **Cost:** Minimization relative to baseline NaPF₆/FEC systems.
+*   **Electrochemical Stability Window:** Compatibility with 3.2V+ NFPP cathodes (> 4.5V).
+*   **Chemical Compatibility:** Resistance to continuous decomposition and stable SEI/CEI formation.
 
-2. Sensitivity Manifold Computation
+2. Unified Multiphysics Operator (DSMO)
+*   **Electrochemical/Thermal Subsystem (PyBaMM):** DFN system solved with CasADi backend for exact sensitivity extraction.
+*   **Mechanical Subsystem (FEniCSx):** Thermoelastic PDE mechanics modeling stress/strain evolution under coupled thermal and concentration gradients.
+
+3. Sensitivity Manifold Computation
 Full Jacobian assembly $S = \partial y / \partial \theta$ captures:
-*   Electrochemical sensitivities (exact Jacobian from CasADi).
-*   Mechanical sensitivities (linearized adjoint FEM from FEniCSx).
+*   Electrochemical sensitivities: Exact Jacobian extraction via CasADi.
+*   Mechanical sensitivities: Concrete adjoint linearized FEM sensitivities from FEniCSx ($S_{mech} = du/d\theta = -(dR/du)^{-1} \cdot dR/d\theta$).
 *   Chain-rule coupling across thermal and SOC fields.
 
 The sensitivity manifold metric $G = S^T S$ defines the curvature of the design space, identifying parameter coupling and identifiability geometry.
 
-3. Electrolyte Optimization & Materials Discovery
-A preliminary stage performs materials discovery via external database queries (e.g., Materials Project) to identify cost-effective alternatives to fluorinated electrolyte systems. Candidates are filtered based on:
-*   Electrochemical stability window (> 4.5V).
-*   Chemical compatibility with NFPP cathode.
-*   Ionic conductivity and cost reduction relative to baseline.
-
 4. Gauss–Newton Manifold Optimization Rule
-The design parameters $\theta$ are updated iteratively using the rule:
+The design parameters $\theta$ (thickness, porosity, particle size, modulus) are updated iteratively using the rule:
 $\theta_{k+1} = \theta_k - \eta (S^T S + \lambda I)^{-1} S^T (y - y_{target})$
-where $y_{target}$ is the performance vector (Energy, Power, Life, and Strain constraints).
-
-5. Cost-Driven Feasibility Adjustment
-cost acts as a correction operator on the coupled solution space obtained from 2
-The preliminary optimal solution (θ*) is adjusted under cost influence:
-	material–structure pairs are modified jointly (not independently) 
-	adjustments preserve DFN feasibility constraints 
-	cost acts as a perturbation field over the admissible solution manifold 
-This yields a cost-corrected feasible solution set:
-θ* → θ_c*
-where:
-	improvements in cost are bounded and typically near-zero or negative relative to baseline 
-	any cost increase is constrained to negligible manufacturing tolerance levels 
-	electrochemical feasibility is preserved throughout adjustment 
+where $y_{target}$ is the performance vector.
 5. Stability Validation (Physics Consistency Check)
 The final optimized configuration is validated using a coupled reduced-order physics framework with PyBaMM, evaluating electrochemical and thermal behavior under full operating stress conditions.
 The model tracks SOC during discharge operation and HOC evolution alongside thermal PDE response under peak current loading and transient demand profiles.
@@ -142,17 +129,17 @@ $C\dot{T} = KT + Q_{gen} - Q_{fluid} - Q_{conv}$
 
 | Component | Physical Specification |
 | :--- | :--- |
-| **Copper Spreader** | OFHC copper bridge (390–401 W/m·K) touching battery pack and chassis walls. Integrated fin array (18–32 fins/in). |
+| **Aluminum Heat Sink** | Aluminum alloy enclosure acting as both structural bridge and heat sink, touching the battery pack and both chassis lateral walls. Integrated high-density fin array. |
 | **Coolant Loop** | Dual-tube sinusoidal Aluminum Alloy 3003 microtubes (~45% surface contact) carrying 60/40 Water-Glycol. |
 | **Tubing Spacing** | Differentiated: 6–9 mm at indraft inlets, 10–15 mm at cell coating contact. |
 | **Pump Actuator** | Magnetically coupled BLDC centrifugal micropump (1–5 L/min, 3–15 W). |
 | **Draft Topology** | 3-airway system (two inlets at 30% length, one exit at back) covering 45% height with oblong rectangular orifices. |
-| **Rejection Port** | Four ultrasonic piezoelectric atomizers (80–150 kHz) for aerosol-enhanced evaporative cooling ($Q = hA\Delta T + \dot{m}L_v$). |
+| **Rejection Port** | Two ultrasonic piezoelectric atomizers (80–150 kHz) for aerosol-enhanced evaporative cooling ($Q = hA\Delta T + \dot{m}L_v$). |
 
 **Thermal Node Topology:**
-*   Cell Core (heat source) → Cell Casing (poly) → Copper Spreader (lateral bridge) → Tubing Wall (Al 3003) → Working Fluid (transport).
+*   Cell Core (heat source) → Cell Casing (poly) → Aluminum Heat Sink (lateral bridge) → Tubing Wall (Al 3003) → Working Fluid (transport).
 
-1.3 Power Electronics & Conditioning
+1.3 Power Conversion and Conditioning System
 The interface layer regulates bidirectional energy flow and grid stability.
 *   **Topology:** AC Grid → STS → PQC → Active Rectifier → DC Link → Bidirectional DC/DC.
 *   **Grid Interface:** Static Transfer Switch (STS) for <4ms grid/island transition.

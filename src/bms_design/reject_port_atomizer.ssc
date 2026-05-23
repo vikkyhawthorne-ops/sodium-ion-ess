@@ -13,7 +13,7 @@ parameters
     h_conv = {65, 'W/(m^2*K)'};  % Increased for draft logic
     T_threshold = {313.15, 'K'};
     m_evap_rate_base = {0.001, 'kg/s'};
-    num_atomizers = {2, '1'};    % Two atomizers per side
+    num_atomizers = {2, '1'};    % Total of 2 atomizers (one per side)
 end
 
 variables
