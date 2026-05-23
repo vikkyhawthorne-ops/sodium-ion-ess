@@ -31,14 +31,24 @@ class DSMOptimizer:
         self.theta = np.array([1.2e-4, 1.2e-4, 0.3, 0.3])
 
     def setup_pybamm(self):
-        # Na-ion chemistry proxy (DFN structure)
-        param = pybamm.ParameterValues("Marquis2019")
-        # Apply deltas from discovery
+        from nfpp_sodium_ion.src.cell_parameters.cell_alpha import get_parameter_values
+        # Na-ion chemistry parameter set
+        param = pybamm.ParameterValues(get_parameter_values())
+
+        # Apply Material Projection from discovery (Doping/Electrolyte deltas)
         if "diffusivity" in self.deltas:
-            param["Negative particle diffusivity [m2.s-1]"] *= self.deltas["diffusivity"]
+            d_mult = self.deltas["diffusivity"]
+            # Handle potential function-based parameters in cell_alpha.py
+            if callable(param["Negative particle diffusivity [m2.s-1]"]):
+                base_func = param["Negative particle diffusivity [m2.s-1]"]
+                param["Negative particle diffusivity [m2.s-1]"] = lambda sto, T: base_func(sto, T) * d_mult
+            else:
+                param["Negative particle diffusivity [m2.s-1]"] *= d_mult
+
         if "conductivity" in self.deltas:
             param["Electrolyte conductivity [S.m-1]"] *= self.deltas["conductivity"]
 
+        # Use DFN model structure for sodium-ion chemistry
         model = pybamm.lithium_ion.DFN()
         # Define symbolic inputs for sensitivity extraction
         inputs = {v: pybamm.InputParameter(v) for v in self.theta_map.values()}
