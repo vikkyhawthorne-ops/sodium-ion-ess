@@ -104,7 +104,13 @@ class ElectrolyteOptimizer:
 
 class DSMOptimizer:
     """
-    Differentiable Sensitivity Manifold Optimizer (DSMO)
+    Differentiable Sensitivity Manifold Optimizer (DSMO).
+    Optimizes cell design as a coupled multiphysics operator (PyBaMM + FEniCSx).
+
+    The optimization covers:
+    1. Material production cost (purification and extraction).
+    2. Cell structural parameters (thickness, porosity, etc.).
+    Note: Full-scale manufacturing process optimization is outside the research scope.
     """
     def __init__(self, target_values):
         self.target = target_values
