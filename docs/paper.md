@@ -1,4 +1,6 @@
-Methodology
+# Constrained DFN-Based NFPP Sodium-Ion Cell Optimization and Model-Based Battery Management System Design
+
+## Methodology
 
 Base Cell Model (Literature-Aligned NFPP Sodium-Ion Twin System)
 1. Electrochemical Core (DFN-Compatible Reaction)
@@ -74,7 +76,7 @@ The structural output is expressed as a reduced endurance response under strain 
 where: n_"crit" = cycles to onset of irreversible deformation, t_"crit" = time to onset under operating profile, ε_"int" = applied or induced strain intensity 
 This defines the deformation endurance boundary of the continuum under coupled electrochemical–thermal loading.
 
-NFPP Cell Optimization: Hierarchical Co-Optimization Framework
+### Constrained DFN-Based NFPP Cell Optimization Framework
 Methodological Scope Statement
 This work presents a constrained multiphysics optimization framework for NFPP-based sodium-ion cells, where material variation is restricted to dopant-level and electrolyte (salt/solvent) chemistry, coupled with structural and thermal co-optimization via Differentiable Sensitivity Manifold Optimization (DSMO).
 
@@ -151,7 +153,7 @@ The integrated ESS unit, housing the 16S1P pack and the power conversion system,
 *   **Length:** 180 mm (aligned with 130 mm cell length plus manifold clearances).
 *   **Width:** 140 mm (aligned with 70 mm cell width plus enclosure thickness).
 
-2. BMS CONTROL ARCHITECTURE (Core Research Contribution)
+2. Model-Based Battery Management System Design (Core Research Contribution)
 The BMS is designed as a high-fidelity algorithmic layer that manages the cell plant through state estimation, protection, and safety-enforced control.
 
 **2.1 State Estimation Layer**
