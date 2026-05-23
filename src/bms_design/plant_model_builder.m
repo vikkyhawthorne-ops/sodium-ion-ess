@@ -1,6 +1,6 @@
 %% NFPP Physical Plant Builder (Simscape Equivalent)
 % Ref: docs/paper.md
-% Updates: 4-Pack Architecture, 4 Transverse Fin Sets, 45% Tube Contact
+% Updates: 4-Pack Architecture, 3 Transverse Fin Sets, 45% Tube Contact
 
 function plant = build_physical_plant(params)
     % 1. Grid & PCCS Subsystem
@@ -22,10 +22,12 @@ function plant = build_physical_plant(params)
             plant.packs{p}.cells{c}.dims = [130, 70]; % mm
         end
 
-        % Finned Tubing Interface (One set per pack boundary/interface)
-        plant.packs{p}.thermal.fin_set.type = 'coolant_tubing.ssc';
-        plant.packs{p}.thermal.fin_set.fins = 'Transverse (4 sets total)';
-        plant.packs{p}.thermal.fin_set.contact = '45% Area-to-Tube';
+        % Transverse Fins (3 sets total, located at inter-pack interfaces)
+        if p < num_packs
+            plant.packs{p}.thermal.inter_pack_fin.type = 'coolant_tubing.ssc';
+            plant.packs{p}.thermal.inter_pack_fin.fins = 'Transverse (Set ' num2str(p) ' of 3)';
+            plant.packs{p}.thermal.inter_pack_fin.contact = '45% Area-to-Tube';
+        end
     end
 
     % 3. ESS Unit Physical Dimensions (450x180x140 mm)
@@ -34,12 +36,17 @@ function plant = build_physical_plant(params)
     plant.enclosure.length = 180;
     plant.enclosure.width = 140;
 
-    % 4. Active Rejection System
+    % 4. Active Rejection & Tubing System
     plant.cooling.atomizers = 2;
     plant.cooling.draft = '3-Airway (Left/Right Inlets, Back Outlet)';
 
+    % Derived total number of tubes:
+    % 2 per pack (Primary + Secondary) * 4 packs = 8 total
+    plant.cooling.tubing.total_count = 8;
+    plant.cooling.tubing.types = {'4x Primary (3C+2W)', '4x Secondary (3C)'};
+
     disp('Full ESS Digital Twin Built:');
     disp('  Hierarchy: 16S1P -> 4 Packs of 4 Cells');
-    disp('  Thermal: 4 Transverse Fin Sets with 45% Tubing Contact');
+    disp('  Thermal: 3 Transverse Fin Sets with 45% Tubing Contact');
     disp('  Chassis: Aluminum Heat Sink (450x180x140 mm)');
 end

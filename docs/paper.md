@@ -129,7 +129,7 @@ $C\dot{T} = KT + Q_{gen} - Q_{fluid} - Q_{conv}$
 | Component | Physical Specification |
 | :--- | :--- |
 | **Aluminum Heat Sink** | Aluminum alloy enclosure acting as both structural bridge and heat sink, touching the battery pack and both chassis lateral walls. Integrated high-density fin array. |
-| **Coolant Loop** | Dual-tube sinusoidal Aluminum Alloy 3003 microtubes (~45% surface contact) carrying 60/40 Water-Glycol. The system features four sets of transverse fins; tubing is in thermal contact with 45% of the total fin area, with the remainder facilitating heat exchange with the air draft. |
+| **Coolant Loop** | Dual-tube sinusoidal Aluminum Alloy 3003 microtubes (~45% surface contact) carrying 60/40 Water-Glycol. Total of 8 microtubes (2 per pack: 1 primary, 1 secondary). Primary tubing follows $L \approx 3 \times C_{pack} + 2 \times W_{unit}$ with a thinner profile at the rejection port; secondary tubing follows $L \approx 3 \times C_{pack}$. |
 | **Tubing Spacing** | Differentiated: 6–9 mm at indraft inlets, 10–15 mm at cell coating contact. |
 | **Pump Actuator** | Magnetically coupled BLDC centrifugal micropump (1–5 L/min, 3–15 W). |
 | **Draft Topology** | 3-airway system (two inlets on left and right at 30% length, one exit at back) covering 45% height with oblong rectangular orifices. |

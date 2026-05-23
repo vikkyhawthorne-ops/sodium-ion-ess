@@ -1,7 +1,7 @@
 component coolant_tubing
 % Dual-Tube Network (Al 3003 with 45% Fin Contact)
 % Ref: docs/paper.md
-% Updates: 4 Sets of transverse fins, 45% fin-tubing contact
+% Updates: 3 Sets of transverse fins, 45% fin-tubing contact
 
 nodes
     wall   = foundation.thermal.thermal; % Tube wall:top
@@ -13,15 +13,19 @@ end
 parameters
     k_tube = {163, 'W/(m*K)'};
     d_inner = {0.006, 'm'};
+    d_reject = {0.004, 'm'};    % Thinner at rejection port
     t_wall = {0.001, 'm'};
-    length = {0.8, 'm'};
+    % Length: 3 * C_pack + 2 * W_unit (Primary) or 3 * C_pack (Secondary)
+    % C_pack approx 2 * (130+70+10) = 420mm
+    % L_prim = 3 * 0.42 + 2 * 0.14 = 1.54; L_sec = 3 * 0.42 = 1.26
+    length = {1.54, 'm'};
     cp_fluid = {3400, 'J/(kg*K)'};
     h_int = {1200, 'W/(m^2*K)'};
     h_ext = {80, 'W/(m^2*K)'};
     coverage_factor = {0.45, '1'};
 
     % Transverse Fin Parameters
-    A_fin_total = {0.05, 'm^2'}; % Total area for 4 fin sets
+    A_fin_total = {0.0375, 'm^2'}; % Total area for 3 fin sets (normalized)
     fin_contact_frac = {0.45, '1'}; % 45% of fin is in contact with tube
 end
 
