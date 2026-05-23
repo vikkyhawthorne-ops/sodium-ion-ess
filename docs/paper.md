@@ -80,16 +80,21 @@ The cell design is optimized using a Differentiable Sensitivity Manifold Optimiz
 
 A critical aspect of the framework is that cost reduction and performance gains are primarily driven by **material production optimization**, specifically focusing on purification and extraction cost efficiencies, as well as **material pricing and supply chain criticality**. While cell structural parameters are fine-tuned for performance, full-scale **manufacturing process optimization** is considered outside the current research scope and is left to future implementers who may find this work useful for commercial deployment.
 
-1. Electrolyte System Selection & Fluorine Reduction
-A preliminary stage performs automated materials discovery by querying external databases (AFLOW, OQMD, Materials Project) to identify cost-effective, low-fluorine alternatives for the electrolyte system (Salt and Solvent). The primary objective is to eliminate or minimize heavily fluorinated components while maintaining compatibility with the baseline NFPP cathode and Hard Carbon anode. Material ranking is performed using a multi-criteria objective function:
+1. Material System Optimization & Discovery
+A preliminary stage performs automated materials discovery by querying external databases (AFLOW, OQMD, Materials Project) to identify optimal material systems for the battery. This phase focuses on two critical optimizations:
 
-*   **Fluorine Minimization:** Penalty-based heuristic favoring low-fluorine or fluorine-free alternatives.
-*   **Stability Index (DFT Data):** Thermodynamic stability and energy above hull retrieved via Density Functional Theory (DFT) calculations from OQMD.
-*   **Cost & Availability (USGS):** Annual production, reserve data, and prices from USGS Mineral Commodity Summaries to ensure economic viability.
-*   **Criticality (IEA):** Supply chain risk indices from the International Energy Agency (Critical Minerals).
-*   **Electrochemical Compatibility:** Stability window compatibility (> 4.5V) and effective SEI/CEI formation capability.
+1.1 Electrolyte Selection & Fluorine Reduction
+The objective is to identify cost-effective, low-fluorine alternatives for the Salt and Solvent. Material ranking utilizes:
+*   **Fluorine Minimization:** Penalty-based heuristic favoring fluorine-free alternatives.
+*   **Stability (DFT Data):** Thermodynamic stability and energy above hull from OQMD.
+*   **Cost & Criticality (USGS/IEA):** Economic viability and supply chain risk indices.
 
-The highest-ranking salt/solvent combination is selected as the alternate material system. Quantum-level DFT data is used to verify thermodynamic compatibility, while the subsequent DFN (Doyle-Fuller-Newman) simulations focus on optimizing the cell's structural design parameters.
+1.2 Electrode Alloying Optimization
+To increase battery capacity, alloying strategies are explored for both the anode and cathode. The framework searches for alloying candidates that are compatible with the existing NFPP/Hard Carbon architecture while maximizing theoretical specific capacity. Ranking is based on:
+*   **Capacity Gain:** Theoretical increase in Ah/kg.
+*   **Architectural Compatibility:** Structural stability during cycling and interfacial compatibility.
+
+The highest-ranking material set is selected to inform the subsequent DFN (Doyle-Fuller-Newman) structural simulations.
 
 2. Unified Multiphysics Operator (DSMO)
 *   **Electrochemical/Thermal Subsystem (PyBaMM):** DFN system solved with CasADi backend for exact sensitivity extraction.
