@@ -125,21 +125,12 @@ The plant model represents the physical hardware of the 16S1P sodium-ion battery
 *   **Coating Thickness:** Specified at 50–150 $\mu$m, governing internal thermal conductance.
 *   **Internal Dynamics:** Core-casing distributed thermal nodes with DFN-informed concentration states ($c_s, c_e$) and 2-RC polarization branches.
 
-1.2 Thermal & Fluid Network
-The plant utilizes a distributed thermal propagation network governed by the state-space relation:
-$C\dot{T} = KT + Q_{gen} - Q_{fluid} - Q_{conv}$
-
-| Component | Physical Specification |
-| :--- | :--- |
-| **Aluminum Heat Sink** | Aluminum alloy enclosure acting as structural bridge and heat sink, touching battery pack and both chassis lateral walls. Integrated high-density fin array. |
-| **Piping Architecture** | Distributed loop with 8 Aluminum Alloy 3003 microtubes. Tubes trace sinusoidal paths around cell packs. Loop: 1st Pump → 8 tubes → 2nd Pump → split → 8 tubes → collector hose → 1st Pump. |
-| **Pump System** | Dual-pump configuration. 2nd pump located at a distance from 1st to maintain pressure across the 8-tube manifold. |
-| **Tubing Spacing** | Differentiated: 6–9 mm at indraft inlets, 10–15 mm at cell coating contact. |
-| **Rejection Port** | Horizontal aluminum fins integrated at the back exit. A conducting metal plate (width ~140mm) connects rejection fins to the closest fins of the L/R inlet airways. |
-| **Draft Topology** | 3-airway system (side inlets at 30% length, exit at back) covering 45% height. Draft is enhanced by thermal bridging between inlet and rejection stages. |
+1.2 Thermal Management
+The cell plant utilizes passive and active air-side convection for thermal management. The thermal behavior is governed by the state-space relation:
+$C\dot{T} = KT + Q_{gen} - Q_{conv}$
 
 **Thermal Node Topology:**
-*   Cell Core (heat source) → Cell Casing (poly) → Aluminum Heat Sink (lateral bridge) → Tubing Wall (Al 3003) → Working Fluid (transport).
+*   Cell Core (heat source) → Cell Casing (poly) → Ambient (convection).
 
 1.3 Power Conversion and Conditioning System
 The interface layer regulates bidirectional energy flow and grid stability.
@@ -152,13 +143,13 @@ The interface layer regulates bidirectional energy flow and grid stability.
 1.4 Interconnects, Sensors & Faults
 *   **Busbars:** Nickel-plated copper with $I^2R$ Joule heating modeling.
 *   **Sensors:** 16-bit voltage ADCs (<2mV noise), NTC thermistors (every 2 cells), and Hall-effect current sensors.
-*   **Fault Injection:** Hooks for internal shorts, coolant leaks, pump degradation, sensor drift, and converter efficiency drops.
+*   **Fault Injection:** Hooks for internal shorts, sensor drift, and converter efficiency drops.
 
 1.5 ESS Unit Physical Dimensions
 The integrated ESS unit, housing the 16S1P pack and the power conversion system, is designed with the following external dimensions:
 *   **Height:** 450 mm (includes cell stack, air draft spacing, and top-mounted PCCS).
 *   **Length:** 180 mm (aligned with 130 mm cell length plus manifold clearances).
-*   **Width:** 140 mm (aligned with 70 mm cell width plus finned chassis thickness).
+*   **Width:** 140 mm (aligned with 70 mm cell width plus enclosure thickness).
 
 2. BMS CONTROL ARCHITECTURE (Core Research Contribution)
 The BMS is designed as a high-fidelity algorithmic layer that manages the cell plant through state estimation, protection, and safety-enforced control.
@@ -187,5 +178,5 @@ The BMS regulates the current command ($I_{cmd}$) to maintain the pack within th
 
 3. RESEARCH SCOPE DECOMPOSITION
 This research maintains a clean separation between the physical plant and the control algorithms:
-*   **Fixed Plant Model:** The NFPP Cell (DFN-informed) and the Aluminum-based Thermal/Fluid network are treated as the static environment.
+*   **Fixed Plant Model:** The NFPP Cell (DFN-informed electro-thermal proxy) is treated as the static environment.
 *   **Variable BMS Layer:** The core contribution lies in the design, stability, and robustness of the estimation and protection algorithms described above.

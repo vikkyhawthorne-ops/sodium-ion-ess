@@ -1,12 +1,12 @@
 component nfpp_cell
-% NFPP Sodium-Ion Cell (Enhanced Multiphysics Digital Twin)
+% NFPP Sodium-Ion Cell (Standalone Electro-Thermal Digital Twin)
 % Ref: docs/paper.md
-% Updates: Poly-only casing (no aluminum laminate)
+% Updates: Standalone thermal convection (no cooling loop)
 
 nodes
     p = foundation.electrical.electrical; % +:left
     n = foundation.electrical.electrical; % -:right
-    thermal_casing = foundation.thermal.thermal; % casing:right
+    thermal_ambient = foundation.thermal.thermal; % ambient:right
 end
 
 parameters
@@ -19,15 +19,19 @@ parameters
     R1 = {0.005, 'Ohm'}; C1 = {2000, 'F'};
     R2 = {0.005, 'Ohm'}; C2 = {5000, 'F'};
 
-    % Thermal Parameters (Distributed)
+    % Thermal Parameters
     C_th_core = {400, 'J/K'};
     C_th_casing = {150, 'J/K'};
-    t_coating = {100e-6, 'm'};  % Cell coating thickness (e.g. 100 um)
-    k_poly = {0.2, 'W/(m*K)'};   % Thermal conductivity of Poly material
+    t_coating = {100e-6, 'm'};
+    k_poly = {0.2, 'W/(m*K)'};
     A_surface = {0.13 * 0.07, 'm^2'};
 
-    % Internal Conductance (Core-to-Casing) governed by coating thickness
+    % Core-to-Casing Conductance
     K_int = k_poly * A_surface / t_coating;
+
+    % Casing-to-Ambient Convection (Natural)
+    h_conv = {10, 'W/(m^2*K)'};
+    K_ext = h_conv * A_surface;
 
     % Electrochemical / Aging
     E_act = {20000, 'J/mol'};
@@ -67,9 +71,11 @@ equations
     V1.der == -V1/(R1*C1) + i_dis/C1;
     V2.der == -V2/(R2*C2) + i_dis/C2;
 
+    % Heat balance: Generation, Internal transport, External rejection
     C_th_core * T_core.der == i_dis^2 * R_0 + i_dis*(V1+V2) - K_int * (T_core - T_casing);
-    C_th_casing * T_casing.der == K_int * (T_core - T_casing) - thermal_casing.Q;
-    thermal_casing.T == T_casing;
+    C_th_casing * T_casing.der == K_int * (T_core - T_casing) - K_ext * (T_casing - thermal_ambient.T);
+
+    thermal_ambient.Q == K_ext * (T_casing - thermal_ambient.T);
 
     SOC.der == -i_dis / (Q_nom * SOH);
     c_s.der == -i_dis / Q_nom;
