@@ -113,7 +113,7 @@ The projected design space ($\theta = [\theta_s, \theta_m]$) is optimized using 
 *   **Update Rule:** Gauss–Newton (Levenberg-Marquardt) update on the sensitivity manifold to optimize for maximum cell performance and efficiency:
     $\theta_{k+1} = \theta_k - \eta (S^T S + \lambda I)^{-1} S^T (y - y_{target})$
 5. Stability Validation (Physics Consistency Check)
-The final optimized configuration is validated using a coupled reduced-order physics framework with PyBaMM, evaluating electrochemical and thermal behavior under full operating stress conditions.
+The final optimized configuration is validated using a coupled reduced-order physics framework with PyBaMM, evaluating electrochemical and thermal behavior under full operating stress conditions. It should be noted that the system can be further optimized by perturbing other dopant sites (beyond the Fe-site) and exploring a broader range of electrolyte systems (solvents and additives) to further enhance cycle life and energy density.
 The model tracks SOC during discharge operation and HOC evolution alongside thermal PDE response under peak current loading and transient demand profiles.
 Computed cell-level performance metrics include:  Energy capacity (kWh), Nominal voltage (V), Continuous current (A), Peak current (A), Charge time (h or min under rated C-rate), Power capability (kW or C-rate equivalent), Cycle life (cycles to end-of-life under defined SOH threshold) 
 
