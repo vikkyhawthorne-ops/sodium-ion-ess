@@ -1,4 +1,4 @@
-# Constrained DFN-Based NFPP Sodium-Ion Cell Optimization and Model-Based Battery Management System Design
+# DFN-Based NFPP Sodium-Ion Cell Optimization and Model-Based Battery Management System Design
 
 ## Methodology
 
@@ -83,12 +83,11 @@ This work presents a constrained multiphysics optimization framework for NFPP-ba
 Objective Definition
 The cell design is optimized using a hierarchical Material-Structural framework. The primary objective is to discover chemistry modifications (dopants/salts/solvents) compatible with the already-validated NFPP architecture while simultaneously fine-tuning structural parameters. Cost reduction and performance gains are driven by **material production optimization**, focusing on purification, extraction, and supply-chain criticality.
 
-1. Stage A-C: Material Discovery & Compatibility Engine
-This phase identifies chemistry modifications compatible with the existing NFPP/Hard Carbon architecture.
-*   **Electrolyte & Fluorine Reduction:** Discovery of non-fluorinated salts and solvents to reduce environmental burden and cost. Top candidates include:
-    *   **Sodium bis(oxalato)borate (NaBOB):** High ionic conductivity and stable cycling.
-    *   **Sodium tricyanomethanide (NaTCP):** High conductivity and performance.
-*   **Electrode Doping:** Fe-site doping for cathodes using **Cr** (Cr³⁺ stabilizer) and **Mn** (voltage booster) to improve stability and performance.
+1. Stage A-C: Material Discovery & Compatibility Framework
+This phase identifies chemistry modifications compatible with the existing NFPP/Hard Carbon architecture using an automated property acquisition framework.
+*   **Automated Discovery Engine:** The framework queries the OQMD API to retrieve thermodynamic stability data for candidate materials. Performance deltas (e.g., diffusivity multipliers, voltage shifts) are derived from these fundamental properties using research-informed heuristics.
+*   **Electrolyte & Fluorine Reduction:** Selection of non-fluorinated salts to reduce environmental burden and cost. Primary candidates include **NaBOB** (Sodium bis(oxalato)borate) for stability and **NaTCP** (Sodium tricyanomethanide) for high performance.
+*   **Electrode Doping:** Fe-site doping for cathodes using **Cr** (Cr³⁺ stabilizer) and **Mn** (voltage booster) is evaluated via sensitivity-based manifold optimization.
 *   **Constraint Engine:** Rejects candidates violating structural (ionic radius), valence (neutrality), or voltage (|dV| > 0.15V) preservation rules.
 *   **Thermodynamic Screening:** Ensures energy-above-hull $E_{hull} < 50$ meV/atom.
 *   **Multi-Objective Pareto Ranking:** Ranking candidates using the objective vector $J = [E_d, L_c, C, R_c, F, S]$ (Energy Density, Life, Production Cost, Criticality, Fluorine, Safety).

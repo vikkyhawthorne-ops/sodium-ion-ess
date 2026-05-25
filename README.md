@@ -1,4 +1,4 @@
-# Constrained DFN-Based NFPP Sodium-Ion Cell Optimization and Model-Based Battery Management System Design
+# DFN-Based NFPP Sodium-Ion Cell Optimization and Model-Based Battery Management System Design
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mhizterpaul/sodium-ion-ess/blob/main/src/report.ipynb)
 
