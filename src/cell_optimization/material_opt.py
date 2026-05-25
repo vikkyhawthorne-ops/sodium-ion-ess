@@ -17,27 +17,10 @@ class MaterialCandidate:
     # derived properties for DSMO
     projected_delta: Dict[str, float] = field(default_factory=dict)
 
-class CompatibilityEngine:
-    def __init__(self):
-        self.r_fe = 0.78
-
-    def screen(self, c: MaterialCandidate) -> bool:
-        # Research Constraint: Must be low/non-fluorinated
-        if c.fluorine_fraction > 0.1: return False
-
-        if c.category == "Cathode_Dopant":
-            # Mn: 0.83 (booster), Cr: 0.755 (stabilizer)
-            dopant_radii = {"Mn": 0.83, "Cr": 0.755}
-            r_d = dopant_radii.get(c.name, 1.0)
-            # Ionic radius compatibility check (0.65 - 0.88 A)
-            if not (0.65 <= r_d <= 0.88): return False
-        return True
-
 class MaterialDiscoveryFramework:
-    """Hierarchical chemistry-screening using OQMD/AFLOW APIs for NFPP optimization."""
+    """Hierarchical property acquisition using OQMD/AFLOW APIs for NFPP optimization."""
 
     def __init__(self):
-        self.engine = CompatibilityEngine()
         self.oqmd_url = "http://oqmd.org/oqmdapi/formationenergy"
 
         # Research-informed base properties for salts and dopants
@@ -53,7 +36,7 @@ class MaterialDiscoveryFramework:
         """Queries OQMD API to get thermodynamic stability and derives performance deltas."""
         try:
             # Query for formula
-            r = requests.get(self.oqmd_url, params={"composition": formula, "limit": 10}, timeout=10)
+            r = requests.get(self.oqmd_url, params={"composition": formula, "limit": 5}, timeout=10)
             if r.status_code == 200:
                 data = r.json().get('results', [])
                 candidates = []
@@ -61,8 +44,7 @@ class MaterialDiscoveryFramework:
                     comp = d.get('composition', formula)
                     stability = abs(d.get('stability', 0.1))
 
-                    # Map stability to performance: higher stability (lower hull energy)
-                    # often correlates with better cycling/stability deltas.
+                    # Map stability to performance
                     perf_scale = 1.0 / (1.0 + stability)
 
                     # Match to our target dopants/salts based on composition string
@@ -91,7 +73,6 @@ class MaterialDiscoveryFramework:
         return self._get_fallback_candidates(category, formula)
 
     def _get_fallback_candidates(self, category: str, formula: str) -> List[MaterialCandidate]:
-        # Narrow down fallback based on formula
         if category == "Cathode_Dopant":
             if "Mn" in formula:
                 return [MaterialCandidate(name="Mn", category="Cathode_Dopant", composition=formula, projected_delta=self.property_heuristics["Mn"], production_cost=0.15)]
@@ -105,22 +86,20 @@ class MaterialDiscoveryFramework:
         return []
 
     def run_discovery(self):
-        print("Executing Material Discovery for DSMO Integration...")
+        print("Executing Material Property Acquisition for DSMO Integration...")
 
-        # Discovery queries
+        # Acquisition queries
         dopant_candidates = self.acquire_properties("Na2FeMnP2O7", "Cathode_Dopant") + \
                             self.acquire_properties("Na2FeCrP2O7", "Cathode_Dopant")
         salt_candidates = self.acquire_properties("NaBOB", "Salt") + \
                           self.acquire_properties("NaTCP", "Salt")
 
-        # Compatibility Screening
-        all_candidates = dopant_candidates + salt_candidates
-        valid = [c for c in all_candidates if self.engine.screen(c)]
-
-        # Grouping and Deduplication
+        # Grouping and Selection
         system = {"Cathode_Dopant": [], "Salt": []}
+        all_found = dopant_candidates + salt_candidates
+
         for cat in system:
-            cat_candidates = [c for c in valid if c.category == cat]
+            cat_candidates = [c for c in all_found if c.category == cat]
             best_unique = {}
             for cand in cat_candidates:
                 if cand.name not in best_unique or cand.energy_above_hull < best_unique[cand.name].energy_above_hull:
@@ -135,4 +114,4 @@ if __name__ == "__main__":
     for cat, cands in res.items():
         print(f"\nCategory: {cat}")
         for c in cands:
-            print(f"  - {c.name}: {c.projected_delta}, Cost: {c.production_cost}, Stability: {c.energy_above_hull}")
+            print(f"  - {c.name}: {c.projected_delta}")
