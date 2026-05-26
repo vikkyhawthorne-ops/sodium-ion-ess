@@ -83,6 +83,10 @@ This work presents a multiphysics optimization framework for NFPP-based sodium-i
 Objective Definition
 The cell design is optimized using a hierarchical Material-Structural framework. The primary objective is to discover chemistry modifications (dopants/salts/solvents) compatible with the already-validated NFPP architecture while simultaneously fine-tuning structural parameters. Cost reduction and performance gains are driven by **material production optimization**, focusing on purification, extraction, and supply-chain criticality.
 
+**Design Space:**
+*   **Structural Parameters ($\theta_s$):** Electrode thickness ($L_c, L_a$), porosity ($\epsilon_c, \epsilon_a, \epsilon_{sep}$), tortuosity ($\tau$), active material loading and particle size ($r_p$).
+*   **Material Parameters ($\theta_m$):** NFPP fraction, conductive carbon fraction, and electrolyte composition (concentration/salts)
+
 1. Stage A-C: Material Discovery & Property Acquisition Framework
 This phase acquires performance properties for chemistry modifications using an automated acquisition framework.
 *   **Automated Discovery Engine:** The framework queries the OQMD API to retrieve thermodynamic stability data for candidate materials. Performance deltas (e.g., diffusivity multipliers, voltage shifts) are derived from these fundamental properties using research-informed heuristics.
@@ -98,7 +102,6 @@ This ensures DFN simulation validity by maintaining compatibility with the calib
 3. Stage E-F: Differentiable Sensitivity Manifold Optimizer (DSMO)
 The projected design space ($\theta = [\theta_s, \theta_m]$) is optimized using a coupled multiphysics operator $y = F(\theta)$.
 
-**Design Space and perturbing other dopant sites (beyond the Fe-site) and exploring a broader range of electrolyte systems (solvents and additives) to further enhance cycle life and energy density.**
 The framework utilizes a Gauss–Newton (Levenberg-Marquardt) update on the sensitivity manifold to determine the optimal configuration:
     $\theta_{k+1} = \theta_k - \eta (S^T S + \lambda I)^{-1} S^T (y - y_{target})$
 5. Stability Validation (Physics Consistency Check)
