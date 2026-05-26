@@ -18,7 +18,7 @@ class DSMOptimizer:
     """
     Differentiable Sensitivity Manifold Optimizer (DSMO).
     Coupled PyBaMM + FEniCSx Multiphysics sensitivities.
-    Optimizes both structural parameters and material selection for maximum performance.
+    Optimizes structural parameters (including separator porosity) and material selection (salts, dopants, MTMS).
     """
     def __init__(self, target_y=None):
         # Target: [Voltage, Temperature, SOC, Mechanical Strain]
@@ -35,6 +35,7 @@ class DSMOptimizer:
             "Negative electrode thickness [m]",
             "Positive electrode porosity",
             "Negative electrode porosity",
+            "Separator porosity",
             "Positive particle radius [m]",
             "Bruggeman coefficient (electrolyte)",
             "Positive electrode active material volume fraction",
@@ -42,26 +43,34 @@ class DSMOptimizer:
             "Typical electrolyte concentration [mol.m-3]"
         ]
 
+        # Initial values
+        self.theta_structural = np.array([1.2e-4, 1.2e-4, 0.3, 0.3, 0.5, 1e-6, 1.5, 0.65, 0.65, 1000.0])
         # Material parameters (continuous selectors)
-        self.theta_structural = np.array([1.2e-4, 1.2e-4, 0.3, 0.3, 1e-6, 1.5, 0.65, 0.65, 1000.0])
-        self.theta_material = np.array([0.5, 0.5]) # [Dopant, Salt]
+        # theta_m: [Dopant, Salt, MTMS_Alpha]
+        self.theta_material = np.array([0.5, 0.5, 1.0]) # MTMS enabled by default
 
         self.theta = np.concatenate([self.theta_structural, self.theta_material])
-        self.all_keys = self.structural_keys + ["Dopant_Alpha", "Salt_Alpha"]
+        self.all_keys = self.structural_keys + ["Dopant_Alpha", "Salt_Alpha", "MTMS_Alpha"]
 
     def apply_material_logic(self, param_vals, theta_m):
         alpha_d = np.clip(theta_m[0], 0, 1)
         alpha_s = np.clip(theta_m[1], 0, 1)
+        alpha_f = np.clip(theta_m[2], 0, 1) # MTMS functionalization strength
 
         dopants = self.material_data["Cathode_Dopant"] # [Mn, Cr]
         salts = self.material_data["Salt"]             # [NaBOB, NaTCP]
+        mtms = self.material_data["Functionalization"][0] # MTMS
 
-        # Interpolate deltas
+        # 1. Dopant & Salt deltas
         d_v = (1-alpha_d)*dopants[0].projected_delta.get("voltage_boost", 0) + alpha_d*dopants[1].projected_delta.get("voltage_boost", 0)
         d_diff = (1-alpha_d)*dopants[0].projected_delta.get("diffusivity_mult", 1) + alpha_d*dopants[1].projected_delta.get("diffusivity_mult", 1)
-
         s_cond = (1-alpha_s)*salts[0].projected_delta.get("conductivity_mult", 1) + alpha_s*salts[1].projected_delta.get("conductivity_mult", 1)
         s_trans = (1-alpha_s)*salts[0].projected_delta.get("ion_transference_mult", 1) + alpha_s*salts[1].projected_delta.get("ion_transference_mult", 1)
+
+        # 2. MTMS effects (Alkyl silane functionalization)
+        f_sei = 1.0 + alpha_f * (mtms.projected_delta.get("sei_growth_mult", 1.0) - 1.0)
+        f_loss = 1.0 + alpha_f * (mtms.projected_delta.get("initial_loss_mult", 1.0) - 1.0)
+        f_exc = 1.0 + alpha_f * (mtms.projected_delta.get("exchange_current_mult", 1.0) - 1.0)
 
         # Apply to parameters
         base_ocp = param_vals["Positive electrode OCP [V]"]
@@ -72,6 +81,14 @@ class DSMOptimizer:
 
         param_vals["Electrolyte conductivity [S.m-1]"] = param_vals["Electrolyte conductivity [S.m-1]"] * s_cond
         param_vals["Cation transference number"] = param_vals["Cation transference number"] * s_trans
+
+        # MTMS modifications
+        param_vals["SEI reaction exchange current density [A.m-2]"] *= f_sei
+        param_vals["Negative electrode exchange-current density [A.m-2]"] = lambda c_e, c_s_surf, c_s_max, T: \
+            get_parameter_values()["Negative electrode exchange-current density [A.m-2]"](c_e, c_s_surf, c_s_max, T) * f_exc
+
+        # Adjust initial loss (proxy via initial concentration)
+        param_vals["Initial concentration in negative electrode [mol.m-3]"] *= f_loss
 
         return param_vals
 
@@ -172,24 +189,26 @@ class DSMOptimizer:
             theta_vec = theta_vec - self.lr * update
 
             # Constraints
-            theta_vec[:9] = np.clip(theta_vec[:9],
-                                    [5e-5, 5e-5, 0.1, 0.1, 1e-7, 1.0, 0.4, 0.4, 500.0],
-                                    [3e-4, 3e-4, 0.6, 0.6, 1e-5, 3.0, 0.8, 0.8, 2000.0])
-            theta_vec[9:] = np.clip(theta_vec[9:], 0, 1)
+            theta_vec[:10] = np.clip(theta_vec[:10],
+                                     [5e-5, 5e-5, 0.1, 0.1, 0.2, 1e-7, 1.0, 0.4, 0.4, 500.0],
+                                     [3e-4, 3e-4, 0.6, 0.6, 0.8, 1e-5, 3.0, 0.8, 0.8, 2000.0])
+            theta_vec[10:] = np.clip(theta_vec[10:], 0, 1)
 
-            print(f"  Iteration {k}: Residual Norm = {np.linalg.norm(r):.4f}, Dopant_Alpha = {theta_vec[9]:.2f}, Salt_Alpha = {theta_vec[10]:.2f}")
+            print(f"  Iteration {k}: Residual Norm = {np.linalg.norm(r):.4f}, Dopant_Alpha = {theta_vec[10]:.2f}, Salt_Alpha = {theta_vec[11]:.2f}")
             if np.linalg.norm(r) < 1e-4: break
 
-        dopant = "Cr" if theta_vec[9] > 0.5 else "Mn"
-        salt = "NaTCP" if theta_vec[10] > 0.5 else "NaBOB"
+        dopant = "Cr" if theta_vec[10] > 0.5 else "Mn"
+        salt = "NaTCP" if theta_vec[11] > 0.5 else "NaBOB"
+        mtms_applied = "Yes" if theta_vec[12] > 0.5 else "No"
 
         print(f"\nOptimization Complete.")
-        print(f"Selected Dopant: {dopant}, Selected Salt: {salt}")
+        print(f"Selected Dopant: {dopant}, Selected Salt: {salt}, MTMS: {mtms_applied}")
 
         return {
             "design": theta_vec.tolist(),
             "selected_dopant": dopant,
-            "selected_salt": salt
+            "selected_salt": salt,
+            "mtms_applied": mtms_applied
         }
 
     def compute_jacobian(self, theta):
@@ -200,7 +219,7 @@ class DSMOptimizer:
             th_p = theta.copy(); th_p[i] += eps
             sim_p = self.setup_sim(th_p)
             try:
-                sol_p = sim_p.solve([0, 60]) # Fast eval
+                sol_p = sim_p.solve([0, 60])
                 v_p = float(np.array(sol_p["Terminal voltage [V]"].entries).flatten()[-1])
                 t_p = float(np.array(sol_p["Cell temperature [K]"].entries).flatten()[-1])
                 soc_p = 1.0 - (float(np.array(sol_p["Discharge capacity [A.h]"].entries).flatten()[-1]) / 10.0)

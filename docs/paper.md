@@ -88,6 +88,7 @@ This phase acquires performance properties for chemistry modifications using an 
 *   **Automated Discovery Engine:** The framework queries the OQMD API to retrieve thermodynamic stability data for candidate materials. Performance deltas (e.g., diffusivity multipliers, voltage shifts) are derived from these fundamental properties using research-informed heuristics.
 *   **Electrolyte & Fluorine Reduction:** Selection of non-fluorinated salts to reduce environmental burden and cost. Primary candidates include **NaBOB** (Sodium bis(oxalato)borate) for stability and **NaTCP** (Sodium tricyanomethanide) for high performance.
 *   **Electrode Doping:** Fe-site doping for cathodes using **Cr** (Cr³⁺ stabilizer) and **Mn** (voltage booster) is evaluated via sensitivity-based manifold optimization.
+*   **Alkyl Silane Functionalization:** Implementation of hard carbon electrode functionalization using **methyltrimethoxysilane (MTMS)**. This process replaces surface –OH groups with –Si–O–R groups on the hard carbon electrode, increasing hydrophobicity and promoting a more uniform SEI layer. The model accounts for reduced SEI kinetics (slower growth and lower irreversible capacity fade), slower interfacial resistance growth over cycles, and optimized exchange current density resulting from improved surface wetting and local ion accessibility.
 
 2. Stage D: Electrochemical Projection Layer
 Selected material modifications are projected onto the validated DFN parameter set as perturbations:
@@ -98,7 +99,7 @@ This ensures DFN simulation validity by maintaining compatibility with the calib
 The projected design space ($\theta = [\theta_s, \theta_m]$) is optimized using a coupled multiphysics operator $y = F(\theta)$.
 
 **Refined Design Space:**
-*   **Structural Parameters ($\theta_s$):** Electrode thickness ($L_c, L_a$), porosity ($\epsilon_c, \epsilon_a$), tortuosity ($\tau$), active material loading, and particle size ($r_p$).
+*   **Structural Parameters ($\theta_s$):** Electrode thickness ($L_c, L_a$), porosity ($\epsilon_c, \epsilon_a, \epsilon_{sep}$), tortuosity ($\tau$), active material loading, particle size ($r_p$), and **separator porosity**.
 *   **Material Parameters ($\theta_m$):** NFPP fraction, conductive carbon fraction, and electrolyte composition (concentration/salts).
 
 **Optimization Engine:**
@@ -108,7 +109,7 @@ The projected design space ($\theta = [\theta_s, \theta_m]$) is optimized using 
 *   **Update Rule:** Gauss–Newton (Levenberg-Marquardt) update on the sensitivity manifold to optimize for maximum cell performance and efficiency:
     $\theta_{k+1} = \theta_k - \eta (S^T S + \lambda I)^{-1} S^T (y - y_{target})$
 5. Stability Validation (Physics Consistency Check)
-The final optimized configuration is validated using a coupled reduced-order physics framework with PyBaMM, evaluating electrochemical and thermal behavior under full operating stress conditions. It should be noted that the system can be further optimized by perturbing other dopant sites (beyond the Fe-site) and exploring a broader range of electrolyte systems (solvents and additives) to further enhance cycle life and energy density.
+The final optimized configuration is validated using a coupled reduced-order physics framework with PyBaMM, evaluating electrochemical and thermal behavior under full operating stress conditions. It should be noted that the cell model can be further optimized by using composite electrodes and pore network engineering, perturbing other dopant sites (beyond the Fe-site), and exploring a broader range of electrolyte systems (solvents and additives). The optimization in this work is kept simple due to the limitations of PyBaMM and to demonstrate the viability of sodium-ion cell optimization for cost and performance.
 The model tracks SOC during discharge operation and HOC evolution alongside thermal PDE response under peak current loading and transient demand profiles.
 Computed cell-level performance metrics include:  Energy capacity (kWh), Nominal voltage (V), Continuous current (A), Peak current (A), Charge time (h or min under rated C-rate), Power capability (kW or C-rate equivalent), Cycle life (cycles to end-of-life under defined SOH threshold) 
 
