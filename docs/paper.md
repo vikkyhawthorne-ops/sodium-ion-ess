@@ -104,11 +104,10 @@ The projected design space ($\theta = [\theta_s, \theta_m]$) is optimized using 
 
 The framework utilizes a Gauss–Newton (Levenberg-Marquardt) update on the sensitivity manifold to determine the optimal configuration:
     $\theta_{k+1} = \theta_k - \eta (S^T S + \lambda I)^{-1} S^T (y - y_{target})$
-5. Stability Validation (Physics Consistency Check)
+
 The final optimized configuration is validated through a coupled multiphysics framework in PyBaMM, assessing the electrochemical and thermal response under representative operating profiles. While this work focuses on a foundational design space, the cell architecture remains amenable to further performance enhancement via composite electrode structuring, advanced pore network engineering, and perturbing other dopant sites (beyond the Fe-site) and exploring a broader range of electrolyte systems (solvents and additives) to further enhance cycle life and energy density. The current optimization scope is intentionally streamlined to accommodate the computational constraints of the DFN solver while effectively demonstrating the viability of physics-based optimization for enhancing the cost-efficiency and performance of sodium-ion energy storage systems.
 Computed cell-level performance metrics include:  Energy capacity (kWh), Nominal voltage (V), Continuous current (A), Peak current (A), Charge time (h or min under rated C-rate), Power capability (kW or C-rate equivalent), Cycle life (cycles to end-of-life under defined SOH threshold) 
 
-6. Expected Outcome
 Metric	Baseline	Optimized
 Energy density	140 Wh/kg	155–165 Wh/kg
 Cycle life	5000	8000–9000
