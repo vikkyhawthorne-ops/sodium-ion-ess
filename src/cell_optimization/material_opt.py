@@ -102,15 +102,17 @@ class PhysicsModels:
 
     @staticmethod
     def salt_dissociation(props: Dict[str, float], base_props: Dict[str, float]) -> Dict[str, float]:
+        # Refined salt model using dissociation energy proxies
         s_thermo, _ = PhysicsModels.stability_decomposition(props)
         s_base_thermo, _ = PhysicsModels.stability_decomposition(base_props)
 
-        gap_diff = float(props["band_gap"]) - float(base_props["band_gap"])
-        if abs(gap_diff) > 20: gap_diff *= 0.001
-
-        sigma_mult = math.exp(-gap_diff / (2 * KT))
+        # Conductivity proxy: sigma ~ exp(-dEf/kT)
+        # delta_Ef as first-order proxy for dissociation enhancement/inhibition
+        ef_diff = props["formation_energy"] - base_props["formation_energy"]
+        sigma_mult = math.exp(-ef_diff / (2 * KT))
         sigma_mult = min(max(sigma_mult, 0.1), 10.0)
 
+        # Dissociation effect: sigmoid relative to NaPF6 stability
         delta_s = s_thermo - s_base_thermo
         dissociation = 1.0 / (1.0 + math.exp(25.0 * delta_s))
 

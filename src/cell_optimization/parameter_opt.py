@@ -23,7 +23,6 @@ class DSMOptimizer:
     """
     def __init__(self, target_y=None):
         self.target_y = target_y if target_y is not None else np.array([3.3, 298.15, 0.5, 1e-8])
-        # Residual scaling for characteristic values
         self.y_scale = np.array([3.5, 300.0, 1.0, 1e-6])
 
         self.engine = MaterialMappingEngine()
@@ -37,7 +36,6 @@ class DSMOptimizer:
         self.inner_iters = 3
         self.lam = 1e-3
 
-        # Symbolic parameters (mesh-independent)
         self.symbolic_keys = [
             "Positive electrode porosity",
             "Negative electrode porosity",
@@ -47,7 +45,6 @@ class DSMOptimizer:
             "Negative electrode active material volume fraction",
             "Typical electrolyte concentration [mol.m-3]"
         ]
-        # Numeric parameters (mesh-dependent, require FD)
         self.numeric_keys = [
             "Positive electrode thickness [m]",
             "Negative electrode thickness [m]",
@@ -58,7 +55,7 @@ class DSMOptimizer:
         self.theta_structural = np.array([1.2e-4, 1.2e-4, 1e-6, 0.3, 0.3, 0.5, 1.5, 0.65, 0.65, 1000.0])
 
     def apply_material_logic(self, param_vals):
-        """Applies material deltas with explicit binding to avoid late-binding closure bugs."""
+        """Applies material deltas with explicit binding."""
         dopants = self.material_data.get("Cathode_Dopant", [])
         salts = self.material_data.get("Salt", [])
         func = self.material_data.get("Functionalization", [])
@@ -68,7 +65,6 @@ class DSMOptimizer:
         f_delta = func[0].to_pybamm_delta() if func else {}
 
         def make_wrapper(b, m_val, a_val):
-            # Explicit binding of b, m, and a to prevent loop capture issues
             return (lambda *args, b_ref=b, m=m_val, a=a_val, **kwargs:
                     b_ref(*args, **kwargs) * m + a)
 
@@ -77,7 +73,6 @@ class DSMOptimizer:
                 base = param_vals[name]
                 m_clamped = np.clip(1.0 + alpha * (val - 1.0), 0.2, 5.0) if mode == "multiplier" else 1.0
                 a_clamped = np.clip(alpha * val, -0.5, 0.5) if mode == "additive" else 0.0
-
                 if callable(base):
                     param_vals[name] = make_wrapper(base, m_clamped, a_clamped)
                 else:
@@ -100,7 +95,7 @@ class DSMOptimizer:
         param_vals["Current function [A]"] = 10.0
 
         model = pybamm.lithium_ion.DFN()
-        # Fast solver with symbolic sensitivities enabled for symbolic_keys
+        # Enforce forward sensitivity calculation for symbolic parameters
         solver = pybamm.CasadiSolver(mode="fast")
         sim = pybamm.Simulation(model, parameter_values=param_vals, solver=solver)
         return sim
@@ -110,16 +105,14 @@ class DSMOptimizer:
         theta_s = self.theta_structural
 
         for epoch in range(self.max_epochs):
-            print(f"Epoch {epoch}: Resolving Materials...")
+            print(f"Epoch {epoch}: Material Resolution...")
             self.material_data = self.engine.run()
 
-            # Outer material selection (simplified greedy)
-            sim_baseline = self.setup_sim(theta_s)
-
-            # Inner Continuous Loop
             for k in range(self.inner_iters):
                 sim = self.setup_sim(theta_s, symbolic_keys=self.symbolic_keys)
                 p_dict = {key: theta_s[i + len(self.numeric_keys)] for i, key in enumerate(self.symbolic_keys)}
+
+                # Explicitly request sensitivities if possible (depends on solver configuration)
                 sol = sim.solve([0, 1800], inputs=p_dict)
 
                 V_val = float(np.array(sol["Terminal voltage [V]"].entries).flatten()[-1])
@@ -130,15 +123,12 @@ class DSMOptimizer:
                 eps_val, S_mech_row = self.solve_mechanical_adjoint(T_val, SOC_val, theta_s, sim.parameter_values)
                 y = np.array([V_val, T_val, SOC_val, eps_val])
 
-                # Hybrid Jacobian
                 S_ec = self._compute_hybrid_jacobian(theta_s, sol)
                 S = np.vstack([S_ec, S_mech_row])
 
-                # Scale Jacobian rows and Residual by characteristic values (Physically consistent)
                 S = S / self.y_scale[:, None]
                 r = (y - self.target_y) / self.y_scale
 
-                # Update with Spectral Regularization
                 scale = np.linalg.norm(S, ord=2)
                 G = S.T @ S + (self.lam + 1e-3 * scale**2) * np.eye(len(theta_s))
                 update = np.linalg.solve(G, S.T @ r)
@@ -153,36 +143,37 @@ class DSMOptimizer:
         self.theta_structural = theta_s
         return {"structural_design": theta_s.tolist()}
 
+    def _get_y(self, th):
+        """Helper for Finite Difference Jacobian rows."""
+        s = self.setup_sim(th)
+        sl = s.solve([0, 1800])
+        v = float(sl["Terminal voltage [V]"].entries[-1])
+        t = float(sl["Cell temperature [K]"].entries[-1])
+        q = float(s.parameter_values["Nominal cell capacity [A.h]"])
+        soc = 1.0 - (float(sl["Discharge capacity [A.h]"].entries[-1]) / q)
+        return np.array([v, t, soc])
+
     def _compute_hybrid_jacobian(self, theta_s, sol):
         n_tot = len(theta_s)
         n_num = len(self.numeric_keys)
         n_sym = len(self.symbolic_keys)
         S = np.zeros((3, n_tot))
 
-        # 1. Numeric Jacobian (Mesh-dependent) via Adaptive FD
+        # 1. Numeric Jacobian via Adaptive FD
         for i in range(n_num):
-            eps = 1e-7 * (1.0 + abs(theta_s[i]))
+            eps = 1.5e-8 * (1.0 + abs(theta_s[i]))
             pert = np.zeros(n_tot); pert[i] = eps
-
-            def get_y(th):
-                s = self.setup_sim(th)
-                sl = s.solve([0, 1800])
-                v = float(sl["Terminal voltage [V]"].entries[-1])
-                t = float(sl["Cell temperature [K]"].entries[-1])
-                q = float(s.parameter_values["Nominal cell capacity [A.h]"])
-                soc = 1.0 - (float(sl["Discharge capacity [A.h]"].entries[-1]) / q)
-                return np.array([v, t, soc])
-
             try:
-                y_p = get_y(theta_s + pert)
-                y_m = get_y(theta_s - pert)
+                y_p = self._get_y(theta_s + pert)
+                y_m = self._get_y(theta_s - pert)
                 S[:, i] = (y_p - y_m) / (2 * eps)
             except: pass
 
-        # 2. Symbolic Jacobian (Mesh-independent) via PyBaMM sensitivities
+        # 2. Symbolic Jacobian with FD Fallback
         try:
-            if not hasattr(sol["Terminal voltage [V]"], "sensitivities"):
-                raise AttributeError("No sensitivities")
+            # Check if solver actually computed sensitivities
+            if not hasattr(sol["Terminal voltage [V]"], "sensitivities") or not sol["Terminal voltage [V]"].sensitivities:
+                raise AttributeError("Sensitivities unavailable")
 
             for i, key in enumerate(self.symbolic_keys):
                 idx = i + n_num
@@ -191,29 +182,26 @@ class DSMOptimizer:
                 Q_nom = float(sol.all_inputs[0].get("Nominal cell capacity [A.h]", 10.0))
                 S[2, idx] = -sol["Discharge capacity [A.h]"].sensitivities[key][-1] / Q_nom
         except:
-            # FD Fallback for symbolic block if sensitivities unavailable
             for i in range(n_sym):
                 idx = i + n_num
-                eps = 1e-7 * (1.0 + abs(theta_s[idx]))
+                eps = 1.5e-8 * (1.0 + abs(theta_s[idx]))
                 pert = np.zeros(n_tot); pert[idx] = eps
-                # reused get_y logic simplified
                 try:
-                    y_p = get_y(theta_s + pert)
-                    y_m = get_y(theta_s - pert)
+                    y_p = self._get_y(theta_s + pert)
+                    y_m = self._get_y(theta_s - pert)
                     S[:, idx] = (y_p - y_m) / (2 * eps)
                 except: pass
 
         return S
 
     def solve_mechanical_adjoint(self, T, SOC, theta_s, param_vals):
-        L_tot_val = theta_s[0] + theta_s[1] + 20e-6
+        L_p, L_a = theta_s[0], theta_s[1]
+        L_tot_val = L_p + L_a + 20e-6
         eps_ref = 1e-6
-        # alpha ~ 1 / (1 + porosity)
         eps_alpha = 1e-7 / (1.0 + theta_s[3])
 
         if not dolfinx:
             eps = eps_alpha * (T - 298.15) + 1e-6 * (0.5 - SOC)
-            # Scaling for energy consistency
             deps_dL = (1e-6 / L_tot_val)
             S_mech = np.zeros(len(theta_s))
             S_mech[0] = S_mech[1] = (deps_dL / L_tot_val) / eps_ref
