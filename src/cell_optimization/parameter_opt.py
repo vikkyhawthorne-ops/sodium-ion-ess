@@ -50,54 +50,71 @@ class DSMOptimizer:
 
         self.structural_keys = self.numeric_keys + self.symbolic_keys
         self.theta_structural = np.array([1.2e-4, 1.2e-4, 1e-6, 0.3, 0.3, 0.5, 1.5, 0.65, 0.65, 1000.0])
-        self.theta_material = np.array([0.5, 0.5, 1.0])
+        # Material selector: [Dopant (Mn vs Cr vs Ni), Salt (NaBOB vs NaTCP), MTMS (Off vs On)]
+        # We use a 4-element theta_material: [alpha_d1, alpha_d2, alpha_s, alpha_f]
+        # Dopant selection via simplex-like mapping:
+        # alpha_d1, alpha_d2 in [0,1]
+        # (1-d1) Mn + d1*(1-d2) Cr + d1*d2 Ni
+        self.theta_material = np.array([0.3, 0.3, 0.5, 1.0])
 
         self.theta = np.concatenate([self.theta_structural, self.theta_material])
-        self.all_keys = self.structural_keys + ["Dopant_Alpha", "Salt_Alpha", "MTMS_Alpha"]
+        self.all_keys = self.structural_keys + ["Dopant_Alpha1", "Dopant_Alpha2", "Salt_Alpha", "MTMS_Alpha"]
 
     def apply_material_logic(self, param_vals, theta_m):
-        alpha_d = np.clip(theta_m[0], 0, 1)
-        alpha_s = np.clip(theta_m[1], 0, 1)
-        alpha_f = np.clip(theta_m[2], 0, 1)
+        d1, d2 = np.clip(theta_m[0], 0, 1), np.clip(theta_m[1], 0, 1)
+        alpha_s, alpha_f = np.clip(theta_m[2], 0, 1), np.clip(theta_m[3], 0, 1)
 
         dopants = self.material_data.get("Cathode_Dopant", [])
         salts = self.material_data.get("Salt", [])
         func_list = self.material_data.get("Functionalization", [])
 
-        if len(dopants) < 2 or len(salts) < 2 or len(func_list) < 1:
-            d_v, d_diff, s_cond, s_trans = 0, 1.0, 1.0, 1.0
-            f_sei, f_loss, f_exc, f_res = 1.0, 1.0, 1.0, 1.0
-        else:
-            d_v = (1-alpha_d)*dopants[0].projected_delta.get("voltage_boost", 0) + alpha_d*dopants[1].projected_delta.get("voltage_boost", 0)
-            d_diff = (1-alpha_d)*dopants[0].projected_delta.get("diffusivity_mult", 1) + alpha_d*dopants[1].projected_delta.get("diffusivity_mult", 1)
-            s_cond = (1-alpha_s)*salts[0].projected_delta.get("conductivity_mult", 1) + alpha_s*salts[1].projected_delta.get("conductivity_mult", 1)
-            s_trans = (1-alpha_s)*salts[0].projected_delta.get("ion_transference_mult", 1) + alpha_s*salts[1].projected_delta.get("ion_transference_mult", 1)
+        if len(dopants) < 3 or len(salts) < 2 or len(func_list) < 1:
+            return param_vals
 
-            mtms = func_list[0]
-            f_sei = 1.0 + alpha_f * (mtms.projected_delta.get("sei_growth_mult", 1.0) - 1.0)
-            loss_red = 1.0 - mtms.projected_delta.get("initial_loss_mult", 1.0)
-            f_loss = 1.0 + alpha_f * (loss_red * 0.1)
-            f_exc = 1.0 + alpha_f * (mtms.projected_delta.get("exchange_current_mult", 1.0) - 1.0)
-            f_res = 1.0 + alpha_f * (mtms.projected_delta.get("resistance_drift_mult", 1.0) - 1.0)
+        # Aggregate perturbations using simplex weights for dopants and linear for others
+        # weights: Mn (0), Cr (1), Ni (2)
+        w = [1-d1, d1*(1-d2), d1*d2]
 
-        def wrap_callable(base, mult, additive=0):
+        # Extracted deltas via pybamm-mapped logic
+        d_deltas = [d.to_pybamm_delta() for d in dopants]
+        s_deltas = [s.to_pybamm_delta() for s in salts]
+        f_delta = func_list[0].to_pybamm_delta()
+
+        def apply_perturbation(name, weight_list, delta_list):
+            base = param_vals[name]
+            mult, add = 1.0, 0.0
+            for i, w_i in enumerate(weight_list):
+                mode, val = delta_list[i].get(name, (None, 0))
+                if mode == "multiplier": mult += w_i * (val - 1.0)
+                elif mode == "additive": add += w_i * val
+
             if callable(base):
-                return lambda *args, **kwargs: base(*args, **kwargs) * mult + additive
-            return base * mult + additive
+                param_vals[name] = lambda *args, **kwargs: base(*args, **kwargs) * mult + add
+            else:
+                param_vals[name] = base * mult + add
 
-        param_vals["Positive electrode OCP [V]"] = wrap_callable(param_vals["Positive electrode OCP [V]"], 1.0, d_v)
-        param_vals["Positive particle diffusivity [m2.s-1]"] = wrap_callable(param_vals["Positive particle diffusivity [m2.s-1]"], d_diff)
-        param_vals["Electrolyte conductivity [S.m-1]"] = wrap_callable(param_vals["Electrolyte conductivity [S.m-1]"], s_cond)
+        # Apply Cathode perturbations
+        for k in ["Positive electrode OCP [V]", "Positive particle diffusivity [m2.s-1]"]:
+            apply_perturbation(k, w, d_deltas)
 
-        param_vals["Cation transference number"] *= s_trans
-        param_vals["SEI reaction exchange current density [A.m-2]"] *= f_sei
-        param_vals["SEI resistivity [Ohm.m]"] *= f_res
+        # Apply Salt perturbations
+        s_w = [1-alpha_s, alpha_s]
+        for k in ["Electrolyte conductivity [S.m-1]", "Cation transference number"]:
+            apply_perturbation(k, s_w, s_deltas)
 
-        base_exc_neg = get_parameter_values()["Negative electrode exchange-current density [A.m-2]"]
-        param_vals["Negative electrode exchange-current density [A.m-2]"] = lambda c_e, c_s_surf, c_s_max, T: \
-            base_exc_neg(c_e, c_s_surf, c_s_max, T) * f_exc
+        # Apply MTMS perturbations (on/off)
+        for k, (mode, val) in f_delta.items():
+            base = param_vals[k]
+            m = (1.0 + alpha_f * (val - 1.0)) if mode == "multiplier" else 1.0
+            a = (alpha_f * val) if mode == "additive" else 0.0
 
-        param_vals["Initial concentration in negative electrode [mol.m-3]"] *= f_loss
+            if callable(base):
+                def make_wrapper(b, mult, add):
+                    return lambda *args, **kwargs: b(*args, **kwargs) * mult + add
+                param_vals[k] = make_wrapper(base, m, a)
+            else:
+                param_vals[k] = base * m + a
+
         return param_vals
 
     def setup_sim(self, theta, symbolic_keys=None):
@@ -152,8 +169,17 @@ class DSMOptimizer:
             print(f"  Iteration {k}: Residual Norm = {np.linalg.norm(r):.4f}")
             if np.linalg.norm(r) < 1e-3: break
 
-        return {"design": theta_vec.tolist(), "selected_dopant": "Cr" if theta_vec[10] > 0.5 else "Mn",
-                "selected_salt": "NaTCP" if theta_vec[11] > 0.5 else "NaBOB", "mtms_applied": "Yes" if theta_vec[12] > 0.5 else "No"}
+        d1, d2 = theta_vec[10], theta_vec[11]
+        w = [1-d1, d1*(1-d2), d1*d2]
+        d_idx = np.argmax(w)
+        d_names = ["Mn", "Cr", "Ni"]
+
+        return {
+            "design": theta_vec.tolist(),
+            "selected_dopant": d_names[d_idx],
+            "selected_salt": "NaTCP" if theta_vec[12] > 0.5 else "NaBOB",
+            "mtms_applied": "Yes" if theta_vec[13] > 0.5 else "No"
+        }
 
     def compute_hybrid_jacobian(self, theta, sol):
         n_tot = len(theta)

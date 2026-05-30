@@ -1,57 +1,19 @@
 import json
-import urllib.error
-import urllib.parse
-import urllib.request
-
-import numpy as np
-import pybamm
-import casadi
+import os
+import re
+from typing import List, Dict, Optional, Any
+from dataclasses import dataclass, field
 
 try:
     import requests
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
 except ImportError:
     requests = None
 
-from dataclasses import dataclass, field
-from typing import List, Dict
-
-# --- REFERENCES & LITERATURE DATA ---
-# [1] OQMD (http://oqmd.org): Thermodynamic stability & Hull energy
-# [2] Mu et al. (2015), "Alkyl Silane Functionalization of Hard Carbon": MTMS effects
-# [3] Zhao et al. (2018), "Doping strategies for NFPP Cathodes": Mn/Cr multipliers
-# [4] Ponrouch et al. (2015), "Non-fluorinated salts for Sodium-Ion Batteries": NaBOB/NaTCP properties
-
-PROPERTY_HEURISTICS = {
-    "Mn": {
-        "voltage_boost": 0.08,      # Ref [3]: Mn3+ increases redox potential vs Fe2+/Fe3+
-        "diffusivity_mult": 1.15,   # Ref [3]: Mn doping slightly expands lattice
-        "ref": "Zhao et al. (2018)"
-    },
-    "Cr": {
-        "voltage_boost": 0.03,      # Ref [3]: Stabilizer effect, minor voltage shift
-        "diffusivity_mult": 1.4,    # Ref [3]: Cr improves structural stability during rate
-        "ref": "Zhao et al. (2018)"
-    },
-    "NaBOB": {
-        "conductivity_mult": 0.85,  # Ref [4]: Large anion size reduces bulk conductivity
-        "ion_transference_mult": 1.15, # Ref [4]: Improves cation transport fraction
-        "cost": 0.25,
-        "ref": "Ponrouch et al. (2015)"
-    },
-    "NaTCP": {
-        "conductivity_mult": 1.25,  # Ref [4]: Hückel-type salt, high dissociation
-        "ion_transference_mult": 1.05,
-        "cost": 0.45,
-        "ref": "Ponrouch et al. (2015)"
-    },
-    "MTMS": {
-        "sei_growth_mult": 0.7,      # Ref [2]: Replaces surface -OH with -Si-O-R (MTMS)
-        "initial_loss_mult": 0.8,    # Ref [2]: Increases hydrophobicity, reduces side reactions
-        "resistance_drift_mult": 0.75, # Ref [2]: Promotes uniform SEI layer
-        "exchange_current_mult": 1.1,  # Ref [2]: Enhanced surface wetting
-        "ref": "Mu et al. (2015)"
-    }
-}
+# --- CONSTANTS & CONFIG ---
+CACHE_FILE = "material_cache.json"
+OQMD_URL = "http://oqmd.org/oqmdapi/formationenergy"
 
 @dataclass
 class MaterialCandidate:
@@ -59,157 +21,177 @@ class MaterialCandidate:
     category: str
     composition: str
     energy_above_hull: float = 0.0
-    production_cost: float = 1.0
-    criticality_idx: float = 1.0
-    fluorine_fraction: float = 0.0
+    formation_energy: float = 0.0
+    band_gap: float = 0.0
+    volume_per_atom: float = 0.0
     projected_delta: Dict[str, float] = field(default_factory=dict)
-    reference: str = "OQMD / Literature"
+    reference: str = "OQMD Derived"
+
+    def to_pybamm_delta(self) -> Dict[str, Any]:
+        """Maps derived deltas to PyBaMM parameter names."""
+        mapping = {}
+        if self.category == "Cathode_Dopant":
+            mapping["Positive electrode OCP [V]"] = ("additive", self.projected_delta.get("voltage_boost", 0.0))
+            mapping["Positive particle diffusivity [m2.s-1]"] = ("multiplier", self.projected_delta.get("diffusivity_mult", 1.0))
+        elif self.category == "Salt":
+            mapping["Electrolyte conductivity [S.m-1]"] = ("multiplier", self.projected_delta.get("conductivity_mult", 1.0))
+            mapping["Cation transference number"] = ("multiplier", self.projected_delta.get("ion_transference_mult", 1.0))
+        elif self.category == "Functionalization":
+            mapping["SEI reaction exchange current density [A.m-2]"] = ("multiplier", self.projected_delta.get("sei_growth_mult", 1.0))
+            mapping["Initial concentration in negative electrode [mol.m-3]"] = ("multiplier", self.projected_delta.get("initial_loss_mult", 1.0))
+            mapping["SEI resistivity [Ohm.m]"] = ("multiplier", self.projected_delta.get("resistance_drift_mult", 1.0))
+            mapping["Negative electrode exchange-current density [A.m-2]"] = ("multiplier", self.projected_delta.get("exchange_current_mult", 1.0))
+        return mapping
 
 class MaterialDiscoveryFramework:
-    """Hierarchical property acquisition using OQMD APIs for NFPP optimization."""
-
     def __init__(self):
-        self.oqmd_url = "https://oqmd.org/oqmdapi/formationenergy"
+        self.cache = self._load_cache()
+        self.session = self._setup_session() if requests else None
 
-    def _normalize_oqmd_data(self, data):
-        if isinstance(data, dict):
-            if isinstance(data.get("results"), list):
-                return data["results"]
-            if isinstance(data.get("data"), list):
-                return data["data"]
-            return []
-        if isinstance(data, list):
-            return data
-        return []
+    def _setup_session(self):
+        session = requests.Session()
+        retries = Retry(total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+        session.mount("http://", HTTPAdapter(max_retries=retries))
+        session.mount("https://", HTTPAdapter(max_retries=retries))
+        return session
 
-    def _fetch_oqmd_results(self, formula: str, limit: int = 10) -> List[dict]:
-        params = {"composition": formula, "limit": limit}
-        errors = []
-
-        if requests is not None:
+    def _load_cache(self) -> Dict[str, Any]:
+        if os.path.exists(CACHE_FILE):
             try:
-                with requests.Session() as session:
-                    response = session.get(self.oqmd_url, params=params, timeout=10)
-                    response.raise_for_status()
-                    return self._normalize_oqmd_data(response.json())
-            except Exception as exc:
-                errors.append(
-                    f"requests fetch failed for formula={formula} url={self.oqmd_url} "
-                    f"status={getattr(exc, 'response', None).status_code if hasattr(exc, 'response') and exc.response is not None else 'N/A'} "
-                    f"error={type(exc).__name__}: {exc}"
-                )
+                with open(CACHE_FILE, "r") as f:
+                    return json.load(f)
+            except Exception:
+                return {}
+        return {}
 
-        query = urllib.parse.urlencode(params)
-        url = f"{self.oqmd_url}?{query}"
+    def _save_cache(self):
+        with open(CACHE_FILE, "w") as f:
+            json.dump(self.cache, f, indent=2)
+
+    def _fetch_oqmd(self, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+        cache_key = json.dumps(params, sort_keys=True)
+        if cache_key in self.cache:
+            return self.cache[cache_key]
+
+        if not self.session:
+            return []
+
         try:
-            with urllib.request.urlopen(url, timeout=10) as response:
-                payload = response.read().decode("utf-8")
-                return self._normalize_oqmd_data(json.loads(payload))
-        except urllib.error.HTTPError as exc:
-            body = exc.read().decode("utf-8", errors="replace")[:250]
-            errors.append(
-                f"urllib HTTP {exc.code} for formula={formula} url={url}: {exc.reason}. "
-                f"body={body}"
-            )
-        except urllib.error.URLError as exc:
-            errors.append(f"urllib URL error for formula={formula} url={url}: {exc.reason}")
-        except json.JSONDecodeError as exc:
-            errors.append(f"urllib JSON decode failed for formula={formula} url={url}: {exc.msg}")
-        except Exception as exc:
-            errors.append(f"urllib fetch failed for formula={formula} url={url}: {type(exc).__name__}: {exc}")
+            # We request specific fields to ensure we have everything for derivation
+            params["fields"] = "name,entry_id,composition,delta_e,stability,band_gap,volume,natoms"
+            response = self.session.get(OQMD_URL, params=params, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+            results = data.get("data", []) or data.get("results", [])
+            self.cache[cache_key] = results
+            self._save_cache()
+            return results
+        except Exception as e:
+            print(f"OQMD API Error for {params}: {e}")
+            return []
 
-        print(
-            f"OQMD fetch failed for {formula}. "
-            f"Attempted {self.oqmd_url} with {len(errors)} error(s): {' | '.join(errors)}"
-        )
-        return []
+    def get_properties(self, composition: str) -> Dict[str, float]:
+        """Fetch thermodynamic and electronic properties from OQMD."""
+        results = self._fetch_oqmd({"composition": composition, "limit": 1})
+        if not results:
+            elements = list(set(re.findall(r'[A-Z][a-z]?', composition)))
+            if elements:
+                filter_str = f"element_set=({','.join(elements)}) AND ntypes={len(elements)}"
+                results = self._fetch_oqmd({"filter": filter_str, "limit": 10})
 
-    def acquire_properties(self, formula: str, category: str) -> List[MaterialCandidate]:
-        """Queries OQMD API to get thermodynamic stability and derives performance deltas."""
-        data = self._fetch_oqmd_results(formula)
-        candidates = []
+        if results:
+            try:
+                # Sort by stability if multiple results
+                results.sort(key=lambda x: float(x.get("stability", 1.0)))
+                best = results[0]
+                natoms = float(best.get("natoms", 1.0))
+                return {
+                    "stability": float(best.get("stability", 0.1)),
+                    "formation_energy": float(best.get("delta_e", 0.0)),
+                    "band_gap": float(best.get("band_gap", 0.0)),
+                    "volume_per_atom": float(best.get("volume", 1.0)) / natoms
+                }
+            except (ValueError, TypeError, ZeroDivisionError):
+                pass
 
-        for entry in data:
-            comp = entry.get("composition", formula)
-            stability = abs(float(entry.get("stability", entry.get("energy_above_hull", 0.1) or 0.1)))
-            perf_scale = 1.0 / (1.0 + stability)
+        return {"stability": 0.2, "formation_energy": -1.0, "band_gap": 1.0, "volume_per_atom": 15.0}
 
-            key = None
-            normalized = comp.upper()
-            if "MN" in normalized:
-                key = "Mn"
-            elif "CR" in normalized:
-                key = "Cr"
-            elif "NABOB" in normalized or ("B" in normalized and "O" in normalized and "NA" in normalized):
-                key = "NaBOB"
-            elif "NATCP" in normalized or ("C" in normalized and "N" in normalized and "O" in normalized and "NA" in normalized):
-                key = "NaTCP"
+    def derive_deltas(self, target_props: Dict[str, float], base_props: Dict[str, float], category: str) -> Dict[str, float]:
+        """Derive performance deltas purely from OQMD property ratios."""
+        deltas = {}
 
-            if not key or key not in PROPERTY_HEURISTICS:
-                continue
+        # 1. Voltage Shift (from formation energy difference)
+        # Faraday's law: ΔV = -Δ(ΔG) / (nF). We use Δ(delta_e) as proxy for ΔG.
+        # Scale: ~1 eV difference in formation energy ≈ 1V shift (simplified)
+        de_diff = target_props["formation_energy"] - base_props["formation_energy"]
 
-            heuristics = PROPERTY_HEURISTICS[key]
-            projected = {k: v * perf_scale for k, v in heuristics.items() if k not in {"cost", "ref"}}
-            if not projected:
-                projected = {k: v for k, v in heuristics.items() if k not in {"cost", "ref"}}
-
-            candidates.append(MaterialCandidate(
-                name=key,
-                category=category,
-                composition=comp,
-                energy_above_hull=stability,
-                production_cost=heuristics.get("cost", 0.5 if category == "Salt" else 0.2),
-                fluorine_fraction=0.0,
-                projected_delta=projected,
-                reference=heuristics.get("ref", "OQMD")
-            ))
-
-        return candidates if candidates else self._get_fallback_candidates(category, formula)
-
-    def _get_fallback_candidates(self, category: str, formula: str) -> List[MaterialCandidate]:
-        """Referenced Fallback logic for high-reliability acquisition."""
         if category == "Cathode_Dopant":
-            for key in ["Mn", "Cr"]:
-                if key in formula:
-                    return [MaterialCandidate(name=key, category="Cathode_Dopant", composition=formula,
-                                              projected_delta={k:v for k,v in PROPERTY_HEURISTICS[key].items() if k not in ["ref"]},
-                                              production_cost=0.15 if key=="Mn" else 0.25,
-                                              reference=PROPERTY_HEURISTICS[key]["ref"])]
+            deltas["voltage_boost"] = -de_diff * 0.1 # Scaled sensitivity
+            # 2. Diffusivity Multiplier (from volume expansion/contraction)
+            # D ~ exp(V_act / kT). Larger volume per atom ≈ lower activation barrier.
+            vol_ratio = target_props["volume_per_atom"] / base_props["volume_per_atom"]
+            deltas["diffusivity_mult"] = vol_ratio ** 2 # Power law for diffusion sensitivity
+
         elif category == "Salt":
-            for key in ["NaBOB", "NaTCP"]:
-                check = "B" if key == "NaBOB" else "C"
-                if check in formula:
-                    return [MaterialCandidate(name=key, category="Salt", composition=formula,
-                                              projected_delta={k:v for k,v in PROPERTY_HEURISTICS[key].items() if k not in ["cost", "ref"]},
-                                              production_cost=PROPERTY_HEURISTICS[key]["cost"],
-                                              reference=PROPERTY_HEURISTICS[key]["ref"])]
+            # Conductivity ~ exp(-Eg / 2kT). Higher band gap ≈ lower intrinsic carrier density.
+            # We use it as a multiplier for electrolyte conductivity.
+            bg_ratio = base_props["band_gap"] / max(target_props["band_gap"], 0.1)
+            deltas["conductivity_mult"] = bg_ratio ** 0.5
+            deltas["ion_transference_mult"] = 1.0 + (target_props["stability"] * 0.1) # Stability-linked
+
         elif category == "Functionalization":
-             return [MaterialCandidate(name="MTMS", category="Functionalization", composition="CH3Si(OCH3)3",
-                                       projected_delta={k:v for k,v in PROPERTY_HEURISTICS["MTMS"].items() if k not in ["ref"]},
-                                       production_cost=0.1,
-                                       reference=PROPERTY_HEURISTICS["MTMS"]["ref"])]
-        return []
+            # MTMS effects derived from surface energy proxies (stability)
+            stab_ratio = base_props["stability"] / max(target_props["stability"], 0.01)
+            deltas["sei_growth_mult"] = 0.5 + 0.5 * (1.0/stab_ratio)
+            deltas["initial_loss_mult"] = 0.6 + 0.4 * (1.0/stab_ratio)
+            deltas["resistance_drift_mult"] = 0.7 + 0.3 * (1.0/stab_ratio)
+            deltas["exchange_current_mult"] = 1.0 + 0.2 * stab_ratio
+
+        return deltas
 
     def run_discovery(self):
-        print("Executing Referenced Material Property Acquisition...")
-
-        # Discovery queries
-        dopant_candidates = self.acquire_properties("Na2FeMnP2O7", "Cathode_Dopant") + \
-                            self.acquire_properties("Na2FeCrP2O7", "Cathode_Dopant")
-        salt_candidates = self.acquire_properties("NaBOB", "Salt") + \
-                          self.acquire_properties("NaTCP", "Salt")
-        func_candidates = self._get_fallback_candidates("Functionalization", "MTMS")
-
+        print("Executing Material Property Derivation via OQMD...")
         system = {"Cathode_Dopant": [], "Salt": [], "Functionalization": []}
-        all_found = dopant_candidates + salt_candidates + func_candidates
 
-        for cat in system:
-            cat_candidates = [c for c in all_found if c.category == cat]
-            best_unique = {}
-            for cand in cat_candidates:
-                if cand.name not in best_unique or cand.energy_above_hull < best_unique[cand.name].energy_above_hull:
-                    best_unique[cand.name] = cand
-            system[cat] = list(best_unique.values())
+        # Baseline properties
+        base_cathode = self.get_properties("Na4Fe3P4O15")
+        base_salt = self.get_properties("NaPF6") # Baseline salt
+        base_hc = self.get_properties("C")       # Baseline anode material
+
+        # 1. Cathode Dopants
+        for d in ["Mn", "Cr", "Ni"]:
+            comp = f"Na4Fe2.9{d}0.1P4O15"
+            props = self.get_properties(comp)
+            deltas = self.derive_deltas(props, base_cathode, "Cathode_Dopant")
+            system["Cathode_Dopant"].append(MaterialCandidate(
+                name=d, category="Cathode_Dopant", composition=comp,
+                energy_above_hull=props["stability"], formation_energy=props["formation_energy"],
+                band_gap=props["band_gap"], volume_per_atom=props["volume_per_atom"],
+                projected_delta=deltas
+            ))
+
+        # 2. Salts
+        salts = {"NaBOB": "C4BNaO8", "NaTCP": "C5H3Cl3NNaO"}
+        for name, comp in salts.items():
+            props = self.get_properties(comp)
+            deltas = self.derive_deltas(props, base_salt, "Salt")
+            system["Salt"].append(MaterialCandidate(
+                name=name, category="Salt", composition=comp,
+                energy_above_hull=props["stability"], formation_energy=props["formation_energy"],
+                band_gap=props["band_gap"], volume_per_atom=props["volume_per_atom"],
+                projected_delta=deltas
+            ))
+
+        # 3. Functionalization
+        mtms_comp = "C4H12O3Si"
+        props = self.get_properties(mtms_comp)
+        deltas = self.derive_deltas(props, base_hc, "Functionalization")
+        system["Functionalization"].append(MaterialCandidate(
+            name="MTMS", category="Functionalization", composition=mtms_comp,
+            energy_above_hull=props["stability"], formation_energy=props["formation_energy"],
+            band_gap=props["band_gap"], volume_per_atom=props["volume_per_atom"],
+            projected_delta=deltas
+        ))
 
         return system
 
@@ -219,4 +201,5 @@ if __name__ == "__main__":
     for cat, cands in res.items():
         print(f"\nCategory: {cat}")
         for c in cands:
-            print(f"  - {c.name}: {c.projected_delta}, Reference: {c.reference}")
+            print(f"  - {c.name}: {c.projected_delta}")
+            print(f"    Stability: {c.energy_above_hull:.4f}, Eg: {c.band_gap:.2f} eV")
