@@ -70,13 +70,11 @@ class MaterialDiscoveryFramework:
 
     def _save_cache(self):
         """Saves cache with deduplication logic."""
-        # Deduplicate keys by normalizing params
         clean_cache = {}
         for key, val in self.cache.items():
             try:
-                # Key is a JSON string of params, normalize it
-                p = json.loads(key)
-                norm_key = json.dumps(p, sort_keys=True)
+                parsed = json.loads(key)
+                norm_key = json.dumps(parsed, sort_keys=True)
                 if norm_key not in clean_cache:
                     clean_cache[norm_key] = val
             except Exception:
@@ -107,10 +105,10 @@ class MaterialDiscoveryFramework:
             return []
 
     def get_properties(self, composition: str) -> Dict[str, float]:
-        """Fetch thermodynamic and electronic properties from OQMD."""
+        """Fetch properties from OQMD. Fallback to stable chemistry if exact fail."""
         results = self._fetch_oqmd({"composition": composition, "limit": 1})
+
         if not results:
-            import re
             elements = list(set(re.findall(r'[A-Z][a-z]?', composition)))
             if elements:
                 filter_str = f"element_set=({','.join(elements)}) AND ntypes={len(elements)}"
@@ -133,29 +131,34 @@ class MaterialDiscoveryFramework:
         return {"stability": 0.2, "formation_energy": -1.0, "band_gap": 1.0, "volume_per_atom": 15.0}
 
     def derive_deltas(self, target_props: Dict[str, float], base_props: Dict[str, float], category: str) -> Dict[str, float]:
-        """Derive performance deltas using OQMD property ratios and PyBaMM baseline values."""
+        """Derive performance deltas using OQMD property ratios and PyBaMM baseline parameters."""
         deltas = {}
         de_diff = target_props["formation_energy"] - base_props["formation_energy"]
 
         if category == "Cathode_Dopant":
-            # Extract baseline from PyBaMM to inform the delta derivation
-            # OCP shift: ~ -de_diff (eV) / valence. We scale based on typical redox window.
-            deltas["voltage_boost"] = -de_diff * 0.1
+            # Baseline from PyBaMM
+            base_ocp = self.base_params["Positive electrode OCP [V]"]
+            try:
+                # Handle CasADi Scalar outputs if present
+                v = base_ocp(0.5)
+                base_val = float(v.value) if hasattr(v, "value") else float(v)
+            except Exception:
+                base_val = 3.2
 
-            # Diffusivity: D_new = D_base * (V_new/V_base)^2
+            # delta_V ≈ -delta_G / nF. Scale for 0.1 doping concentration.
+            deltas["voltage_boost"] = -de_diff * 0.1 * (base_val / 3.2)
+
+            # Diffusivity scale
             vol_ratio = target_props["volume_per_atom"] / base_props["volume_per_atom"]
             deltas["diffusivity_mult"] = vol_ratio ** 2
 
         elif category == "Salt":
-            # Conductivity: sigma_new = sigma_base * (Eg_base / Eg_new)^0.5
+            # Conductivity baseline
             bg_ratio = base_props["band_gap"] / max(target_props["band_gap"], 0.1)
             deltas["conductivity_mult"] = bg_ratio ** 0.5
-
-            # Cation transference multiplier
             deltas["ion_transference_mult"] = 1.0 + (target_props["stability"] * 0.1)
 
         elif category == "Functionalization":
-            # SEI growth and loss multipliers derived from stability ratios
             stab_ratio = base_props["stability"] / max(target_props["stability"], 0.01)
             deltas["sei_growth_mult"] = 0.5 + 0.5 * (1.0/stab_ratio)
             deltas["initial_loss_mult"] = 0.6 + 0.4 * (1.0/stab_ratio)
@@ -168,21 +171,40 @@ class MaterialDiscoveryFramework:
         print("Executing Material Property Derivation via OQMD + PyBaMM...")
         system = {"Cathode_Dopant": [], "Salt": [], "Functionalization": []}
 
-        # Baseline properties
-        base_cathode = self.get_properties("Na4Fe3P4O15")
+        # Baselines
+        base_cathode_props = self.get_properties("Na4Fe3P4O15")
         base_salt = self.get_properties("NaPF6")
         base_hc = self.get_properties("C")
 
-        # 1. Cathode Dopants
-        for d in ["Mn", "Cr", "Ni"]:
-            comp = f"Na4Fe2.9{d}0.1P4O15"
-            props = self.get_properties(comp)
-            deltas = self.derive_deltas(props, base_cathode, "Cathode_Dopant")
+        # 1. Cathode Dopants (Intercalation derived from stable end-members if exact fail)
+        dopants = {"Mn": "NaMnPO4", "Cr": "NaCrPO4", "Ni": "NaNiPO4"}
+        for d, end_member in dopants.items():
+            doped_comp = f"Na4Fe2.9{d}0.1P4O15"
+            # Attempt to fetch specific doped chemistry
+            exact_props = self._fetch_oqmd({"composition": doped_comp, "limit": 1})
 
-            # Using PyBaMM to verify/scale base properties if needed
-            # For this simple model, we extract multipliers/additives to apply to base_params
+            if exact_props:
+                best = exact_props[0]
+                natoms = float(best.get("natoms", 1.0))
+                props = {
+                    "stability": float(best.get("stability", 0.1)),
+                    "formation_energy": float(best.get("delta_e", 0.0)),
+                    "band_gap": float(best.get("band_gap", 0.0)),
+                    "volume_per_atom": float(best.get("volume", 1.0)) / natoms
+                }
+            else:
+                # Interpolate from base cathode (Na4Fe3P4O15) and end-member
+                end_props = self.get_properties(end_member)
+                props = {
+                    "stability": 0.9 * base_cathode_props["stability"] + 0.1 * end_props["stability"],
+                    "formation_energy": 0.9 * base_cathode_props["formation_energy"] + 0.1 * end_props["formation_energy"],
+                    "band_gap": 0.9 * base_cathode_props["band_gap"] + 0.1 * end_props["band_gap"],
+                    "volume_per_atom": 0.9 * base_cathode_props["volume_per_atom"] + 0.1 * end_props["volume_per_atom"]
+                }
+
+            deltas = self.derive_deltas(props, base_cathode_props, "Cathode_Dopant")
             system["Cathode_Dopant"].append(MaterialCandidate(
-                name=d, category="Cathode_Dopant", composition=comp,
+                name=d, category="Cathode_Dopant", composition=doped_comp,
                 energy_above_hull=props["stability"], formation_energy=props["formation_energy"],
                 band_gap=props["band_gap"], volume_per_atom=props["volume_per_atom"],
                 projected_delta=deltas
@@ -220,10 +242,8 @@ if __name__ == "__main__":
         print(f"\nCategory: {cat}")
         for c in cands:
             print(f"  - {c.name}: {c.projected_delta}")
-            # print(f"    PyBaMM Delta Mapping: {c.to_pybamm_delta()}")
 
-    # Show clean cache
-    print("\n--- Final material_cache.json content ---")
+    print("\n--- material_cache.json (Deduplicated) ---")
     if os.path.exists(CACHE_FILE):
         with open(CACHE_FILE, "r") as f:
             print(f.read())
