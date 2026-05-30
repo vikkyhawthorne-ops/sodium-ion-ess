@@ -2,7 +2,7 @@ import numpy as np
 import pybamm
 import casadi
 from nfpp_sodium_ion.src.cell_parameters.cell_alpha import get_parameter_values
-from src.cell_optimization.material_opt import MaterialDiscoveryFramework
+from src.cell_optimization.material_opt import MaterialMappingEngine
 
 try:
     import dolfinx
@@ -26,8 +26,8 @@ class DSMOptimizer:
         # 3.3V (high power), 298.15K (minimal heating), 0.5 SOC, 1e-8 (minimal strain)
         self.target_y = target_y if target_y is not None else np.array([3.3, 298.15, 0.5, 1e-8])
 
-        self.discovery = MaterialDiscoveryFramework()
-        self.material_data = self.discovery.run_discovery()
+        self.engine = MaterialMappingEngine()
+        self.material_data = self.engine.run()
 
         # Pre-extract deltas via pybamm-mapped logic
         self.d_deltas = [d.to_pybamm_delta() for d in self.material_data.get("Cathode_Dopant", [])]

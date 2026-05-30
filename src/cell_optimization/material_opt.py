@@ -20,17 +20,23 @@ except ImportError:
 import pybamm
 from nfpp_sodium_ion.src.cell_parameters.cell_alpha import get_parameter_values
 
-# --- CONSTANTS & SCIENTIFIC CONFIG ---
+# --- CONSTRAINED CHEMICAL SPACE ---
+ALLOWED_SALTS = {"NaBOB": "C4BNaO8", "NaTCP": "C5H3Cl3NNaO"}
+ALLOWED_FUNCTIONALIZATION = {"MTMS": "C4H12O3Si"}
+BASE_CATHODE = "Na4Fe3P4O15"
+DOPANTS = ["Mn", "Cr", "Ni"]
+
+# --- SCIENTIFIC CONSTANTS ---
 CACHE_FILE = "material_cache.json"
 MP_API_KEY = os.environ.get("MP_API_KEY", "4wUDc4LwwKXSRWxiE6DHQS40pG45g0q6")
-KT = 0.0259 # Thermal energy at 300K (eV)
+OQMD_URL = "https://oqmd.org/oqmdapi/formationenergy"
+KT = 0.0259 # eV at 300K
 
-# Hard Carbon is not well-represented by crystalline DFT entries.
-HARD_CARBON_REF = {
-    "stability": 0.05,
-    "formation_energy": -0.12,
-    "band_gap": 0.4,
-    "volume_per_atom": 12.0
+# Class Baselines (Fallback if API fails)
+BASELINES = {
+    "Cathode": {"stability": 0.1, "formation_energy": -2.2, "band_gap": 0.5, "volume_per_atom": 12.0},
+    "Salt": {"stability": 0.05, "formation_energy": -1.5, "band_gap": 4.0, "volume_per_atom": 10.0},
+    "Anode": {"stability": 0.02, "formation_energy": -0.1, "band_gap": 1.0, "volume_per_atom": 15.0}
 }
 
 @dataclass
@@ -38,15 +44,12 @@ class MaterialCandidate:
     name: str
     category: str
     composition: str
-    energy_above_hull: float = 0.0
-    formation_energy: float = 0.0
-    band_gap: float = 0.0
-    volume_per_atom: float = 0.0
+    properties: Dict[str, float]
     projected_delta: Dict[str, float] = field(default_factory=dict)
-    reference: str = "Materials Project Harvester"
+    confidence: float = 1.0
 
     def to_pybamm_delta(self) -> Dict[str, Any]:
-        """Maps derived deltas to PyBaMM parameter names."""
+        """Maps derived deltas to PyBaMM parameter names based on physics channel."""
         mapping = {}
         if self.category == "Cathode_Dopant":
             mapping["Positive electrode OCP [V]"] = ("additive", self.projected_delta.get("voltage_boost", 0.0))
@@ -58,13 +61,21 @@ class MaterialCandidate:
             mapping["SEI reaction exchange current density [A.m-2]"] = ("multiplier", self.projected_delta.get("sei_growth_mult", 1.0))
             mapping["Initial concentration in negative electrode [mol.m-3]"] = ("multiplier", self.projected_delta.get("initial_loss_mult", 1.0))
             mapping["SEI resistivity [Ohm.m]"] = ("multiplier", self.projected_delta.get("resistance_drift_mult", 1.0))
-            mapping["Negative electrode exchange-current density [A.m-2]"] = ("multiplier", self.projected_delta.get("exchange_current_mult", 1.0))
         return mapping
 
-class MaterialDiscoveryFramework:
+class MaterialMappingEngine:
+    """Constrained materials-to-parameter mapping engine."""
+
     def __init__(self):
         self.cache = self._load_cache()
+        self.session = self._setup_session() if requests else None
         self.base_params = get_parameter_values()
+
+    def _setup_session(self):
+        session = requests.Session()
+        retries = Retry(total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+        session.mount("https://", HTTPAdapter(max_retries=retries))
+        return session
 
     def _load_cache(self) -> Dict[str, Any]:
         if os.path.exists(CACHE_FILE):
@@ -76,167 +87,147 @@ class MaterialDiscoveryFramework:
         return {}
 
     def _save_cache(self):
-        """Saves cache with deduplication and normalization."""
-        clean_cache = {}
-        for key, val in self.cache.items():
-            clean_cache[key] = val
         with open(CACHE_FILE, "w") as f:
-            json.dump(clean_cache, f, indent=2)
+            json.dump(self.cache, f, indent=2)
 
-    def harvest_mp_system(self, chemsys: str) -> List[Dict[str, Any]]:
-        """Harvests entire chemical system from Materials Project."""
-        cache_key = f"MP_HARVEST:{chemsys}"
+    def _resolve_material(self, formula: str, category_baseline: str) -> tuple[Dict[str, float], float]:
+        """Resolution Flow: OQMD (Exact) -> MP (Exact) -> Class Baseline."""
+        cache_key = f"RESOLVE:{formula}"
         if cache_key in self.cache:
-            return self.cache[cache_key]
+            return self.cache[cache_key]["props"], self.cache[cache_key]["conf"]
 
-        if not MPRester:
-            return []
+        # 1. OQMD Exact
+        if self.session:
+            try:
+                params = {"composition": formula, "limit": 1, "fields": "delta_e,stability,band_gap,volume,natoms"}
+                r = self.session.get(OQMD_URL, params=params, timeout=15)
+                r.raise_for_status()
+                data = r.json().get("data", [])
+                if data:
+                    best = data[0]
+                    props = {
+                        "stability": float(best.get("stability", 0.1)),
+                        "formation_energy": float(best.get("delta_e", 0.0)),
+                        "band_gap": float(best.get("band_gap", 0.0)),
+                        "volume_per_atom": float(best.get("volume", 1.0)) / float(best.get("natoms", 1.0))
+                    }
+                    return props, 1.0
+            except Exception: pass
 
-        all_data = []
-        try:
-            with MPRester(api_key=MP_API_KEY) as mpr:
-                docs = mpr.materials.summary.search(
-                    chemsys=chemsys,
-                    fields=['formula_pretty', 'material_id', 'formation_energy_per_atom', 'energy_above_hull', 'band_gap', 'volume', 'nsites']
-                )
-                for d in docs:
-                    all_data.append({
-                        "formula": d.formula_pretty,
-                        "mid": str(d.material_id),
-                        "delta_e": d.formation_energy_per_atom,
-                        "stability": d.energy_above_hull,
-                        "band_gap": d.band_gap,
-                        "volume_per_atom": d.volume / d.nsites if d.nsites else 15.0
-                    })
-        except Exception as e:
-            print(f"MP Harvest error for {chemsys}: {e}")
+        # 2. MP Exact
+        if MPRester:
+            try:
+                with MPRester(api_key=MP_API_KEY) as mpr:
+                    docs = mpr.materials.summary.search(formula=formula, fields=['formation_energy_per_atom', 'energy_above_hull', 'band_gap', 'volume', 'nsites'])
+                    if docs:
+                        best = docs[0]
+                        props = {
+                            "stability": best.energy_above_hull,
+                            "formation_energy": best.formation_energy_per_atom,
+                            "band_gap": best.band_gap,
+                            "volume_per_atom": best.volume / best.nsites if best.nsites else 15.0
+                        }
+                        return props, 0.9
+            except Exception: pass
 
-        self.cache[cache_key] = all_data
-        self._save_cache()
-        return all_data
+        # 3. Class Baseline
+        return BASELINES.get(category_baseline, BASELINES["Anode"]), 0.5
 
-    def get_best_stable_phase(self, system_data: List[Dict[str, Any]], formula: Optional[str] = None) -> Dict[str, float]:
-        """Identifies the most stable phase, optionally filtering by formula."""
-        if not system_data:
-            return {"stability": 0.2, "formation_energy": -1.0, "band_gap": 1.0, "volume_per_atom": 15.0}
+    def derive_cathode_channel(self, dopant: str, base_props: Dict[str, float]) -> MaterialCandidate:
+        """Dopant perturbation model for fixed NFPP framework."""
+        # We model dopants via their singular variant (e.g. Na2MnP2O7) to see perturbation direction
+        formula = f"Na2{dopant}P2O7"
+        props, conf = self._resolve_material(formula, "Cathode")
 
-        subset = [d for d in system_data if d["formula"] == formula] if formula else system_data
-        if not subset: subset = system_data
+        # Physics Parameters
+        f_dopant = 0.1
+        alpha = 0.5 # Diffusion sensitivity
+        beta = 10.0 # Stability penalty decay
 
-        # Sort by energy above hull
-        subset.sort(key=lambda x: x["stability"])
-        best = subset[0]
-        return {
-            "stability": best["stability"],
-            "formation_energy": best["delta_e"],
-            "band_gap": best["band_gap"],
-            "volume_per_atom": best["volume_per_atom"]
+        # Voltage Shift
+        de_diff = props["formation_energy"] - base_props["formation_energy"]
+        v_boost = -de_diff * f_dopant
+
+        # Diffusion Modifier
+        vol_ratio = props["volume_per_atom"] / base_props["volume_per_atom"]
+        d_mult = 1.0 + alpha * (vol_ratio - 1.0)
+
+        # Stability Realization
+        realization = math.exp(-beta * props["stability"])
+
+        deltas = {
+            "voltage_boost": v_boost * realization,
+            "diffusivity_mult": max(0.1, d_mult * realization)
         }
 
-    def derive_deltas(self, target_props: Dict[str, float], base_props: Dict[str, float], category: str) -> Dict[str, float]:
-        """Physics-based delta derivation from MP states."""
-        deltas = {}
-        de_diff = target_props["formation_energy"] - base_props["formation_energy"]
-        # Penalize realizations for materials far from ground state
-        realization = 1.0 / (1.0 + math.exp(20.0 * (target_props["stability"] - 0.05)))
+        return MaterialCandidate(dopant, "Cathode_Dopant", formula, props, deltas, conf)
 
-        if category == "Cathode_Dopant":
-            base_ocp = self.base_params["Positive electrode OCP [V]"]
-            try:
-                v = base_ocp(0.5)
-                base_v_val = float(getattr(v, 'value', v))
-            except Exception:
-                base_v_val = 3.2
+    def derive_salt_channel(self, name: str, formula: str, base_props: Dict[str, float]) -> MaterialCandidate:
+        """Molecular dissociation proxy model."""
+        props, conf = self._resolve_material(formula, "Salt")
 
-            # Voltage boost from Nernstian proxy
-            deltas["voltage_boost"] = -de_diff * 0.1 * (base_v_val / 3.0) * realization
+        gamma = 20.0 # Dissociation penalty
 
-            # Diffusivity scaling from lattice expansion
-            vol_ratio = target_props["volume_per_atom"] / base_props["volume_per_atom"]
-            deltas["diffusivity_mult"] = (vol_ratio ** 1.3) * realization
+        # Conductivity Index
+        gap_diff = base_props["band_gap"] - props["band_gap"]
+        sigma_index = math.exp(gap_diff / (2 * KT))
+        sigma_index = min(max(sigma_index, 0.2), 5.0)
 
-        elif category == "Salt":
-            # σ ∝ exp(-Eg / 2kT)
-            gap_diff = base_props["band_gap"] - target_props["band_gap"]
-            cond_mult = math.exp(gap_diff / (2 * KT))
-            deltas["conductivity_mult"] = min(max(cond_mult, 0.2), 5.0)
+        # Stability Effect
+        dissociation = 1.0 / (1.0 + math.exp(gamma * (props["stability"] - 0.05)))
 
-            # Transference mapping
-            deltas["ion_transference_mult"] = 1.0 + (0.08 / (1.0 + target_props["stability"] * 15.0))
+        deltas = {
+            "conductivity_mult": sigma_index * dissociation,
+            "ion_transference_mult": 1.0 + (0.1 * dissociation)
+        }
 
-        elif category == "Functionalization":
-            deltas["sei_growth_mult"] = 0.65 + 0.35 / (1.0 + realization)
-            deltas["initial_loss_mult"] = 0.7 + 0.3 / (1.0 + realization)
-            deltas["resistance_drift_mult"] = 0.8 + 0.2 / (1.0 + realization)
-            deltas["exchange_current_mult"] = 1.0 + 0.12 * realization
+        return MaterialCandidate(name, "Salt", formula, props, deltas, conf)
 
-        return deltas
+    def derive_anode_channel(self, name: str, formula: str) -> MaterialCandidate:
+        """MTMS SEI kinetics model."""
+        props, conf = self._resolve_material(formula, "Anode")
 
-    def run_discovery(self):
-        print("Harvesting Phase Spaces via Materials Project API...")
+        kappa = 0.5 # Resistance sensitivity
+
+        # MTMS Effects
+        sei_growth = 0.5 + 0.5 * math.exp(-props["stability"] * 5.0)
+        r_sei = 1.0 + kappa * (1.0 - math.exp(-props["stability"]))
+        loss = 0.7 + 0.3 * (1.0 - math.exp(-props["stability"]))
+
+        deltas = {
+            "sei_growth_mult": sei_growth,
+            "resistance_drift_mult": r_sei,
+            "initial_loss_mult": loss
+        }
+
+        return MaterialCandidate(name, "Functionalization", formula, props, deltas, conf)
+
+    def run(self):
+        print("Executing Constrained Materials-to-Parameter Mapping...")
         system = {"Cathode_Dopant": [], "Salt": [], "Functionalization": []}
 
-        # 1. BASELINES
-        # Na-Fe-P-O system (NFPP)
-        nfpp_sys = self.harvest_mp_system("Na-Fe-P-O")
-        base_cathode_props = self.get_best_stable_phase(nfpp_sys, "Na4Fe3P4O15")
+        # Resolving Baselines
+        base_cathode, _ = self._resolve_material(BASE_CATHODE, "Cathode")
+        base_salt, _ = self._resolve_material("NaPF6", "Salt")
 
-        # Salt baseline (NaPF6)
-        napf6_sys = self.harvest_mp_system("Na-P-F")
-        base_salt_props = self.get_best_stable_phase(napf6_sys, "NaPF6")
+        # 1. Cathode Channel
+        for d in DOPANTS:
+            system["Cathode_Dopant"].append(self.derive_cathode_channel(d, base_cathode))
 
-        # 2. CATHODE DOPANTS (Mn, Cr, Ni)
-        dopant_systems = {"Mn": "Na-Fe-Mn-P-O", "Cr": "Na-Fe-Cr-P-O", "Ni": "Na-Fe-Ni-P-O"}
-        for d, sys_name in dopant_systems.items():
-            doped_sys = self.harvest_mp_system(sys_name)
-            target_props = self.get_best_stable_phase(doped_sys)
+        # 2. Salt Channel
+        for name, formula in ALLOWED_SALTS.items():
+            system["Salt"].append(self.derive_salt_channel(name, formula, base_salt))
 
-            deltas = self.derive_deltas(target_props, base_cathode_props, "Cathode_Dopant")
-            system["Cathode_Dopant"].append(MaterialCandidate(
-                name=d, category="Cathode_Dopant", composition=f"Doped-{d}-NFPP",
-                energy_above_hull=target_props["stability"], formation_energy=target_props["formation_energy"],
-                band_gap=target_props["band_gap"], volume_per_atom=target_props["volume_per_atom"],
-                projected_delta=deltas
-            ))
-
-        # 3. SALTS (NaBOB, NaTCP)
-        salt_map = {"NaBOB": "Na-B-C-O", "NaTCP": "Na-C-N-O"}
-        for name, sys_name in salt_map.items():
-            s_sys = self.harvest_mp_system(sys_name)
-            target_props = self.get_best_stable_phase(s_sys)
-            deltas = self.derive_deltas(target_props, base_salt_props, "Salt")
-            system["Salt"].append(MaterialCandidate(
-                name=name, category="Salt", composition=name,
-                energy_above_hull=target_props["stability"], formation_energy=target_props["formation_energy"],
-                band_gap=target_props["band_gap"], volume_per_atom=target_props["volume_per_atom"],
-                projected_delta=deltas
-            ))
-
-        # 4. FUNCTIONALIZATION (MTMS)
-        mtms_sys = self.harvest_mp_system("Si-C-H-O")
-        mtms_props = self.get_best_stable_phase(mtms_sys)
-        deltas = self.derive_deltas(mtms_props, HARD_CARBON_REF, "Functionalization")
-        system["Functionalization"].append(MaterialCandidate(
-            name="MTMS", category="Functionalization", composition="C4H12O3Si",
-            energy_above_hull=mtms_props["stability"], formation_energy=mtms_props["formation_energy"],
-            band_gap=mtms_props["band_gap"], volume_per_atom=mtms_props["volume_per_atom"],
-            projected_delta=deltas
-        ))
+        # 3. Anode Channel
+        for name, formula in ALLOWED_FUNCTIONALIZATION.items():
+            system["Functionalization"].append(self.derive_anode_channel(name, formula))
 
         return system
 
 if __name__ == "__main__":
-    discovery = MaterialDiscoveryFramework()
-    res = discovery.run_discovery()
+    engine = MaterialMappingEngine()
+    res = engine.run()
     for cat, cands in res.items():
         print(f"\nCategory: {cat}")
         for c in cands:
-            print(f"  - {c.name}: {c.projected_delta}")
-            # print(f"    Eg: {c.band_gap:.2f} eV, Hull: {c.energy_above_hull:.4f} eV/atom")
-
-    print("\n--- Final material_cache.json content ---")
-    if os.path.exists(CACHE_FILE):
-        with open(CACHE_FILE, "r") as f:
-            data = json.load(f)
-            for k in data.keys():
-                print(f"Key: {k} (Items: {len(data[k]) if isinstance(data[k], list) else 'N/A'})")
+            print(f"  - {c.name} (Conf: {c.confidence}): {c.projected_delta}")
