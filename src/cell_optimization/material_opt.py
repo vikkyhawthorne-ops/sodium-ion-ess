@@ -31,6 +31,7 @@ DOPANTS = ["Mn", "Cr", "Ni"]
 # --- SCIENTIFIC & API CONFIG ---
 OQMD_URL = "https://oqmd.org/oqmdapi/formationenergy"
 CACHE_FILE = "material_cache.json"
+CACHE_VERSION = "v2"
 KT = 0.0259 # eV at 300K
 
 # Class Baselines (Fallback if API fails)
@@ -48,6 +49,7 @@ class MaterialCandidate:
     properties: Dict[str, float]
     projected_delta: Dict[str, float] = field(default_factory=dict)
     confidence: float = 1.0
+    provenance: str = "OQMD"
 
     def to_pybamm_delta(self) -> Dict[str, Any]:
         """Maps derived deltas to PyBaMM parameter names."""
@@ -79,7 +81,6 @@ class PhysicsModels:
             v = ocp_func(x)
             return float(getattr(v, "value", v))
         except Exception:
-            # Penalized fallback to avoid systematic upward bias
             return 3.2 * 0.8
 
     @staticmethod
@@ -105,7 +106,6 @@ class PhysicsModels:
         s_base_thermo, _ = PhysicsModels.stability_decomposition(base_props)
 
         gap_diff = float(props["band_gap"]) - float(base_props["band_gap"])
-        # Safeguard against potential unit mismatch (eV vs meV)
         if abs(gap_diff) > 20: gap_diff *= 0.001
 
         sigma_mult = math.exp(-gap_diff / (2 * KT))
@@ -159,12 +159,12 @@ class MaterialMappingEngine:
         required = ["stability", "formation_energy", "band_gap", "volume_per_atom"]
         return all(k in p and isinstance(p[k], (int, float)) for k in required)
 
-    def _resolve_material(self, formula: str, category_baseline: str) -> tuple[Dict[str, float], float]:
-        cache_key = f"RESOLVE:{formula}"
+    def _resolve_material(self, formula: str, category_baseline: str) -> tuple[Dict[str, float], float, str]:
+        cache_key = f"RESOLVE:{formula}:{CACHE_VERSION}"
         if cache_key in self.cache:
-            return self.cache[cache_key]["props"], self.cache[cache_key]["conf"]
+            return self.cache[cache_key]["props"], self.cache[cache_key]["conf"], self.cache[cache_key].get("source", "UNKNOWN")
 
-        props, conf = None, 0.0
+        props, conf, source = None, 0.0, "BASELINE"
 
         if self.session:
             try:
@@ -181,7 +181,7 @@ class MaterialMappingEngine:
                         "band_gap": float(best.get("band_gap", 0.0)),
                         "volume_per_atom": float(best.get("volume", 1.0)) / float(best.get("natoms", 1.0))
                     }
-                    conf = 1.0
+                    conf, source = 1.0, "OQMD"
             except Exception as e:
                 logging.warning(f"OQMD query failed for {formula}: {e}")
 
@@ -198,43 +198,43 @@ class MaterialMappingEngine:
                             "band_gap": best.band_gap,
                             "volume_per_atom": best.volume / best.nsites if best.nsites else 15.0
                         }
-                        conf = 0.9
+                        conf, source = 0.9, "MATERIALS_PROJECT"
             except Exception as e:
                 logging.warning(f"MP query failed for {formula}: {e}")
 
         if not props:
             props = CLASS_BASELINES.get(category_baseline, CLASS_BASELINES["Anode"])
-            conf = 0.2 # low confidence fallback
+            conf, source = 0.2, "BASELINE"
 
         if self._valid_props(props):
-            self.cache[cache_key] = {"props": props, "conf": conf}
+            self.cache[cache_key] = {"props": props, "conf": conf, "source": source}
             self._save_cache()
 
-        return props, conf
+        return props, conf, source
 
     def run(self):
         print("Executing Decoupled Materials Mapping & Physics Engine...")
         system = {"Cathode_Dopant": [], "Salt": [], "Functionalization": []}
         physics = PhysicsModels()
 
-        base_cathode, _ = self._resolve_material(BASE_CATHODE_FORMULA, "Cathode")
-        base_salt, _ = self._resolve_material(BASE_SALT_FORMULA, "Salt")
+        base_cathode, _, _ = self._resolve_material(BASE_CATHODE_FORMULA, "Cathode")
+        base_salt, _, _ = self._resolve_material(BASE_SALT_FORMULA, "Salt")
 
         dopant_proxies = {"Mn": "NaMnPO4", "Cr": "NaCrPO4", "Ni": "NaNiPO4"}
         for d, proxy_formula in dopant_proxies.items():
-            electronic_anchor, conf = self._resolve_material(proxy_formula, "Cathode")
+            electronic_anchor, conf, src = self._resolve_material(proxy_formula, "Cathode")
             deltas = physics.cathode_perturbation(electronic_anchor, base_cathode, self.base_params)
-            system["Cathode_Dopant"].append(MaterialCandidate(d, "Cathode_Dopant", f"Doped-{d}-NFPP", electronic_anchor, deltas, conf))
+            system["Cathode_Dopant"].append(MaterialCandidate(d, "Cathode_Dopant", f"Doped-{d}-NFPP", electronic_anchor, deltas, conf, src))
 
         for name, formula in ALLOWED_SALTS.items():
-            props, conf = self._resolve_material(formula, "Salt")
+            props, conf, src = self._resolve_material(formula, "Salt")
             deltas = physics.salt_dissociation(props, base_salt)
-            system["Salt"].append(MaterialCandidate(name, "Salt", formula, props, deltas, conf))
+            system["Salt"].append(MaterialCandidate(name, "Salt", formula, props, deltas, conf, src))
 
         for name, formula in ALLOWED_FUNCTIONALIZATION.items():
-            props, conf = self._resolve_material(formula, "Anode")
+            props, conf, src = self._resolve_material(formula, "Anode")
             deltas = physics.anode_interface(props)
-            system["Functionalization"].append(MaterialCandidate(name, "Functionalization", formula, props, deltas, conf))
+            system["Functionalization"].append(MaterialCandidate(name, "Functionalization", formula, props, deltas, conf, src))
 
         return system
 
@@ -244,4 +244,4 @@ if __name__ == "__main__":
     for cat, cands in res.items():
         print(f"\nCategory: {cat}")
         for c in cands:
-            print(f"  - {c.name} (Conf: {c.confidence:.1f}): {c.projected_delta}")
+            print(f"  - {c.name} (Conf: {c.confidence:.1f}, Source: {c.provenance}): {c.projected_delta}")
