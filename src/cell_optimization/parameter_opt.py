@@ -18,18 +18,16 @@ class DSMOptimizer:
     """
     Differentiable Sensitivity Manifold Optimizer (DSMO).
     Coupled PyBaMM + FEniCSx Multiphysics sensitivities.
-    Optimizes structural parameters (hybrid symbolic) and material selection (finite diff).
     Targeting optimal performance and efficiency.
     """
     def __init__(self, target_y=None):
-        # Target [Voltage, Temperature, SOC, Strain] set for optimal performance
-        # 3.3V (high power), 298.15K (minimal heating), 0.5 SOC, 1e-8 (minimal strain)
+        # Target [Voltage, Temperature, SOC, Strain]
         self.target_y = target_y if target_y is not None else np.array([3.3, 298.15, 0.5, 1e-8])
 
         self.engine = MaterialMappingEngine()
         self.material_data = self.engine.run()
 
-        # Pre-extract deltas via pybamm-mapped logic
+        # Pre-extract deltas
         self.d_deltas = [d.to_pybamm_delta() for d in self.material_data.get("Cathode_Dopant", [])]
         self.s_deltas = [s.to_pybamm_delta() for s in self.material_data.get("Salt", [])]
         self.f_delta = self.material_data.get("Functionalization", [None])[0].to_pybamm_delta() if self.material_data.get("Functionalization") else {}
@@ -55,11 +53,6 @@ class DSMOptimizer:
 
         self.structural_keys = self.numeric_keys + self.symbolic_keys
         self.theta_structural = np.array([1.2e-4, 1.2e-4, 1e-6, 0.3, 0.3, 0.5, 1.5, 0.65, 0.65, 1000.0])
-        # Material selector: [Dopant (Mn vs Cr vs Ni), Salt (NaBOB vs NaTCP), MTMS (Off vs On)]
-        # We use a 4-element theta_material: [alpha_d1, alpha_d2, alpha_s, alpha_f]
-        # Dopant selection via simplex-like mapping:
-        # alpha_d1, alpha_d2 in [0,1]
-        # (1-d1) Mn + d1*(1-d2) Cr + d1*d2 Ni
         self.theta_material = np.array([0.3, 0.3, 0.5, 1.0])
 
         self.theta = np.concatenate([self.theta_structural, self.theta_material])
@@ -72,8 +65,7 @@ class DSMOptimizer:
         if len(self.d_deltas) < 3 or len(self.s_deltas) < 2:
             return param_vals
 
-        # Aggregate perturbations using simplex weights for dopants and linear for others
-        # weights: Mn (0), Cr (1), Ni (2)
+        # Weights: Mn (0), Cr (1), Ni (2)
         w = [1-d1, d1*(1-d2), d1*d2]
 
         def apply_perturbation(name, weight_list, delta_list):
@@ -91,21 +83,17 @@ class DSMOptimizer:
             else:
                 param_vals[name] = base * mult + add
 
-        # Apply Cathode perturbations
         for k in ["Positive electrode OCP [V]", "Positive particle diffusivity [m2.s-1]"]:
             apply_perturbation(k, w, self.d_deltas)
 
-        # Apply Salt perturbations
         s_w = [1-alpha_s, alpha_s]
         for k in ["Electrolyte conductivity [S.m-1]", "Cation transference number"]:
             apply_perturbation(k, s_w, self.s_deltas)
 
-        # Apply MTMS perturbations (on/off)
         for k, (mode, val) in self.f_delta.items():
             base = param_vals[k]
             m = (1.0 + alpha_f * (val - 1.0)) if mode == "multiplier" else 1.0
             a = (alpha_f * val) if mode == "additive" else 0.0
-
             if callable(base):
                 def make_wrapper(b, m_val, a_val):
                     return lambda *args, **kwargs: b(*args, **kwargs) * m_val + a_val
@@ -139,22 +127,37 @@ class DSMOptimizer:
 
         theta_vec = self.theta
         for k in range(self.max_iters):
+            # Recompute material data periodically to avoid static snapshot bias
+            if k > 0 and k % 2 == 0:
+                self.material_data = self.engine.run()
+                self.d_deltas = [d.to_pybamm_delta() for d in self.material_data.get("Cathode_Dopant", [])]
+                self.s_deltas = [s.to_pybamm_delta() for s in self.material_data.get("Salt", [])]
+                self.f_delta = self.material_data.get("Functionalization", [None])[0].to_pybamm_delta() if self.material_data.get("Functionalization") else {}
+
             sim = self.setup_sim(theta_vec, symbolic_keys=self.symbolic_keys)
             p_dict = {key: theta_vec[i + len(self.numeric_keys)] for i, key in enumerate(self.symbolic_keys)}
             sol = sim.solve([0, 1800], inputs=p_dict)
 
             V_val = float(np.array(sol["Terminal voltage [V]"].entries).flatten()[-1])
             T_val = float(np.array(sol["Cell temperature [K]"].entries).flatten()[-1])
-            SOC_val = 1.0 - (float(np.array(sol["Discharge capacity [A.h]"].entries).flatten()[-1]) / 10.0)
 
-            eps_val, S_mech_row = self.solve_mechanical_adjoint(T_val, SOC_val, theta_vec)
+            # Dynamic SOC Normalization
+            Q_nom = float(sim.parameter_values["Nominal cell capacity [A.h]"])
+            SOC_val = 1.0 - (float(np.array(sol["Discharge capacity [A.h]"].entries).flatten()[-1]) / Q_nom)
+
+            eps_val, S_mech_row = self.solve_mechanical_adjoint(T_val, SOC_val, theta_vec, sim.parameter_values)
             y = np.array([V_val, T_val, SOC_val, eps_val])
 
             S = self.compute_hybrid_jacobian(theta_vec, sol)
+
+            # Normalize mechanical row to electrochemical scale
+            S_mech_row /= (np.linalg.norm(S_mech_row) + 1e-12)
             S = np.vstack([S, S_mech_row])
 
             r = y - self.target_y
-            G = S.T @ S + self.lam * np.eye(len(theta_vec))
+
+            # Regularized Update (Damped Gauss-Newton)
+            G = S.T @ S + (self.lam + 1e-2 * np.trace(S.T @ S)) * np.eye(len(theta_vec))
             update = np.linalg.solve(G, S.T @ r)
             theta_vec = theta_vec - self.lr * update
 
@@ -192,7 +195,8 @@ class DSMOptimizer:
                 idx = i + n_num
                 S[0, idx] = sol["Terminal voltage [V]"].sensitivities[key][-1]
                 S[1, idx] = sol["Cell temperature [K]"].sensitivities[key][-1]
-                S[2, idx] = -sol["Discharge capacity [A.h]"].sensitivities[key][-1] / 10.0
+                Q_nom = float(sol.all_inputs[0].get("Nominal cell capacity [A.h]", 10.0))
+                S[2, idx] = -sol["Discharge capacity [A.h]"].sensitivities[key][-1] / Q_nom
         except Exception:
             S[:, n_num:n_num+n_sym] = self._finite_diff_partial(theta, range(n_num, n_num+n_sym))
 
@@ -201,15 +205,18 @@ class DSMOptimizer:
 
     def _finite_diff_partial(self, theta, indices):
         S_part = np.zeros((3, len(indices)))
-        eps = 1e-4
         for idx, i in enumerate(indices):
+            # Adaptive Finite Difference Step
+            eps = max(1e-6, 1e-3 * abs(theta[i]))
+
             th_p = theta.copy(); th_p[i] += eps
             sim_p = self.setup_sim(th_p)
             try:
                 sol_p = sim_p.solve([0, 1800])
                 v_p = float(np.array(sol_p["Terminal voltage [V]"].entries).flatten()[-1])
                 t_p = float(np.array(sol_p["Cell temperature [K]"].entries).flatten()[-1])
-                soc_p = 1.0 - (float(np.array(sol_p["Discharge capacity [A.h]"].entries).flatten()[-1]) / 10.0)
+                Q_nom = float(sim_p.parameter_values["Nominal cell capacity [A.h]"])
+                soc_p = 1.0 - (float(np.array(sol_p["Discharge capacity [A.h]"].entries).flatten()[-1]) / Q_nom)
             except: v_p, t_p, soc_p = 3.0, 298.15, 0.5
 
             th_m = theta.copy(); th_m[i] -= eps
@@ -218,7 +225,8 @@ class DSMOptimizer:
                 sol_m = sim_m.solve([0, 1800])
                 v_m = float(np.array(sol_m["Terminal voltage [V]"].entries).flatten()[-1])
                 t_m = float(np.array(sol_m["Cell temperature [K]"].entries).flatten()[-1])
-                soc_m = 1.0 - (float(np.array(sol_m["Discharge capacity [A.h]"].entries).flatten()[-1]) / 10.0)
+                Q_nom = float(sim_m.parameter_values["Nominal cell capacity [A.h]"])
+                soc_m = 1.0 - (float(np.array(sol_m["Discharge capacity [A.h]"].entries).flatten()[-1]) / Q_nom)
             except: v_m, t_m, soc_m = 3.0, 298.15, 0.5
 
             S_part[0, idx] = (v_p - v_m) / (2 * eps)
@@ -226,17 +234,21 @@ class DSMOptimizer:
             S_part[2, idx] = (soc_p - soc_m) / (2 * eps)
         return S_part
 
-    def solve_mechanical_adjoint(self, T, SOC, theta):
+    def solve_mechanical_adjoint(self, T, SOC, theta, param_vals):
+        # Physical Electrode Thickness Mapping for FEM Domain
+        L_p = float(param_vals["Positive electrode thickness [m]"])
+        L_a = float(param_vals["Negative electrode thickness [m]"])
+        L_tot_val = L_p + L_a + 20e-6 # Include separator fixed thickness
+
         if not dolfinx:
             eps = 1e-7 * (T - 298.15) + 1e-6 * (0.5 - SOC)
-            deps_dL = (1e-6 / (theta[0]+theta[1]+20e-6))
+            deps_dL = (1e-6 / L_tot_val)
             S_mech = np.zeros(len(self.theta))
             S_mech[0] = S_mech[1] = deps_dL
             return eps, S_mech
 
         domain = mesh.create_interval(MPI.COMM_WORLD, 20, [0, 1])
         V = fem.functionspace(domain, ("Lagrange", 1))
-        L_tot_val = theta[0] + theta[1] + 20e-6
         L_var = fem.Constant(domain, default_scalar_type(L_tot_val))
         L_ufl = ufl.variable(L_var)
         E = fem.Constant(domain, default_scalar_type(10e9))
@@ -264,6 +276,7 @@ class DSMOptimizer:
         ksp.solve(rhs_sens, du_dL.vector)
         dstrain_dL = (1.0/L_tot_val) * du_dL.x.array[-1] - (uh.x.array[-1] / (L_tot_val**2))
         S_mech = np.zeros(len(self.theta))
+        # Map back to structural indices
         S_mech[0] = S_mech[1] = dstrain_dL
         return float(strain_val), S_mech
 
