@@ -48,5 +48,29 @@
     },
     "conf": 1.0,
     "source": "OQMD"
+  },
+  "RESOLVE:NaPF6:v3": {
+    "props": {
+      "stability": 0.0,
+      "formation_energy": -3.01986400057478,
+      "band_gap": 7.906,
+      "volume_per_atom": 12.74275,
+      "natoms": 8.0,
+      "uncertainty": 0.05
+    },
+    "conf": 1.0,
+    "source": "OQMD"
+  },
+  "RESOLVE:NaMnPO4:v3": {
+    "props": {
+      "stability": 0.0,
+      "formation_energy": -2.52235484579121,
+      "band_gap": 3.26,
+      "volume_per_atom": 11.29575,
+      "natoms": 28.0,
+      "uncertainty": 0.05
+    },
+    "conf": 1.0,
+    "source": "OQMD"
   }
 }

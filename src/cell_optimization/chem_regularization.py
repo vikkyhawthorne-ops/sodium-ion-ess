@@ -1,30 +1,46 @@
 import re
 import math
-from typing import Dict, Set
+import numpy as np
+from typing import Dict, Set, List
 
-def parse_formula(formula: str) -> Set[str]:
+ELEMENT_UNIVERSE = ["Na", "Fe", "P", "O", "Mn", "Cr", "Ni"]
+
+def parse_formula_counts(formula: str) -> Dict[str, float]:
     """
-    Extracts elemental symbols from a chemical formula.
-    Example: 'Na4Fe3P4O15' -> {'Na', 'Fe', 'P', 'O'}
+    Parses a chemical formula into element counts.
+    Example: 'Na4Fe3P4O15' -> {'Na': 4.0, 'Fe': 3.0, 'P': 4.0, 'O': 15.0}
     """
-    return set(re.findall(r'[A-Z][a-z]?', formula))
+    # This matches Element followed by optional count (including decimals)
+    matches = re.findall(r'([A-Z][a-z]?)(\d*(?:\.\d+)?)', formula)
+    counts = {}
+    for element, count in matches:
+        counts[element] = float(count) if count else 1.0
+    return counts
+
+def stoich_vector(formula: str) -> np.ndarray:
+    """
+    Converts formula to a normalized stoichiometric vector x.
+    """
+    counts = parse_formula_counts(formula)
+    v = np.zeros(len(ELEMENT_UNIVERSE))
+    total = sum(counts.values())
+    for i, e in enumerate(ELEMENT_UNIVERSE):
+        v[i] = counts.get(e, 0.0)
+    return v / (total + 1e-12)
 
 def compute_chemical_realization(base_formula: str, proxy_formula: str,
                                  base_props: Dict[str, float],
                                  proxy_props: Dict[str, float]) -> float:
     """
-    Computes a realization factor [0, 1] based on chemical, structural,
-    and electronic similarity between a base material and a proxy.
+    Computes a realization factor [0, 1] based on composition distance,
+    structural, and electronic similarity.
     """
-    # 1. Chemical Similarity (Elemental Overlap)
-    e_base = parse_formula(base_formula)
-    e_proxy = parse_formula(proxy_formula)
-    r_chem = len(e_base & e_proxy) / len(e_base | e_proxy) if (e_base | e_proxy) else 0.0
+    # 1. Chemical Similarity (Stoichiometric Vector Norm)
+    r_chem = math.exp(-np.linalg.norm(stoich_vector(base_formula) - stoich_vector(proxy_formula)))
 
     # 2. Structural Similarity (Volume-per-atom mismatch)
     v_b = base_props["volume_per_atom"]
     v_p = proxy_props["volume_per_atom"]
-    # Handle zero volume case just in case
     r_struct = math.exp(-abs(v_p - v_b) / (v_b + 1e-9))
 
     # 3. Electronic Similarity (Bandgap mismatch)
@@ -35,39 +51,40 @@ def compute_chemical_realization(base_formula: str, proxy_formula: str,
 
     return r_chem * r_struct * r_electronic
 
+# Calibrated Projection Matrix M (Representative of Polyanionic Physics)
+# Rows: [Voltage, ln(Diffusivity), Conductivity, Reaction Rate]
+# Cols: [dEf, dVatom, dEg, dEformation_total]
+M_PROJECTION = np.array([
+    [-0.2,  0.0,   0.0, -0.05], # Voltage
+    [ 0.1,  1.2,  -0.5,  0.0],  # ln(Diffusivity)
+    [ 0.0,  0.0,  -2.0,  0.0],  # ln(Conductivity)
+    [-0.1,  0.1,  -0.1, -0.5]   # ln(Reaction Rate)
+])
+
 def derive_coupled_deltas(base_props: Dict[str, float],
                           proxy_props: Dict[str, float],
                           base_v: float,
                           realization: float) -> Dict[str, float]:
     """
-    Derives correlated performance perturbations using a reduced-order latent descriptor.
+    Derives correlated performance perturbations using a vector latent physics model.
     """
-    # de_diff: difference in formation energy per atom
-    de_diff = proxy_props["formation_energy"] - base_props["formation_energy"]
+    # Latent Physics Vector z
+    z = np.array([
+        proxy_props["formation_energy"] - base_props["formation_energy"], # dEf (per atom proxy)
+        proxy_props["volume_per_atom"] - base_props["volume_per_atom"],   # dVatom
+        proxy_props["band_gap"] - base_props["band_gap"],                # dEg
+        (proxy_props["formation_energy"] * proxy_props.get("natoms", 1)) -
+        (base_props["formation_energy"] * base_props.get("natoms", 1))   # Total formation energy diff proxy
+    ])
 
-    # vol_ratio: relative volume change
-    vol_ratio = proxy_props["volume_per_atom"] / (base_props["volume_per_atom"] + 1e-9)
+    # Multi-dimensional latent physics projection
+    dy = M_PROJECTION @ z
 
-    # eg_ratio: relative bandgap change
-    eg_b = base_props["band_gap"]
-    eg_p = proxy_props["band_gap"]
-    eg_ratio = eg_p / (eg_b + 1e-6)
+    # Performance projections (mapped back to multipliers and additives)
+    voltage_boost = dy[0] * realization * (base_v / 3.2)
+    # Diffusivity follows exponential scaling
+    diffusivity_mult = math.exp(dy[1] * realization)
 
-    # Latent descriptor z = w1*dEf + w2*vol_ratio + w3*bandgap_ratio
-    # Weights selected based on physical heuristics for polyanionic cathodes
-    w1, w2, w3 = -0.5, 0.3, -0.2
-    z = w1 * de_diff + w2 * (vol_ratio - 1.0) + w3 * (eg_ratio - 1.0)
-
-    # Performance projections
-    # a1 for voltage boost, a2 for diffusivity exponent
-    a1 = 0.15 * (base_v / 3.2)
-    a2 = 0.8
-
-    voltage_boost = a1 * z * realization
-    # Diffusivity follows exponential scaling: D/D0 = exp(a2 * z * realization)
-    diffusivity_mult = math.exp(a2 * z * realization)
-
-    # Clamping for physical consistency
     return {
         "voltage_boost": float(voltage_boost),
         "diffusivity_mult": float(max(0.1, min(10.0, diffusivity_mult)))
