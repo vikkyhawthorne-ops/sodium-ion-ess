@@ -126,9 +126,7 @@ The plant model represents the physical hardware of the 16S1P sodium-ion battery
 *   **Coating Thickness:** Specified at 50–150 $\mu$m, governing internal thermal conductance.
 *   **Internal Dynamics:** Core-casing distributed thermal nodes with DFN-informed concentration states ($c_s, c_e$) and 2-RC polarization branches.
 
-1.2 Thermal Management
-The cell plant utilizes passive and active air-side convection for thermal management. The thermal behavior is governed by the state-space relation:
-$C\dot{T} = KT + Q_{gen} - Q_{conv}$
+
 
 **Thermal Node Topology:**
 *   Cell Core (heat source) → Cell Casing (poly) → Ambient (convection).
@@ -139,7 +137,6 @@ The interface layer regulates bidirectional energy flow and grid stability.
 *   **Grid Interface:** Static Transfer Switch (STS) for <4ms grid/island transition.
 *   **PQC:** Series-injected DVR-equivalent sag compensator for voltage sag/swell mitigation.
 *   **Conversion:** Bidirectional isolated buck-boost stage with integrated PWM and LC filtering.
-*   **Monitoring:** SRF-PLL for real-time Frequency and ROCOF estimation.
 
 1.4 Interconnects, Sensors & Faults
 *   **Busbars:** Nickel-plated copper with $I^2R$ Joule heating modeling.
