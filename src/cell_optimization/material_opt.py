@@ -49,6 +49,13 @@ class MaterialCandidate:
     uncertainty: float = 0.0
     provenance: str = "OQMD"
 
+    def __post_init__(self):
+        """Schema guard for projected_delta."""
+        required_channels = {"thermodynamic", "kinetic", "transport", "structural"}
+        if self.category == "Cathode_Dopant":
+            if not isinstance(self.projected_delta, dict) or not required_channels.issubset(self.projected_delta.keys()):
+                logging.warning(f"MaterialCandidate {self.name} missing required physics channels in projected_delta.")
+
     def to_pybamm_delta(self) -> Dict[str, Any]:
         """Maps derived deltas to PyBaMM parameter names."""
         mapping = {}

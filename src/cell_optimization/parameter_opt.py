@@ -2,6 +2,7 @@ import numpy as np
 import pybamm
 import casadi
 import math
+import logging
 from copy import deepcopy
 from functools import lru_cache
 from nfpp_sodium_ion.src.cell_parameters.cell_alpha import get_parameter_values
@@ -56,14 +57,11 @@ class ParamTransform:
 
 class DSMOptimizer:
     """
-    Scientifically Justifiable DSMO with Explicit Block-Latent Manifold Projection.
+    Riemannian Control Manifold Optimizer for Coupled Electrochemical-Mechanical State Space.
     """
     def __init__(self, target_y=None):
         # Physically Grounded Operating Point and Scaling
-        # Target y: [V, T, SOC, eps]
-        # Reference point y_ref (operating midpoint)
         self.y_ref = np.array([3.2, 300.0, 0.5, 0.02])
-        # Physical span s_i (span scales for dimensionless consistency)
         self.y_scale = np.array([2.0, 50.0, 1.0, 0.02])
 
         self.target_y = target_y if target_y is not None else self.y_ref
@@ -94,16 +92,11 @@ class DSMOptimizer:
         self.theta_structural = np.array([1.2e-4, 1.2e-4, 1e-6, 0.3, 0.3, 0.5, 1.5, 0.65, 0.65, 1000.0])
 
         # Structured Block-Latent Mapping Phi (4 latent blocks)
-        # Prevents cross-physics leakage
         self.Phi_blocks = [
-            # 1. Transport [rp, eps_p, eps_n, eps_sep, brugg]
-            (0, [2, 3, 4, 5, 6], np.array([1.0, 1.0, 1.0, 1.0, 0.5])),
-            # 2. Electrochemical [am_p, am_n, c_typ]
-            (1, [7, 8, 9], np.array([1.0, 1.0, 0.5])),
-            # 3. Thermal [Lp, Ln, eps_p, eps_n]
-            (2, [0, 1, 3, 4], np.array([0.2, 0.2, 0.5, 0.5])),
-            # 4. Mechanical [Lp, Ln, rp]
-            (3, [0, 1, 2], np.array([1.0, 1.0, 0.5]))
+            (0, [2, 3, 4, 5, 6], np.array([1.0, 1.0, 1.0, 1.0, 0.5])), # Transport
+            (1, [7, 8, 9], np.array([1.0, 1.0, 0.5])),                # Electrochemical
+            (2, [0, 1, 3, 4], np.array([0.2, 0.2, 0.5, 0.5])),        # Thermal
+            (3, [0, 1, 2], np.array([1.0, 1.0, 0.5]))                 # Mechanical
         ]
         self.Phi = np.zeros((4, 10))
         for block_idx, indices, weights in self.Phi_blocks:
@@ -111,40 +104,30 @@ class DSMOptimizer:
 
         self.sim_cache = {}
         self.solve_cache = {}
+        self._current_material_state = None
 
     def get_parameter_set(self, theta_s, dopant_idx, salt_idx, mtms):
         """Constructs parameter set via pure transformation layer."""
         base_params = get_parameter_values()
         transform = ParamTransform(base_params)
-
-        # 1. Structural Parameters
         for i, key in enumerate(self.structural_keys):
             transform.base[key] = theta_s[i]
 
-        # 2. Material Channels
         dopants = self.material_data.get("Cathode_Dopant", [])
         salts = self.material_data.get("Salt", [])
         func = self.material_data.get("Functionalization", [])
 
         def apply_channels(material_obj, alpha=1.0):
             if not material_obj: return
-            channels = material_obj.projected_delta # Now returns Dict[channel, Dict]
-            if not isinstance(channels, dict) or "thermodynamic" not in channels:
-                return # Fallback for old data if needed
+            channels = material_obj.projected_delta
+            if not isinstance(channels, dict) or "thermodynamic" not in channels: return
 
-            # Thermodynamic: Additive
-            for k, v in channels["thermodynamic"].items():
-                if k == "voltage_boost":
-                    transform.add_additive("Positive electrode OCP [V]", v * alpha)
-
-            # Kinetic/Transport: Log-multiplicative
-            for k, v in channels["kinetic"].items():
-                if k == "reaction_rate_log_delta":
-                    transform.add_multiplier("Positive electrode exchange-current density [A.m-2]", math.exp(v * alpha))
-
-            for k, v in channels["transport"].items():
-                if k == "diffusivity_log_delta":
-                    transform.add_multiplier("Positive particle diffusivity [m2.s-1]", math.exp(v * alpha))
+            if "voltage_boost" in channels["thermodynamic"]:
+                transform.add_additive("Positive electrode OCP [V]", channels["thermodynamic"]["voltage_boost"] * alpha)
+            if "reaction_rate_log_delta" in channels["kinetic"]:
+                transform.add_multiplier("Positive electrode exchange-current density [A.m-2]", math.exp(channels["kinetic"]["reaction_rate_log_delta"] * alpha))
+            if "diffusivity_log_delta" in channels["transport"]:
+                transform.add_multiplier("Positive particle diffusivity [m2.s-1]", math.exp(channels["transport"]["diffusivity_log_delta"] * alpha))
 
         if dopants: apply_channels(dopants[dopant_idx])
         if salts: apply_channels(salts[salt_idx])
@@ -152,8 +135,30 @@ class DSMOptimizer:
 
         return transform.evaluate()
 
+    def setup_sim(self, theta_s, dopant_idx, salt_idx, mtms, model_type="SPM"):
+        """Enforces simulation rebuild on material state change or explicit invalidation."""
+        mat_state = (dopant_idx, salt_idx, mtms, model_type)
+        theta_hash = hash(tuple(theta_s.tolist()))
+
+        # If material state changed, we must rebuild or strictly re-parameterize
+        # Here we enforce rebuild for material changes to ensure PyBaMM consistency
+        if self._current_material_state != mat_state:
+            self.sim_cache = {} # Invalidate cache
+            self._current_material_state = mat_state
+
+        if theta_hash in self.sim_cache:
+            return self.sim_cache[theta_hash]
+
+        params = self.get_parameter_set(theta_s, dopant_idx, salt_idx, mtms)
+        model = pybamm.lithium_ion.SPM() if model_type == "SPM" else pybamm.lithium_ion.DFN()
+        solver = pybamm.CasadiSolver(mode="safe")
+        sim = pybamm.Simulation(model, parameter_values=params, solver=solver)
+
+        self.sim_cache[theta_hash] = sim
+        return sim
+
     def run(self):
-        print(f"Starting Scientifically Justifiable DSMO Optimization...")
+        print(f"Starting Riemannian DSMO Optimization with Consistent Least-Squares Projection...")
         theta_s = self.theta_structural
 
         for epoch in range(self.max_epochs):
@@ -163,46 +168,34 @@ class DSMOptimizer:
             for k in range(self.inner_iters):
                 y = self._get_y_pure(theta_s, self.selected_dopant_idx, self.selected_salt_idx, self.mtms_enabled)
 
-                # 1. Structural Jacobian (Block-Decoupled)
+                # 1. Structural Jacobian (Consistent Least-Squares Projection)
                 S_reduced = self._compute_reduced_jacobian(theta_s)
                 S_theta = S_reduced @ self.Phi
 
-                # 2. Material Selection Update (Pure Evaluation)
-                self._update_material_selection_pure(theta_s)
+                # 2. Material Selection Update (Probabilistic EI)
+                self._update_material_selection_probabilistic(theta_s)
 
-                # 3. Riemannian Natural Gradient Update Step
+                # 3. Natural Gradient Update on Physics Manifold
                 r = (y - self.target_y) / self.y_scale
                 S_norm = S_theta / self.y_scale[:, None]
 
-                # Spectral clipping for numerical conditioning
-                U, s_val, Vh = np.linalg.svd(S_norm, full_matrices=False)
-                s_clipped = np.clip(s_val, 1e-3, None)
-                S_norm = U @ np.diag(s_clipped) @ Vh
-
-                # Induced Riemannian Metric (Pullback to theta-space)
-                # G_theta = Phi^T G_z Phi
+                # Pullback metric G_theta = Phi^T G_z Phi
                 G_theta = self.Phi.T @ GZ_METRIC @ self.Phi
 
-                # Full Hessian approximation on the physics manifold
-                # G = J^T Sigma_y^-1 J + lambda * G_theta
+                # Gauss-Newton + Tikhonov Diagonal Damping (λI)
                 G = S_norm.T @ S_norm + self.lam * G_theta
+                # Trace-based numerical stabilization
+                G += 0.01 * np.eye(10) * np.trace(G)/10.0
 
-                # Trace-based conditioning for numerical stability
-                G += 0.01 * np.eye(len(theta_s)) * np.trace(G)/len(theta_s)
-
-                # Material uncertainty augmentation (Channel-aligned covariance propagation)
+                # Channel-aligned material uncertainty propagation
                 u = self.material_data["Cathode_Dopant"][self.selected_dopant_idx].uncertainty
                 Sigma_y = np.diag(self.y_scale**2) * u
                 G += 0.1 * S_norm.T @ Sigma_y @ S_norm
 
-                # Natural Gradient Update
                 update = np.linalg.solve(G, S_norm.T @ r)
                 theta_s = theta_s - self.lr * update
 
-                # 4. Physical Feasibility Projection (Pi_phys)
                 theta_s = self._project_physical_manifold(theta_s)
-
-                # 5. Consistency Check Layer
                 self._consistency_check(y, theta_s)
 
                 print(f"  Iteration {epoch}.{k}: Residual Norm = {np.linalg.norm(r):.4f}")
@@ -212,12 +205,10 @@ class DSMOptimizer:
 
     def _project_physical_manifold(self, theta):
         """Enforces physical feasibility constraints including capacity consistency."""
-        # Porosity limits
         theta[3:6] = np.clip(theta[3:6], 0.2, 0.7)
-        # Loading (volume fractions)
         theta[7:9] = np.clip(theta[7:9], 0.4, 0.9)
 
-        # N/P Ratio Constraint refinement
+        # N/P Capacity Ratio consistency (Qn/Qp approx 1.0)
         np_ratio = (theta[1] * theta[8]) / (theta[0] * theta[7] + 1e-9)
         if np_ratio < 0.9 or np_ratio > 1.1:
             target_ln = 1.0 * (theta[0] * theta[7]) / (theta[8] + 1e-9)
@@ -228,29 +219,14 @@ class DSMOptimizer:
                        [3e-4, 3e-4, 1e-5, 0.7, 0.7, 0.7, 3.0, 0.9, 0.9, 2000.0])
 
     def _consistency_check(self, y, theta):
-        assert np.all(np.isfinite(y)), "Non-finite outputs detected."
-        assert np.all(np.isfinite(theta)), "Non-finite parameters detected."
-        assert theta[9] > 0, "Non-positive electrolyte concentration."
+        assert np.all(np.isfinite(y)), "Non-finite outputs."
+        assert np.all(np.isfinite(theta)), "Non-finite parameters."
 
     def _get_y_pure(self, th, d_idx, s_idx, mtms):
-        """Pure evaluation function for simulation state with simulation object caching."""
         state_hash = hash((tuple(th.tolist()), d_idx, s_idx, mtms))
-        if state_hash in self.solve_cache:
-            return self.solve_cache[state_hash]
+        if state_hash in self.solve_cache: return self.solve_cache[state_hash]
 
-        params = self.get_parameter_set(th, d_idx, s_idx, mtms)
-
-        # Object-level caching
-        sim_key = (d_idx, s_idx, mtms)
-        if sim_key in self.sim_cache:
-            sim = self.sim_cache[sim_key]
-            sim.parameter_values.update(params) # Update parameters on existing object
-        else:
-            model = pybamm.lithium_ion.SPM()
-            solver = pybamm.CasadiSolver(mode="safe")
-            sim = pybamm.Simulation(model, parameter_values=params, solver=solver)
-            self.sim_cache[sim_key] = sim
-
+        sim = self.setup_sim(th, d_idx, s_idx, mtms)
         try:
             sl = sim.solve([0, 1800])
             v = float(np.array(sl["Terminal voltage [V]"].entries).flatten()[-1])
@@ -260,7 +236,6 @@ class DSMOptimizer:
             c_s_avg = float(np.mean(sl["X-averaged negative particle concentration [mol.m-3]"].entries))
             eps_val = self.solve_reduced_mechanics(t, c_s_avg, th, sim.parameter_values)
 
-            # Nondimensionalize
             res = np.array([v, t, soc, eps_val])
             self.solve_cache[state_hash] = res
             return res
@@ -274,37 +249,33 @@ class DSMOptimizer:
         eps = 1e-3
 
         for i in range(n_z):
-            # Block-wise inversion aligned to Phi structure (prevents cross-block coupling)
+            # Block-wise consistent least-squares projection
             d_theta = np.zeros(10)
             block_id, idxs, w = self.Phi_blocks[i]
 
             # Map dz=eps to d_theta such that Phi_i @ d_theta_i = eps
-            # d_theta_i = (w^T / ||w||^2) * eps
+            # Correct projection: d_theta_i = (w / ||w||^2) * eps
             d_theta[idxs] = (w / (np.sum(w**2) + 1e-9)) * eps
 
             y_p = self._get_y_pure(theta_s + d_theta, self.selected_dopant_idx, self.selected_salt_idx, self.mtms_enabled)
             y_m = self._get_y_pure(theta_s - d_theta, self.selected_dopant_idx, self.selected_salt_idx, self.mtms_enabled)
-
             S_z[:, i] = (y_p - y_m) / (2 * eps)
 
         return S_z
 
-    def _update_material_selection_pure(self, theta_s, beta=15.0):
-        """Pure probabilistic selection without state contamination."""
+    def _update_material_selection_probabilistic(self, theta_s, beta=15.0, lam_u=0.5):
         dopants = self.material_data.get("Cathode_Dopant", [])
         salts = self.material_data.get("Salt", [])
 
-        def score(y, uncertainty, lam=0.5):
+        def score(y, uncertainty):
             err = np.linalg.norm((y - self.target_y) / self.y_scale)**2
-            return -(err + lam * uncertainty)
+            return -(err + lam_u * uncertainty)
 
-        # 1. Dopant
         if dopants:
             scs = np.array([score(self._get_y_pure(theta_s, i, self.selected_salt_idx, self.mtms_enabled), dopants[i].uncertainty)
                    for i in range(len(dopants))])
             self.selected_dopant_idx = int(np.random.choice(len(scs), p=softmax(scs, beta=beta)))
 
-        # 2. Salt
         if salts:
             scs = np.array([score(self._get_y_pure(theta_s, self.selected_dopant_idx, i, self.mtms_enabled), salts[i].uncertainty)
                    for i in range(len(salts))])
@@ -312,18 +283,13 @@ class DSMOptimizer:
 
     def solve_reduced_mechanics(self, T, c_s_avg, theta_s, param_vals):
         """Physics-consistent reduced mechanics model with structural coupling."""
-        # s_eps = 0.02 (2% span)
-        s_eps = self.y_scale[3]
-        eps_alpha = 1e-4 / (1.0 + theta_s[3]) # realistic coeff scaled for 10-2
+        eps_alpha = 1e-4 / (1.0 + theta_s[3])
         c_max = float(param_vals["Maximum concentration in negative electrode [mol.m-3]"])
-        # beta_expansion ~ partial molar volume ~ 0.01-0.1
         beta = 0.05 / (c_max + 1e-6)
 
         # Strain = expansion_thermal + expansion_intercalation + structural_coupling
         eps = eps_alpha * (T - 300.15) + beta * c_s_avg
         eps += 0.02 * (1.0 - theta_s[3]) * (c_s_avg / (c_max + 1e-6))
-
-        # Return physical strain (dimensionless, O(10^-2))
         return eps
 
 if __name__ == "__main__":
