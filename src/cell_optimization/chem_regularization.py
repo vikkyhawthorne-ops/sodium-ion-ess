@@ -40,6 +40,10 @@ def compute_chemical_realization(base_formula: str, proxy_formula: str,
 # Calibrated Projection Matrix M (Identity baseline for identifiability)
 M_PROJECTION = np.eye(4, dtype=float)
 
+# Latent Physics Metric Gz (Curvature preference in physics directions)
+# Weights: Energy(10), Volume(5), Bandgap(2), Stability(1)
+GZ_METRIC = np.diag([10.0, 5.0, 2.0, 1.0])
+
 def derive_coupled_deltas(base_props: Dict[str, float],
                           proxy_props: Dict[str, float],
                           base_v: float,
@@ -69,7 +73,8 @@ def derive_coupled_deltas(base_props: Dict[str, float],
 
     channels = {
         "thermodynamic": {
-            "voltage_boost": dy[0] * realization * (base_v / 3.2),
+            # Voltage shift: V ~ -dEf (Thermodynamic consistency)
+            "voltage_boost": -dy[0] * realization * (base_v / 3.2),
             "stability_shift": dy[3] * realization
         },
         "kinetic": {

@@ -144,8 +144,8 @@ class MaterialMappingEngine:
         return {}
 
     def _save_cache(self):
-        with open(CACHE_FILE, "w") as f:
-            json.dump(self.cache, f, indent=2)
+        # Cache disabled as per PR requirements
+        pass
 
     def _valid_props(self, p: Dict[str, Any]) -> bool:
         required = ["stability", "formation_energy", "band_gap", "volume_per_atom"]

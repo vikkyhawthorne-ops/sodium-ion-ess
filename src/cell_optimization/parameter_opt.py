@@ -6,6 +6,7 @@ from copy import deepcopy
 from functools import lru_cache
 from nfpp_sodium_ion.src.cell_parameters.cell_alpha import get_parameter_values
 from src.cell_optimization.material_opt import MaterialMappingEngine
+from src.cell_optimization.chem_regularization import GZ_METRIC
 
 try:
     import dolfinx
@@ -169,25 +170,32 @@ class DSMOptimizer:
                 # 2. Material Selection Update (Pure Evaluation)
                 self._update_material_selection_pure(theta_s)
 
-                # 3. Regularized Update Step with Physical Scaling
+                # 3. Riemannian Natural Gradient Update Step
                 r = (y - self.target_y) / self.y_scale
                 S_norm = S_theta / self.y_scale[:, None]
 
-                # Spectral clipping
+                # Spectral clipping for numerical conditioning
                 U, s_val, Vh = np.linalg.svd(S_norm, full_matrices=False)
                 s_clipped = np.clip(s_val, 1e-3, None)
                 S_norm = U @ np.diag(s_clipped) @ Vh
 
-                G = S_norm.T @ S_norm + self.lam * np.eye(len(theta_s))
-                # Trace-based conditioning
+                # Induced Riemannian Metric (Pullback to theta-space)
+                # G_theta = Phi^T G_z Phi
+                G_theta = self.Phi.T @ GZ_METRIC @ self.Phi
+
+                # Full Hessian approximation on the physics manifold
+                # G = J^T Sigma_y^-1 J + lambda * G_theta
+                G = S_norm.T @ S_norm + self.lam * G_theta
+
+                # Trace-based conditioning for numerical stability
                 G += 0.01 * np.eye(len(theta_s)) * np.trace(G)/len(theta_s)
 
                 # Material uncertainty augmentation (Channel-aligned covariance propagation)
-                # G += lambda_u * S^T * Sigma_y * S
                 u = self.material_data["Cathode_Dopant"][self.selected_dopant_idx].uncertainty
                 Sigma_y = np.diag(self.y_scale**2) * u
                 G += 0.1 * S_norm.T @ Sigma_y @ S_norm
 
+                # Natural Gradient Update
                 update = np.linalg.solve(G, S_norm.T @ r)
                 theta_s = theta_s - self.lr * update
 
@@ -208,12 +216,6 @@ class DSMOptimizer:
         theta[3:6] = np.clip(theta[3:6], 0.2, 0.7)
         # Loading (volume fractions)
         theta[7:9] = np.clip(theta[7:9], 0.4, 0.9)
-
-        # Capacity ratio consistency (Qn/Qp approx 1.0)
-        # Account for particle radius effect on active surface if needed, here we use volume capacity
-        capacity_ratio = (theta[8] * theta[1]) / (theta[7] * theta[0] + 1e-9)
-        # Enforce consistency: 0.9 <= ratio <= 1.1
-        theta *= np.clip(1.0 / capacity_ratio, 0.95, 1.05)
 
         # N/P Ratio Constraint refinement
         np_ratio = (theta[1] * theta[8]) / (theta[0] * theta[7] + 1e-9)
