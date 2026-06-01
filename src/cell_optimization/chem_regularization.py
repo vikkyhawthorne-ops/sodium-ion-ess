@@ -32,24 +32,26 @@ def compute_chemical_realization(base_formula: str, proxy_formula: str,
     df = (proxy_props["formation_energy"] - base_props["formation_energy"])
 
     # Bounded Logistic Fusion (prevents realization collapse)
-    # Penalizes mismatches exponentially in the latent score z
     z = - (1.2 * dv**2 + 0.8 * de**2 + 0.3 * df**2)
     r_phys = 1 / (1 + math.exp(-z))
 
     return float(np.clip(r_chem * r_phys, 0.0, 1.0))
 
-# Calibrated Projection Matrix M
-# Using Identity-initialized baseline for identifiability and physical consistency
+# Calibrated Projection Matrix M (Identity baseline for identifiability)
 M_PROJECTION = np.eye(4, dtype=float)
 
 def derive_coupled_deltas(base_props: Dict[str, float],
                           proxy_props: Dict[str, float],
                           base_v: float,
-                          realization: float) -> Dict[str, float]:
+                          realization: float) -> Dict[str, Dict[str, float]]:
     """
-    Derives performance deltas using the latent physics vector and projection matrix.
+    Derives performance deltas using typed parameter channels and matrix-based
+    latent physics vector.
+
+    Returns:
+        Dict organized by channels: thermodynamic, kinetic, transport, structural.
     """
-    # Latent Physics Vector z (normalized and dimensionless where possible)
+    # Latent Physics Vector z (dimensionless proxies)
     z = np.array([
         (proxy_props["formation_energy"] - base_props["formation_energy"]),
         (proxy_props["volume_per_atom"] - base_props["volume_per_atom"]) / (base_props["volume_per_atom"] + 1e-9),
@@ -60,12 +62,26 @@ def derive_coupled_deltas(base_props: Dict[str, float],
     # Multi-dimensional projection
     dy = M_PROJECTION @ z
 
-    # Performance projections (clamped and scaled)
-    voltage_boost = dy[0] * realization * (base_v / 3.2)
-    # Diffusivity: exp scaling of structural/electronic proxy
-    diffusivity_mult = math.exp(dy[1] * realization)
+    # Map projected physics to typed channels with consistent scaling logic
+    # thermodynamic: additive (theta' = theta + beta*delta)
+    # kinetic/transport: log-space multiplicative (theta' = theta * exp(alpha*delta))
 
-    return {
-        "voltage_boost": float(voltage_boost),
-        "diffusivity_mult": float(max(0.1, min(10.0, diffusivity_mult)))
+    channels = {
+        "thermodynamic": {
+            "voltage_boost": dy[0] * realization * (base_v / 3.2),
+            "stability_shift": dy[3] * realization
+        },
+        "kinetic": {
+            # ln(i0/i0_ref) proportional to dEf/dEg mismatch
+            "reaction_rate_log_delta": (0.1 * dy[0] - 0.2 * dy[2]) * realization
+        },
+        "transport": {
+            # ln(D/D0) proportional to volume and electronic distances
+            "diffusivity_log_delta": (1.2 * dy[1] - 0.5 * dy[2]) * realization
+        },
+        "structural": {
+            "volume_expansion_coeff": dy[1] * realization
+        }
     }
+
+    return channels

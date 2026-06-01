@@ -243,17 +243,23 @@ class MaterialMappingEngine:
 
             deltas, realization = physics.cathode_perturbation(proxy_props, base_cathode, self.base_params, BASE_CATHODE_FORMULA, proxy_formula)
 
-            # Transfer Learning Property Correction
+            # Uncertainty-aware Weighted Correction (Inverse-variance weighting)
+            # corrected = (w*proxy + w0*base) / (w + w0)
+            u_proxy = proxy_props.get("uncertainty", 0.1)
+            u_base = base_cathode.get("uncertainty", 0.05)
+
+            w_p = 1.0 / (u_proxy + 1e-6)
+            w_b = 1.0 / (u_base + 1e-6)
+
             corrected_props = {
-                k: base_cathode[k] + realization * (proxy_props[k] - base_cathode[k])
+                k: (w_p * proxy_props[k] + w_b * base_cathode[k]) / (w_p + w_b)
                 for k in base_cathode if k in proxy_props
             }
-            uncertainty = proxy_props.get("uncertainty", 0.1)
 
             system["Cathode_Dopant"].append(MaterialCandidate(
                 name=d, category="Cathode_Dopant", composition=proxy_formula,
                 properties=corrected_props, projected_delta=deltas, confidence=conf,
-                realization=realization, uncertainty=uncertainty, provenance=src))
+                realization=realization, uncertainty=u_proxy, provenance=src))
 
         for name, formula in ALLOWED_SALTS.items():
             props, conf, src = self._resolve_material(formula, "Salt")

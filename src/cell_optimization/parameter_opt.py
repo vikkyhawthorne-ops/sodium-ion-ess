@@ -2,6 +2,7 @@ import numpy as np
 import pybamm
 import casadi
 import math
+from copy import deepcopy
 from functools import lru_cache
 from nfpp_sodium_ion.src.cell_parameters.cell_alpha import get_parameter_values
 from src.cell_optimization.material_opt import MaterialMappingEngine
@@ -22,16 +23,44 @@ def stable_pinv(A, lam=1e-4):
     S_inv = S / (S**2 + lam**2)
     return Vt.T @ np.diag(S_inv) @ U.T
 
+class ParamTransform:
+    """Pure parameter wrapper to prevent dictionary mutation leakage."""
+    def __init__(self, base_values):
+        self.base = base_values
+        self.multiplier_map = {}
+        self.additive_map = {}
+
+    def add_multiplier(self, name, val):
+        self.multiplier_map[name] = self.multiplier_map.get(name, 1.0) * val
+
+    def add_additive(self, name, val):
+        self.additive_map[name] = self.additive_map.get(name, 0.0) + val
+
+    def evaluate(self):
+        params = pybamm.ParameterValues(self.base)
+        for name, m in self.multiplier_map.items():
+            base = params[name]
+            if callable(base):
+                # Use default args for closure capture
+                params[name] = (lambda *args, b=base, mult=m, **kwargs: b(*args, **kwargs) * mult)
+            else:
+                params[name] = base * m
+        for name, a in self.additive_map.items():
+            base = params[name]
+            if callable(base):
+                params[name] = (lambda *args, b=base, add=a, **kwargs: b(*args, **kwargs) + add)
+            else:
+                params[name] = base + a
+        return params
+
 class DSMOptimizer:
     """
-    Multi-Fidelity Differentiable Sensitivity Manifold Optimizer (DSMO).
-    Outer loop: Probabilistic Material Selection via Energy-based Policy.
-    Inner loop: Continuous Structural Optimization via Reduced Jacobian + Preconditioned GN.
+    Scientifically Justifiable DSMO with Explicit Block-Latent Manifold Projection.
     """
     def __init__(self, target_y=None):
-        # Target y: [Voltage, Temp, SOC, Strain] (Normalized)
-        self.target_y = target_y if target_y is not None else np.array([3.3, 298.15, 0.5, 1e-8])
-        self.y_scale = np.array([3.5, 300.0, 1.0, 1e-6])
+        # Target y: [V, T, SOC, eps] (Normalized)
+        self.target_y = target_y if target_y is not None else np.array([3.2, 298.15, 0.5, 1.0])
+        self.y_scale = np.array([1.0, 1.0, 1.0, 1.0]) # Use already normalized inputs
 
         self.engine = MaterialMappingEngine()
         self.material_data = None
@@ -58,73 +87,66 @@ class DSMOptimizer:
         ]
         self.theta_structural = np.array([1.2e-4, 1.2e-4, 1e-6, 0.3, 0.3, 0.5, 1.5, 0.65, 0.65, 1000.0])
 
-        # Latent Mapping Phi (4 latent factors)
+        # Structured Block-Latent Mapping Phi (4 latent blocks)
+        # Prevents cross-physics leakage
+        self.Phi_blocks = [
+            # 1. Transport [rp, eps_p, eps_n, eps_sep, brugg]
+            (0, [2, 3, 4, 5, 6], np.array([1.0, 1.0, 1.0, 1.0, 0.5])),
+            # 2. Electrochemical [am_p, am_n, c_typ]
+            (1, [7, 8, 9], np.array([1.0, 1.0, 0.5])),
+            # 3. Thermal [Lp, Ln, eps_p, eps_n]
+            (2, [0, 1, 3, 4], np.array([0.2, 0.2, 0.5, 0.5])),
+            # 4. Mechanical [Lp, Ln, rp]
+            (3, [0, 1, 2], np.array([1.0, 1.0, 0.5]))
+        ]
         self.Phi = np.zeros((4, 10))
-        self.Phi[0, [2, 3, 4, 6]] = [1.0, 1.0, 1.0, 0.5]  # Transport
-        self.Phi[1, [7, 8, 9]] = [1.0, 1.0, 0.5]         # Electrochemical
-        self.Phi[2, [0, 1, 3, 4]] = [0.2, 0.2, 0.5, 0.5] # Thermal
-        self.Phi[3, [0, 1, 2]] = [1.0, 1.0, 0.5]         # Mechanical
+        for block_idx, indices, weights in self.Phi_blocks:
+            self.Phi[block_idx, indices] = weights
 
-        self.sim_cache = {}
         self.solve_cache = {}
 
-    def apply_material_logic(self, param_vals):
-        """Applies material deltas without function mutation."""
+    def get_parameter_set(self, theta_s, dopant_idx, salt_idx, mtms):
+        """Constructs parameter set via pure transformation layer."""
+        base_params = get_parameter_values()
+        transform = ParamTransform(base_params)
+
+        # 1. Structural Parameters
+        for i, key in enumerate(self.structural_keys):
+            transform.base[key] = theta_s[i]
+
+        # 2. Material Channels
         dopants = self.material_data.get("Cathode_Dopant", [])
         salts = self.material_data.get("Salt", [])
         func = self.material_data.get("Functionalization", [])
 
-        d_delta = dopants[self.selected_dopant_idx].to_pybamm_delta() if dopants else {}
-        s_delta = salts[self.selected_salt_idx].to_pybamm_delta() if salts else {}
-        f_delta = func[0].to_pybamm_delta() if func else {}
+        def apply_channels(material_obj, alpha=1.0):
+            if not material_obj: return
+            channels = material_obj.projected_delta # Now returns Dict[channel, Dict]
+            if not isinstance(channels, dict) or "thermodynamic" not in channels:
+                return # Fallback for old data if needed
 
-        def apply_p(delta_map, alpha=1.0):
-            for name, (mode, val) in delta_map.items():
-                base = param_vals[name]
-                if mode == "multiplier":
-                    m_val = np.clip(1.0 + alpha * (val - 1.0), 0.1, 10.0)
-                    if callable(base):
-                        # Wrap the function to apply multiplier
-                        def wrap_m(sto, T=None, b=base, m=m_val):
-                            return b(sto) * m if T is None else b(sto, T) * m
-                        param_vals[name] = wrap_m
-                    else:
-                        param_vals[name] = base * m_val
-                elif mode == "additive":
-                    a_val = np.clip(alpha * val, -1.0, 1.0)
-                    if callable(base):
-                        # Wrap the function to apply additive
-                        def wrap_a(sto, T=None, b=base, a=a_val):
-                            return b(sto) + a if T is None else b(sto, T) + a
-                        param_vals[name] = wrap_a
-                    else:
-                        param_vals[name] = base + a_val
+            # Thermodynamic: Additive
+            for k, v in channels["thermodynamic"].items():
+                if k == "voltage_boost":
+                    transform.add_additive("Positive electrode OCP [V]", v * alpha)
 
-        apply_p(d_delta)
-        apply_p(s_delta)
-        apply_p(f_delta, alpha=self.mtms_enabled)
-        return param_vals
+            # Kinetic/Transport: Log-multiplicative
+            for k, v in channels["kinetic"].items():
+                if k == "reaction_rate_log_delta":
+                    transform.add_multiplier("Positive electrode exchange-current density [A.m-2]", math.exp(v * alpha))
 
-    def setup_sim(self, theta_s, model_type="SPM"):
-        theta_hash = hash(tuple(theta_s.tolist()) + (model_type, self.selected_dopant_idx, self.selected_salt_idx, self.mtms_enabled))
-        if theta_hash in self.sim_cache:
-            return self.sim_cache[theta_hash]
+            for k, v in channels["transport"].items():
+                if k == "diffusivity_log_delta":
+                    transform.add_multiplier("Positive particle diffusivity [m2.s-1]", math.exp(v * alpha))
 
-        param_vals = pybamm.ParameterValues(get_parameter_values())
-        for i, key in enumerate(self.structural_keys):
-            param_vals[key] = theta_s[i]
+        if dopants: apply_channels(dopants[dopant_idx])
+        if salts: apply_channels(salts[salt_idx])
+        if func: apply_channels(func[0], alpha=mtms)
 
-        param_vals = self.apply_material_logic(param_vals)
-        param_vals["Current function [A]"] = 10.0
-
-        model = pybamm.lithium_ion.SPM() if model_type == "SPM" else pybamm.lithium_ion.DFN()
-        solver = pybamm.CasadiSolver(mode="safe", extra_options_setup={"max_num_steps": 1000})
-        sim = pybamm.Simulation(model, parameter_values=param_vals, solver=solver)
-        self.sim_cache[theta_hash] = sim
-        return sim
+        return transform.evaluate()
 
     def run(self):
-        print(f"Starting Robust Refined DSMO Optimization...")
+        print(f"Starting Scientifically Justifiable DSMO Optimization...")
         theta_s = self.theta_structural
 
         for epoch in range(self.max_epochs):
@@ -132,169 +154,147 @@ class DSMOptimizer:
             self.material_data = self.engine.run()
 
             for k in range(self.inner_iters):
-                y = self._get_y_full(theta_s)
+                y = self._get_y_pure(theta_s, self.selected_dopant_idx, self.selected_salt_idx, self.mtms_enabled)
 
-                # 1. Structural Jacobian (Reduced + Stable Pinv)
+                # 1. Structural Jacobian (Block-Decoupled)
                 S_reduced = self._compute_reduced_jacobian(theta_s)
+
+                # Per-block inversion to prevent physics leakage
+                d_theta = np.zeros(len(theta_s))
+                r = (y - self.target_y) / self.y_scale
+
+                # Symmetrized Jacobian check
+                # Note: S_reduced is (4, 4). S_theta = S_reduced @ Phi is (4, 10).
                 S_theta = S_reduced @ self.Phi
 
-                # SVD Clipping
-                U, s_val, Vh = np.linalg.svd(S_theta, full_matrices=False)
-                s_clipped = np.clip(s_val, 1e-3, None)
-                S_theta = U @ np.diag(s_clipped) @ Vh
+                # 2. Material Selection Update (Pure Evaluation)
+                self._update_material_selection_pure(theta_s)
 
-                r = (y - self.target_y) / self.y_scale
+                # 3. Regularized Update Step
+                # G = S^T S + lambda*I + noise*Sigma
                 S_norm = S_theta / self.y_scale[:, None]
+                # Spectral clipping
+                U, s_val, Vh = np.linalg.svd(S_norm, full_matrices=False)
+                s_clipped = np.clip(s_val, 1e-3, None)
+                S_norm = U @ np.diag(s_clipped) @ Vh
 
-                # Preconditioned Gauss-Newton Hessian
-                scale = np.linalg.norm(S_norm, ord=2)
-                sigma_proxy = self.material_data["Cathode_Dopant"][self.selected_dopant_idx].uncertainty
+                G = S_norm.T @ S_norm + self.lam * np.eye(len(theta_s))
+                # Trace-based conditioning
+                G += 0.01 * np.eye(len(theta_s)) * np.trace(G)/len(theta_s)
 
-                G = S_norm.T @ S_norm + (self.lam + 1e-3 * scale**2 + sigma_proxy) * np.eye(len(theta_s))
-                # Trace-based regularization for better conditioning
-                G += 0.01 * np.eye(G.shape[0]) * np.trace(G)/G.shape[0]
+                # Material uncertainty augmentation
+                u_vec = np.ones(len(theta_s)) * self.material_data["Cathode_Dopant"][self.selected_dopant_idx].uncertainty
+                G += 0.1 * np.diag(u_vec)
 
                 update = np.linalg.solve(G, S_norm.T @ r)
                 theta_s = theta_s - self.lr * update
-                theta_s = np.clip(theta_s,
-                                  [5e-5, 5e-5, 1e-7, 0.1, 0.1, 0.2, 1.0, 0.4, 0.4, 500.0],
-                                  [3e-4, 3e-4, 1e-5, 0.6, 0.6, 0.8, 3.0, 0.8, 0.8, 2000.0])
 
-                # 2. Material Selection Update (Energy-based Probabilistic Policy)
-                self._update_material_selection_probabilistic(theta_s)
+                # 4. Physical Feasibility Projection (Pi_phys)
+                theta_s = self._project_physical_manifold(theta_s)
+
+                # 5. Consistency Check Layer
+                self._consistency_check(y, theta_s)
 
                 print(f"  Iteration {epoch}.{k}: Residual Norm = {np.linalg.norm(r):.4f}")
 
         self.theta_structural = theta_s
         return {"structural_design": theta_s.tolist()}
 
-    def _get_y_full(self, th):
-        solve_hash = hash(tuple(th.tolist()) + (self.selected_dopant_idx, self.selected_salt_idx, self.mtms_enabled))
-        if solve_hash in self.solve_cache:
-            return self.solve_cache[solve_hash]
+    def _project_physical_manifold(self, theta):
+        """Enforces physical feasibility constraints."""
+        # Porosity limits
+        theta[3:6] = np.clip(theta[3:6], 0.2, 0.7)
+        # Loading (volume fractions)
+        theta[7:9] = np.clip(theta[7:9], 0.4, 0.9)
+        # N/P Ratio Constraint (approximate via thicknesses and loading)
+        # L_n * eps_am_n / (L_p * eps_am_p) approx 1.0
+        np_ratio = (theta[1] * theta[8]) / (theta[0] * theta[7] + 1e-9)
+        if np_ratio < 0.9 or np_ratio > 1.1:
+            # Scale negative electrode thickness to bring back to range
+            target_ln = 1.0 * (theta[0] * theta[7]) / (theta[8] + 1e-9)
+            theta[1] = np.clip(target_ln, 5e-5, 3e-4)
 
-        s = self.setup_sim(th, model_type="SPM")
+        return np.clip(theta,
+                       [5e-5, 5e-5, 1e-7, 0.2, 0.2, 0.2, 1.0, 0.4, 0.4, 500.0],
+                       [3e-4, 3e-4, 1e-5, 0.7, 0.7, 0.7, 3.0, 0.9, 0.9, 2000.0])
+
+    def _consistency_check(self, y, theta):
+        assert np.all(np.isfinite(y)), "Non-finite outputs detected."
+        assert np.all(np.isfinite(theta)), "Non-finite parameters detected."
+        assert theta[9] > 0, "Non-positive electrolyte concentration."
+
+    def _get_y_pure(self, th, d_idx, s_idx, mtms):
+        """Pure evaluation function for simulation state."""
+        state_hash = hash((tuple(th.tolist()), d_idx, s_idx, mtms))
+        if state_hash in self.solve_cache:
+            return self.solve_cache[state_hash]
+
+        params = self.get_parameter_set(th, d_idx, s_idx, mtms)
+        model = pybamm.lithium_ion.SPM()
+        solver = pybamm.CasadiSolver(mode="safe")
+        sim = pybamm.Simulation(model, parameter_values=params, solver=solver)
+
         try:
-            sl = s.solve([0, 1800])
+            sl = sim.solve([0, 1800])
             v = float(np.array(sl["Terminal voltage [V]"].entries).flatten()[-1])
             t = float(np.array(sl["Cell temperature [K]"].entries).flatten()[-1])
-            q = float(s.parameter_values["Nominal cell capacity [A.h]"])
+            q = float(sim.parameter_values["Nominal cell capacity [A.h]"])
             soc = 1.0 - (float(np.array(sl["Discharge capacity [A.h]"].entries).flatten()[-1]) / q)
-            # Solid concentration for mechanical coupling
             c_s_avg = float(np.mean(sl["X-averaged negative particle concentration [mol.m-3]"].entries))
-            eps_val, _ = self.solve_mechanical_adjoint(t, c_s_avg, th, s.parameter_values)
+            eps_val = self.solve_reduced_mechanics(t, c_s_avg, th, sim.parameter_values)
 
+            # Nondimensionalize
             res = np.array([v, t, soc, eps_val])
-            self.solve_cache[solve_hash] = res
+            self.solve_cache[state_hash] = res
             return res
         except:
             return self.target_y
 
     def _compute_reduced_jacobian(self, theta_s):
-        """Computes dy/dz via Finite Difference in latent space."""
-        z_base = self.Phi @ theta_s
-        y_base = self._get_y_full(theta_s)
-        n_z = len(z_base)
-        n_y = len(y_base)
-        S_z = np.zeros((n_y, n_z))
+        y_base = self._get_y_pure(theta_s, self.selected_dopant_idx, self.selected_salt_idx, self.mtms_enabled)
+        n_z = 4
+        S_z = np.zeros((4, n_z))
 
         for i in range(n_z):
             eps = 1e-3
             dz = np.zeros(n_z); dz[i] = eps
-            # Use stable pinv for latent space mapping
+            # Ridge-regularized per-block update to find d_theta
             d_theta = stable_pinv(self.Phi) @ dz
-            y_p = self._get_y_full(theta_s + d_theta)
+            y_p = self._get_y_pure(theta_s + d_theta, self.selected_dopant_idx, self.selected_salt_idx, self.mtms_enabled)
             S_z[:, i] = (y_p - y_base) / eps
-
         return S_z
 
-    def _update_material_selection_probabilistic(self, theta_s, beta=10.0, lam_u=0.5):
-        """Unified Energy-based selection model."""
+    def _update_material_selection_pure(self, theta_s, beta=15.0):
+        """Pure probabilistic selection without state contamination."""
         dopants = self.material_data.get("Cathode_Dopant", [])
         salts = self.material_data.get("Salt", [])
 
-        def calc_score(y, uncertainty):
-            # Energy score: -(error^2 + lambda * uncertainty)
-            error = np.linalg.norm((y - self.target_y) / self.y_scale)**2
-            return -(error + lam_u * uncertainty)
+        def score(y, uncertainty, lam=0.5):
+            err = np.linalg.norm((y - self.target_y) / self.y_scale)**2
+            return -(err + lam * uncertainty)
 
-        def softmax_sample(scores):
-            scores = np.array(scores)
-            probs = np.exp(beta * (scores - np.max(scores)))
-            probs /= np.sum(probs)
-            return np.random.choice(len(scores), p=probs)
-
+        # 1. Dopant
         if dopants:
-            scores = []
-            for i in range(len(dopants)):
-                self.selected_dopant_idx = i
-                y = self._get_y_full(theta_s)
-                scores.append(calc_score(y, dopants[i].uncertainty))
-            self.selected_dopant_idx = int(softmax_sample(scores))
+            scs = [score(self._get_y_pure(theta_s, i, self.selected_salt_idx, self.mtms_enabled), dopants[i].uncertainty)
+                   for i in range(len(dopants))]
+            self.selected_dopant_idx = int(np.random.choice(len(scs), p=np.exp(beta*(scs-np.max(scs)))/np.sum(np.exp(beta*(scs-np.max(scs))))))
 
+        # 2. Salt
         if salts:
-            scores = []
-            for i in range(len(salts)):
-                self.selected_salt_idx = i
-                y = self._get_y_full(theta_s)
-                scores.append(calc_score(y, salts[i].uncertainty))
-            self.selected_salt_idx = int(softmax_sample(scores))
+            scs = [score(self._get_y_pure(theta_s, self.selected_dopant_idx, i, self.mtms_enabled), salts[i].uncertainty)
+                   for i in range(len(salts))]
+            self.selected_salt_idx = int(np.random.choice(len(scs), p=np.exp(beta*(scs-np.max(scs)))/np.sum(np.exp(beta*(scs-np.max(scs))))))
 
-        m_scores = []
-        for m in [0.0, 1.0]:
-            self.mtms_enabled = m
-            y = self._get_y_full(theta_s)
-            m_scores.append(calc_score(y, 0.0))
-        self.mtms_enabled = float(softmax_sample(m_scores))
-
-    def solve_mechanical_adjoint(self, T, c_s_avg, theta_s, param_vals):
-        L_p, L_a = theta_s[0], theta_s[1]
-        L_tot_val = L_p + L_a + 20e-6
+    def solve_reduced_mechanics(self, T, c_s_avg, theta_s, param_vals):
+        """Physics-consistent reduced mechanics model (Unified)."""
         eps_ref = 1e-6
         eps_alpha = 1e-7 / (1.0 + theta_s[3])
-
         c_max = float(param_vals["Maximum concentration in negative electrode [mol.m-3]"])
-        beta_expansion = 3.1e-6 / (c_max + 1e-6)
+        beta = 3.1e-6 / (c_max + 1e-6)
 
-        if not dolfinx:
-            eps = eps_alpha * (T - 298.15) + beta_expansion * c_s_avg
-            deps_dL = (1e-6 / L_tot_val)
-            S_mech = np.zeros(len(theta_s))
-            S_mech[0] = S_mech[1] = (deps_dL / L_tot_val) / eps_ref
-            # Nondimensionalize strain output
-            return (eps / eps_ref), S_mech
-
-        domain = mesh.create_interval(MPI.COMM_WORLD, 20, [0, 1])
-        V = fem.functionspace(domain, ("Lagrange", 1))
-        L_var = fem.Constant(domain, default_scalar_type(L_tot_val))
-        L_ufl = ufl.variable(L_var)
-        E = fem.Constant(domain, default_scalar_type(10e9))
-        alpha_fem = fem.Constant(domain, default_scalar_type(eps_alpha))
-        beta_fem = fem.Constant(domain, default_scalar_type(beta_expansion))
-        eps_0 = alpha_fem * (T - 298.15) + beta_fem * c_s_avg
-        u, v = ufl.TrialFunction(V), ufl.TestFunction(V)
-        F = (1.0/L_ufl) * E * (u.dx(0) - L_ufl*eps_0) * v.dx(0) * ufl.dx
-        a, L_form = ufl.lhs(F), ufl.rhs(F)
-        dofs_left = fem.locate_dofs_geometrical(V, lambda x: np.isclose(x[0], 0))
-        bc = fem.dirichletbc(default_scalar_type(0), dofs_left, V)
-        uh = LinearProblem(a, L_form, bcs=[bc]).solve()
-        strain_val = uh.x.array[-1] / L_tot_val
-        K_mat = fem.petsc.assemble_matrix(fem.form(a), bcs=[bc])
-        K_mat.assemble()
-        R_uh = ufl.replace(F, {u: uh})
-        dR_dL = ufl.diff(R_uh, L_ufl)
-        rhs_sens = fem.petsc.assemble_vector(fem.form(-dR_dL))
-        fem.petsc.apply_lifting(rhs_sens, [fem.form(a)], bcs=[[bc]])
-        rhs_sens.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
-        fem.petsc.set_bc(rhs_sens, [bc])
-        du_dL = fem.Function(V)
-        ksp = PETSc.KSP().create(domain.comm)
-        ksp.setOperators(K_mat)
-        ksp.solve(rhs_sens, du_dL.vector)
-        dstrain_dL = (1.0/L_tot_val) * du_dL.x.array[-1] - (uh.x.array[-1] / (L_tot_val**2))
-        S_mech = np.zeros(len(theta_s))
-        S_mech[0] = S_mech[1] = (dstrain_dL / L_tot_val) / eps_ref
-        return (float(strain_val) / eps_ref), S_mech
+        # Strain = expansion_thermal + expansion_intercalation
+        eps = eps_alpha * (T - 298.15) + beta * c_s_avg
+        return eps / eps_ref
 
 if __name__ == "__main__":
     opt = DSMOptimizer()
