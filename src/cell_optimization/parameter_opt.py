@@ -58,10 +58,14 @@ class DSMOptimizer:
     Scientifically Justifiable DSMO with Explicit Block-Latent Manifold Projection.
     """
     def __init__(self, target_y=None):
-        # Physically Derived Target y: [V, T, SOC, eps]
-        # v_ref = 3.2V, T_ref = 298.15K, eps_ref = 1e-6
-        self.target_y = target_y if target_y is not None else np.array([3.2, 298.15, 0.5, 1.0])
-        self.y_ref = np.array([3.2, 298.15, 1.0, 1.0]) # Physical normalization bases
+        # Physically Grounded Operating Point and Scaling
+        # Target y: [V, T, SOC, eps]
+        # Reference point y_ref (operating midpoint)
+        self.y_ref = np.array([3.2, 300.0, 0.5, 0.02])
+        # Physical span s_i (span scales for dimensionless consistency)
+        self.y_scale = np.array([2.0, 50.0, 1.0, 0.02])
+
+        self.target_y = target_y if target_y is not None else self.y_ref
 
         self.engine = MaterialMappingEngine()
         self.material_data = None
@@ -165,9 +169,9 @@ class DSMOptimizer:
                 # 2. Material Selection Update (Pure Evaluation)
                 self._update_material_selection_pure(theta_s)
 
-                # 3. Regularized Update Step with Physical Normalization
-                r = (y - self.target_y) / self.y_ref
-                S_norm = S_theta / self.y_ref[:, None]
+                # 3. Regularized Update Step with Physical Scaling
+                r = (y - self.target_y) / self.y_scale
+                S_norm = S_theta / self.y_scale[:, None]
 
                 # Spectral clipping
                 U, s_val, Vh = np.linalg.svd(S_norm, full_matrices=False)
@@ -178,10 +182,11 @@ class DSMOptimizer:
                 # Trace-based conditioning
                 G += 0.01 * np.eye(len(theta_s)) * np.trace(G)/len(theta_s)
 
-                # Material uncertainty augmentation (Covariance-scaled damping)
+                # Material uncertainty augmentation (Channel-aligned covariance propagation)
+                # G += lambda_u * S^T * Sigma_y * S
                 u = self.material_data["Cathode_Dopant"][self.selected_dopant_idx].uncertainty
-                u_vec = np.ones(len(theta_s)) * u
-                G += (u_vec[:, None] * u_vec[None, :]) * 0.1
+                Sigma_y = np.diag(self.y_scale**2) * u
+                G += 0.1 * S_norm.T @ Sigma_y @ S_norm
 
                 update = np.linalg.solve(G, S_norm.T @ r)
                 theta_s = theta_s - self.lr * update
@@ -288,7 +293,7 @@ class DSMOptimizer:
         salts = self.material_data.get("Salt", [])
 
         def score(y, uncertainty, lam=0.5):
-            err = np.linalg.norm((y - self.target_y) / self.y_ref)**2
+            err = np.linalg.norm((y - self.target_y) / self.y_scale)**2
             return -(err + lam * uncertainty)
 
         # 1. Dopant
@@ -304,18 +309,20 @@ class DSMOptimizer:
             self.selected_salt_idx = int(np.random.choice(len(scs), p=softmax(scs, beta=beta)))
 
     def solve_reduced_mechanics(self, T, c_s_avg, theta_s, param_vals):
-        """Physics-consistent reduced mechanics model (Unified) with structural coupling."""
-        eps_ref = 1e-6
-        eps_alpha = 1e-7 / (1.0 + theta_s[3])
+        """Physics-consistent reduced mechanics model with structural coupling."""
+        # s_eps = 0.02 (2% span)
+        s_eps = self.y_scale[3]
+        eps_alpha = 1e-4 / (1.0 + theta_s[3]) # realistic coeff scaled for 10-2
         c_max = float(param_vals["Maximum concentration in negative electrode [mol.m-3]"])
-        beta = 3.1e-6 / (c_max + 1e-6)
+        # beta_expansion ~ partial molar volume ~ 0.01-0.1
+        beta = 0.05 / (c_max + 1e-6)
 
         # Strain = expansion_thermal + expansion_intercalation + structural_coupling
-        # Structural coupling to porosity (theta_s[3])
-        eps = eps_alpha * (T - 298.15) + beta * c_s_avg
-        eps += 0.05 * (1.0 - theta_s[3]) * (c_s_avg / (c_max + 1e-6))
+        eps = eps_alpha * (T - 300.15) + beta * c_s_avg
+        eps += 0.02 * (1.0 - theta_s[3]) * (c_s_avg / (c_max + 1e-6))
 
-        return eps / eps_ref
+        # Return physical strain (dimensionless, O(10^-2))
+        return eps
 
 if __name__ == "__main__":
     opt = DSMOptimizer()

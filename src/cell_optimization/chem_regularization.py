@@ -45,18 +45,19 @@ def derive_coupled_deltas(base_props: Dict[str, float],
                           base_v: float,
                           realization: float) -> Dict[str, Dict[str, float]]:
     """
-    Derives performance deltas using typed parameter channels and matrix-based
+    Derives performance deltas using typed parameter channels and dimensionless
     latent physics vector.
 
     Returns:
         Dict organized by channels: thermodynamic, kinetic, transport, structural.
     """
-    # Latent Physics Vector z (dimensionless proxies)
+    # Dimensionless Latent Physics Vector z
+    # Normalized by characteristic scales: Ef~2eV, V~10A^3, Eg~3eV, Stab~1eV
     z = np.array([
-        (proxy_props["formation_energy"] - base_props["formation_energy"]),
-        (proxy_props["volume_per_atom"] - base_props["volume_per_atom"]) / (base_props["volume_per_atom"] + 1e-9),
-        (proxy_props["band_gap"] - base_props["band_gap"]) / (base_props["band_gap"] + 1e-6),
-        (proxy_props["stability"] - base_props["stability"])
+        (proxy_props["formation_energy"] - base_props["formation_energy"]) / 2.0,
+        (proxy_props["volume_per_atom"] - base_props["volume_per_atom"]) / 10.0,
+        (proxy_props["band_gap"] - base_props["band_gap"]) / 3.0,
+        (proxy_props["stability"] - base_props["stability"]) / 1.0
     ])
 
     # Multi-dimensional projection
