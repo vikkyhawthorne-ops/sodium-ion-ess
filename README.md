@@ -10,7 +10,7 @@ This repository implements a high-fidelity digital twin and optimization framewo
 The plant environment represents the physical hardware and electrochemical dynamics, treated as a static baseline for control development:
 *   **Electrochemical Core**: Standalone 16S1P NFPP pouch-cell pack (10Ah, 48V) modeled via the Doyle-Fuller-Newman (DFN) framework.
 *   **Thermal Dynamics**: Distributed core-casing thermal nodes with natural convection and Arrhenius-based aging kinetics.
-*   **Power Conversion**: A full conversion and conditioning system (STS, PQC, isolated DC/DC) with SRF-PLL grid monitoring.
+*   **Power Conversion**: A full conversion and conditioning system (STS, PQC, isolated DC/DC).
 
 ### 2. Variable BMS Layer (Core Contribution)
 The primary research focus is the design and validation of a model-based Battery Management System:
