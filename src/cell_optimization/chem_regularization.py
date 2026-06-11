@@ -81,7 +81,9 @@ def derive_coupled_deltas(
     proxy_props: Dict[str, float]
 ) -> Dict[str, Dict[str, float]]:
     """
-    Physics-only transformation layer for cathode dopants.
+    Universal physics transformation layer.
+    Converts raw material property differences into physical performance deltas.
+    Includes Dopant, Salt, and Functionalization coupling logic.
     """
     dE = thermo_norm(proxy_props["formation_energy"], base_props["formation_energy"])
     dG = (proxy_props["band_gap"] - base_props["band_gap"]) / 1.0
@@ -89,15 +91,28 @@ def derive_coupled_deltas(
     # Positive dS means improvement (lower energy above hull)
     dS = (base_props["stability"] - proxy_props["stability"]) / 0.2
 
-    # Physics coupling rules
-    voltage_boost = -0.01 * dE # Small correction
+    # Universal Physics coupling rules
 
-    # Arrhenius form: D = D0 * exp(-Ea / KT)
+    # 1. Energetic/Thermodynamic
+    voltage_boost = -0.01 * dE # Small correction
+    stability_shift = dS
+    # Functionalization: reduced initial sodium loss via stability proxy
+    initial_loss_mult = math.exp(np.clip(-0.2 * dS, -5, 5))
+
+    # 2. Kinetic (Arrhenius-derived)
+    # D = D0 * exp(-Ea / KT)
     activation_delta = 0.2 * dV + 0.1 * dG
     diffusivity_log_delta = -activation_delta / (KT + 1e-9)
 
     reaction_rate_log_delta = 0.1 * dE - 0.3 * dG
-    stability_shift = dS
+    # Functionalization: SEI kinetics and Anode exchange current
+    sei_growth_mult = math.exp(np.clip(0.5 * dE - 0.2 * dS, -5, 5))
+    negative_exchange_log_delta = 0.4 * dS - 0.1 * dG
+
+    # 3. Transport/Secondary
+    transport_log_delta = -0.5 * dE + 0.2 * dV
+    # Interfacial resistance growth (SEI resistivity)
+    interfacial_log_delta = -0.8 * dS + 0.3 * dG
 
     def clip_log(x):
         return float(np.clip(x, -5, 5))
@@ -105,48 +120,21 @@ def derive_coupled_deltas(
     return {
         "thermodynamic": {
             "voltage_boost": float(voltage_boost),
-            "stability_shift": float(stability_shift)
+            "stability_shift": float(stability_shift),
+            "initial_loss_mult": float(initial_loss_mult)
         },
         "kinetic": {
-            "reaction_rate_log_delta": clip_log(reaction_rate_log_delta)
+            "reaction_rate_log_delta": clip_log(reaction_rate_log_delta),
+            "sei_growth_mult": float(sei_growth_mult),
+            "negative_exchange_log_delta": clip_log(negative_exchange_log_delta)
         },
         "transport": {
-            "diffusivity_log_delta": clip_log(diffusivity_log_delta)
+            "diffusivity_log_delta": clip_log(diffusivity_log_delta),
+            "conductivity_mult": float(math.exp(clip_log(transport_log_delta))),
+            "ion_transference_mult": 1.0 + 0.1 * float(np.tanh(transport_log_delta)),
+            "resistance_drift_mult": float(math.exp(clip_log(interfacial_log_delta)))
         },
         "structural": {
             "volume_expansion_coeff": float(dV)
         }
-    }
-
-def salt_physics(props: Dict[str, float], base_props: Dict[str, float]) -> Dict[str, Any]:
-    """Salt dissociation and transport physics."""
-    ef_diff = props["formation_energy"] - base_props["formation_energy"]
-    sigma_mult = math.exp(np.clip(-ef_diff / (2 * KT), -10, 10))
-    sigma_mult = min(max(sigma_mult, 0.1), 10.0)
-
-    delta_s = base_props["stability"] - props["stability"]
-    dissociation = 1.0 / (1.0 + math.exp(np.clip(25.0 * delta_s, -20, 20)))
-
-    return {
-        "thermodynamic": {"stability_shift": delta_s},
-        "kinetic": {},
-        "transport": {
-            "conductivity_mult": sigma_mult * dissociation,
-            "ion_transference_mult": 1.0 + (0.15 * dissociation)
-        },
-        "structural": {}
-    }
-
-def anode_physics(props: Dict[str, float]) -> Dict[str, Any]:
-    """Anode interface and SEI physics."""
-    s_thermo = props["stability"]
-    sei_growth = 0.5 + 0.5 * math.exp(np.clip(-s_thermo * 8.0, -20, 20))
-    r_sei = 1.0 + 0.4 * (1.0 - math.exp(np.clip(-s_thermo, -20, 20)))
-    loss = 0.7 + 0.3 * (1.0 - math.exp(np.clip(-s_thermo, -20, 20)))
-
-    return {
-        "thermodynamic": {"initial_loss_mult": loss},
-        "kinetic": {"sei_growth_mult": sei_growth},
-        "transport": {"resistance_drift_mult": r_sei},
-        "structural": {}
     }
