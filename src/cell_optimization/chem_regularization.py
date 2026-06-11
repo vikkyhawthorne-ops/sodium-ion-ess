@@ -46,19 +46,15 @@ def apply_connectivity_scaling(props: Dict[str, float], phi: float = 0.75) -> Di
     scaled = props.copy()
     # Connectivity exponents
     a_density = 1.0
-    a_modulus = 2.5 # Not directly used in PyBaMM but good for completeness
     a_transport = 1.5
 
     # Scaling properties
-    # Density/Volume: Lower connectivity -> higher volume per atom
     if "volume_per_atom" in scaled:
         scaled["volume_per_atom"] = scaled["volume_per_atom"] / (phi**a_density)
 
-    # Energy: scaling formation energy by connectivity
     if "formation_energy" in scaled:
         scaled["formation_energy"] = scaled["formation_energy"] * phi
 
-    # Stability: lower connectivity typically reduces stability (higher energy above hull)
     if "stability" in scaled:
         scaled["stability"] = scaled["stability"] / (phi + 1e-9)
 
@@ -118,24 +114,23 @@ def derive_coupled_deltas(
     dS = (base_props["stability"] - proxy_props["stability"]) / 0.2
 
     # Physics coupling rules
-
-    # 1. Energetic/Thermodynamic
-    voltage_boost = -0.01 * dE # Small correction
+    voltage_boost = -0.01 * dE
     stability_shift = dS
     initial_loss_mult = math.exp(np.clip(0.2 * dS, -5, 5))
 
-    # 2. Kinetic (Arrhenius-derived)
+    # Kinetic (Arrhenius-derived)
     activation_delta = 0.2 * dV + 0.1 * dG
 
-    # For network solids (like MTMS-derived), we apply a further connectivity-based attenuation
-    # if not already handled by input properties.
-    diffusivity_log_delta = -activation_delta / (KT + 1e-9)
+    # Network-specific attenuation for diffusivity if applicable
+    # This reflects the lower connectivity reducing hopping pathways in network solids
+    network_attenuation = 0.5 if is_network else 1.0
+    diffusivity_log_delta = -activation_delta * network_attenuation / (KT + 1e-9)
 
     reaction_rate_log_delta = 0.1 * dE - 0.3 * dG
     sei_growth_mult = math.exp(np.clip(0.5 * dE - 0.2 * dS, -5, 5))
     negative_exchange_log_delta = 0.4 * dS - 0.1 * dG
 
-    # 3. Transport/Secondary
+    # Transport/Secondary
     transport_log_delta = -0.5 * dE + 0.2 * dV
     interfacial_log_delta = -0.8 * dS + 0.3 * dG
 
