@@ -29,19 +29,18 @@ from nfpp_sodium_ion.src.cell_parameters.cell_alpha import get_parameter_values
 
 # --- CONSTRAINED CHEMICAL SPACE ---
 ALLOWED_SALTS = {"NaBOB": "C4BNaO8", "NaTCP": "C5H3Cl3NNaO"}
-# Using SiO2 as a proxy for functionalization since it's on MP and related to silanes
+# Using SiO2 as a proxy for functionalization since it's on MP/OQMD and related to silanes
 ALLOWED_FUNCTIONALIZATION = {"MTMS_proxy": "SiO2"}
-# Using NaFePO4 as base since it is available on MP.
-BASE_CATHODE_FORMULA = "NaFePO4"
+# Cascading Resolve Priorities
+BASE_CATHODE_PRIORITIES = ["Na4Fe3P4O15", "NaFePO4"]
 BASE_SALT_FORMULA = "NaPF6"
 BASE_ANODE_FORMULA = "C"
 DOPANTS = ["Mn", "Cr", "Ni"]
 
 # --- SCIENTIFIC & API CONFIG ---
 OQMD_URL = "https://oqmd.org/oqmdapi/formationenergy"
-MP_API_KEY = os.environ.get("MP_API_KEY")
 CACHE_FILE = "material_cache.json"
-CACHE_VERSION = "v9"
+CACHE_VERSION = "v10"
 
 REQUIRED_CHANNELS = {"thermodynamic", "kinetic", "transport", "structural"}
 
@@ -94,7 +93,7 @@ class MaterialMappingEngine:
         self.cache = self._load_cache()
         self.session = self._setup_session() if requests else None
         self.base_params = get_parameter_values()
-        self.mp_key = MP_API_KEY
+        self.mp_key = os.environ.get("MP_API_KEY")
 
     def _setup_session(self):
         session = requests.Session()
@@ -181,11 +180,19 @@ class MaterialMappingEngine:
         return props, conf, source
 
     def run(self):
-        print(f"Executing Unified Physics Materials Mapping (Strict MP for Cathode)...")
+        print(f"Executing Unified Physics Materials Mapping (Cascading Resolve)...")
         system = {"Cathode_Dopant": [], "Salt": [], "Functionalization": []}
 
-        # Cathode materials EXCLUSIVELY from MP
-        base_cathode, _, _ = self._resolve_material(BASE_CATHODE_FORMULA, source_override="MP")
+        # --- Base Cathode Resolution (Priority cascading) ---
+        base_cathode = None
+        base_cathode_formula = None
+        for f in BASE_CATHODE_PRIORITIES:
+            base_cathode, _, _ = self._resolve_material(f, source_override="MP")
+            if base_cathode:
+                base_cathode_formula = f
+                print(f"  Base Cathode resolved: {f}")
+                break
+
         base_salt, _, _ = self._resolve_material(BASE_SALT_FORMULA)
         base_anode, _, _ = self._resolve_material(BASE_ANODE_FORMULA)
 
@@ -199,7 +206,7 @@ class MaterialMappingEngine:
             proxy_props, conf, src = self._resolve_material(proxy_formula, source_override="MP")
             if not proxy_props: continue
 
-            realization = compute_chemical_realization(BASE_CATHODE_FORMULA, proxy_formula, base_cathode, proxy_props)
+            realization = compute_chemical_realization(base_cathode_formula, proxy_formula, base_cathode, proxy_props)
             deltas = derive_coupled_deltas(base_cathode, proxy_props)
             system["Cathode_Dopant"].append(MaterialCandidate(
                 name=d, category="Cathode_Dopant", composition=proxy_formula,
