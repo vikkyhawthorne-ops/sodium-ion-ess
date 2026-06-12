@@ -54,6 +54,10 @@ class ParamTransform:
                     self.values_dict["Positive electrode OCP [V]"] += d["voltage_boost"]
             if "initial_sodium_loss_delta" in d:
                 self.values_dict["Initial concentration in negative electrode [mol.m-3]"] *= (1.0 + d["initial_sodium_loss_delta"])
+            if "stability_shift" in d:
+                 # Map stability shift to degradation rates (positive means less stable)
+                 self._apply_scaling("SEI reaction exchange current density [A.m-2]", np.exp(d["stability_shift"]))
+                 self._apply_scaling("Positive electrode LAM constant proportional term [s-1]", np.exp(d["stability_shift"]))
 
         if "transport" in deltas:
             d = deltas["transport"]
@@ -79,6 +83,7 @@ class ParamTransform:
                 self.values_dict[name] = val
 
     def get_parameter_values(self) -> pybamm.ParameterValues:
+        # Consistency fixes
         if "Cell volume [m3]" not in self.values_dict:
             self.values_dict["Cell volume [m3]"] = 0.13 * 0.07 * 0.01
         if "Cell cooling surface area [m2]" not in self.values_dict:
@@ -94,7 +99,6 @@ class ParamTransform:
 # --- PARETO OPTIMIZATION ENGINE (Layer 3) ---
 
 def dominates(obj_a: np.ndarray, obj_b: np.ndarray) -> bool:
-    """Checks if vector A dominates vector B (MAXIMIZATION)."""
     return np.all(obj_a >= obj_b) and np.any(obj_a > obj_b)
 
 class ParetoOptimizer:
@@ -128,7 +132,6 @@ class ParetoOptimizer:
             except:
                  m_stability = -float(params["Positive particle radius [m]"]) * 1e6
 
-            # Internal Resistance proxy
             r_int = abs(v[0] - v[1]) / (abs(curr[0]) + 1e-6) if len(v) > 1 else 0.0
 
             return {
@@ -142,7 +145,7 @@ class ParetoOptimizer:
         except Exception:
             return {"success": False}
 
-    def compute_jacobian(self, params: pybamm.ParameterValues) -> np.ndarray:
+    def compute_jacobian(self, params: pybamm.ParameterValues, design_vector: np.ndarray) -> np.ndarray:
         """Computes G_ij = dJ_i / dp_j."""
         eps = 1e-4
         base_res = self.simulate(params)
@@ -152,16 +155,11 @@ class ParetoOptimizer:
         G = np.zeros((3, len(DESIGN_SPACE)))
 
         for j, name in enumerate(DESIGN_SPACE):
-            x_base = []
-            for n in DESIGN_SPACE:
-                if n == "carbon_fraction": x_base.append(0.05)
-                else: x_base.append(params[n])
-            x_base = np.array(x_base)
-
-            x_perturbed = x_base.copy()
+            x_perturbed = design_vector.copy()
             x_perturbed[j] *= (1 + eps)
 
             pt = ParamTransform(self.base_params)
+            # Use original params dict but overwrite design
             pt.values_dict = dict(params)
             pt.apply_design_vector(x_perturbed, DESIGN_SPACE)
 
@@ -186,20 +184,26 @@ class ParetoOptimizer:
                 pareto.append(c1)
         return pareto
 
-    def optimize_design(self, material_deltas: Dict[str, Any], initial_x: np.ndarray) -> Tuple[np.ndarray, Dict[str, float]]:
+    def optimize_design_extremes(self, material_deltas: Dict[str, Any], initial_x: np.ndarray) -> List[Tuple[np.ndarray, Dict[str, float]]]:
         bounds = [(30e-6, 150e-6), (30e-6, 150e-6), (0.2, 0.5), (0.2, 0.5), (1e-7, 10e-6), (1e-7, 10e-6), (0.3, 0.7), (0.02, 0.15)]
-        def objective(x):
-            pt = ParamTransform(self.base_params)
-            pt.apply_physics_deltas(material_deltas)
-            pt.apply_design_vector(x, DESIGN_SPACE)
-            res = self.simulate(pt.get_parameter_values())
-            if not res["success"]: return 1e6
-            return -(1.0 * res["energy"] + 0.1 * res["power"] + 0.01 * res["mechanical_stability"])
-        res = minimize(objective, initial_x, bounds=bounds, method='L-BFGS-B', options={'maxiter': 10})
-        final_pt = ParamTransform(self.base_params)
-        final_pt.apply_physics_deltas(material_deltas)
-        final_pt.apply_design_vector(res.x, DESIGN_SPACE)
-        return res.x, self.simulate(final_pt.get_parameter_values())
+        objectives = ["energy", "power", "mechanical_stability"]
+        results = []
+        for obj_name in objectives:
+            def objective(x):
+                pt = ParamTransform(self.base_params)
+                pt.apply_physics_deltas(material_deltas)
+                pt.apply_design_vector(x, DESIGN_SPACE)
+                res = self.simulate(pt.get_parameter_values())
+                if not res["success"]: return 1e6
+                return -res[obj_name]
+            res = minimize(objective, initial_x, bounds=bounds, method='L-BFGS-B', options={'maxiter': 10})
+            final_pt = ParamTransform(self.base_params)
+            final_pt.apply_physics_deltas(material_deltas)
+            final_pt.apply_design_vector(res.x, DESIGN_SPACE)
+            metrics = self.simulate(final_pt.get_parameter_values())
+            if metrics.get("success"):
+                 results.append((res.x, metrics))
+        return results
 
 def run_workflow():
     from src.cell_optimization.material_opt import MaterialMappingEngine, MaterialCategory
@@ -215,8 +219,8 @@ def run_workflow():
     salts = db[MaterialCategory.SALT] or [None]
 
     print("Executing Multi-Objective Pareto Optimization (Layer 3)...")
-    for cat in cathodes[:1]:
-        for salt in salts[:1]:
+    for cat in cathodes[:2]:
+        for salt in salts[:2]:
             deltas = {}
             if cat:
                 d = derive_coupled_deltas(bases["cathode"]["properties"], cat.properties, bases["cathode"]["formula"], cat.composition)
@@ -225,8 +229,9 @@ def run_workflow():
                 d = regularize_salt_props(bases["salt"]["solution"], salt.properties)
                 for k, v in d.items(): deltas.setdefault(k, {}).update(v)
 
-            x_opt, metrics = opt.optimize_design(deltas, np.array([100e-6, 100e-6, 0.3, 0.3, 1e-6, 5e-6, 0.5, 0.05]))
-            if metrics.get("success"):
+            x0 = np.array([100e-6, 100e-6, 0.3, 0.3, 1e-6, 5e-6, 0.5, 0.05])
+            extremes = opt.optimize_design_extremes(deltas, x0)
+            for x_opt, metrics in extremes:
                 all_runs.append({"cat": cat, "salt": salt, "x": x_opt, "metrics": metrics, "deltas": deltas})
 
     if not all_runs: return
@@ -236,7 +241,7 @@ def run_workflow():
     final_pt = ParamTransform(opt.base_params)
     final_pt.apply_physics_deltas(best["deltas"])
     final_pt.apply_design_vector(best["x"], DESIGN_SPACE)
-    G = opt.compute_jacobian(final_pt.get_parameter_values())
+    G = opt.compute_jacobian(final_pt.get_parameter_values(), best["x"])
 
     groups = {"Energy": [], "Power": [], "Stability": []}
     obj_names = ["Energy", "Power", "Stability"]
@@ -244,25 +249,26 @@ def run_workflow():
         dominant_obj = np.argmax(np.abs(G[:, j]))
         groups[obj_names[dominant_obj]].append(name)
 
-    # REQUIRED OUTPUT FORMAT
     output = {
         "materials": {
             "cathode": {"name": best["cat"].name if best["cat"] else "Base", "formula": best["cat"].composition if best["cat"] else "Base"},
             "electrolyte": {"salt": best["salt"].name if best["salt"] else "Base"}
         },
-        "cell_parameters": {
-            "voltage": round(best["metrics"]["avg_voltage"], 3),
-            "energy_density_Wh": round(best["metrics"]["energy"], 3), # Proxy
-            "internal_resistance": round(best["metrics"]["internal_resistance"], 4),
+        "performance_objectives": {
+            "energy_Wh": round(best["metrics"]["energy"], 3),
             "power_W": round(best["metrics"]["power"], 3),
             "mechanical_stability_proxy": round(best["metrics"]["mechanical_stability"], 3)
+        },
+        "cell_parameters": {
+            "voltage": round(best["metrics"]["avg_voltage"], 3),
+            "energy_density_Wh": round(best["metrics"]["energy"], 3),
+            "internal_resistance": round(best["metrics"]["internal_resistance"], 4)
         },
         "parameter_grouping": groups,
         "sensitivity_matrix": G.tolist(),
         "design_specs": dict(zip(DESIGN_SPACE, best["x"].tolist())),
         "combined_deltas": best["deltas"]
     }
-
     print("\nFINAL OPTIMIZED OUTPUT:")
     print(json.dumps(output, indent=2))
     return output

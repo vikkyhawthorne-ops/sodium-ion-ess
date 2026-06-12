@@ -53,7 +53,7 @@ DOPANTS = ["Mn", "Cr", "Ni"]
 
 OQMD_URL = "https://oqmd.org/oqmdapi/formationenergy"
 CACHE_FILE = "material_cache.json"
-CACHE_VERSION = "v22"
+CACHE_VERSION = "v23"
 
 @dataclass
 class MaterialCandidate:
@@ -68,6 +68,7 @@ class MaterialMappingEngine:
         logging.basicConfig(level=logging.INFO)
         self.cache = self._load_cache()
         self.session = self._setup_session() if requests else None
+        # Provide base_params for Layer 3
         self.base_params = get_parameter_values()
         self.mp_key = os.environ.get("MP_API_KEY")
 
@@ -106,7 +107,12 @@ class MaterialMappingEngine:
                     if docs:
                         docs.sort(key=lambda d: d.energy_above_hull)
                         best = docs[0]
-                        props = {"stability": float(best.energy_above_hull), "formation_energy": float(best.formation_energy_per_atom), "band_gap": float(best.band_gap if best.band_gap is not None else 0.0), "volume_per_atom": float(best.volume / best.nsites if best.nsites else 15.0)}
+                        props = {
+                            "stability": float(best.energy_above_hull),
+                            "formation_energy": float(best.formation_energy_per_atom),
+                            "band_gap": float(best.band_gap if best.band_gap is not None else 0.0),
+                            "volume_per_atom": float(best.volume / best.nsites if best.nsites else 1.0)
+                        }
                         source = "MATERIALS_PROJECT"
             except Exception: pass
 
@@ -118,7 +124,12 @@ class MaterialMappingEngine:
                     data = r.json().get("data", [])
                     if data:
                         best = data[0]
-                        props = {"stability": float(best.get("stability", 0.1)), "formation_energy": float(best.get("delta_e", 0.0)), "band_gap": float(best.get("band_gap", 0.0)), "volume_per_atom": float(best.get("volume", 15.0)) / float(best.get("natoms", 1.0))}
+                        props = {
+                            "stability": float(best.get("stability", 0.1)),
+                            "formation_energy": float(best.get("delta_e", 0.0)),
+                            "band_gap": float(best.get("band_gap", 0.0)),
+                            "volume_per_atom": float(best.get("volume", 1.0)) / float(best.get("natoms", 1.0))
+                        }
                         source = "OQMD"
             except Exception: pass
 
