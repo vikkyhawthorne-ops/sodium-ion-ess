@@ -156,7 +156,32 @@ class HierarchicalOptimizer:
         except Exception as e:
             return {"success": False, "reason": f"{e}"}
 
-    def _objective(self, x, deltas, mode):
+    def compute_sensitivity(self, x: np.ndarray, deltas: Dict[str, Any]) -> np.ndarray:
+        eps = 1e-4
+        pt = ParamTransform(self.base_params)
+        pt.apply_physics_deltas(deltas)
+        pt.apply_design_vector(x, DESIGN_SPACE)
+        base_res = self.simulate(pt.get_parameter_values())
+        if not base_res["success"]: return np.zeros((3, len(DESIGN_SPACE)))
+
+        j_base = np.array([base_res["energy"], base_res["power"], base_res["mechanical_stability"]])
+        G = np.zeros((3, len(DESIGN_SPACE)))
+
+        for j in range(len(DESIGN_SPACE)):
+            x_pert = x.copy()
+            x_pert[j] *= (1 + eps)
+            pt_p = ParamTransform(self.base_params)
+            pt_p.apply_physics_deltas(deltas)
+            pt_p.apply_design_vector(x_pert, DESIGN_SPACE)
+            res = self.simulate(pt_p.get_parameter_values())
+            if res["success"]:
+                j_pert = np.array([res["energy"], res["power"], res["mechanical_stability"]])
+                G[:, j] = (j_pert - j_base) / (np.abs(j_base) * eps + 1e-12)
+        return G
+
+    def _objective(self, x_active, x_full, active_indices, deltas, mode):
+        x = x_full.copy()
+        x[active_indices] = x_active
         pt = ParamTransform(self.base_params)
         pt.apply_physics_deltas(deltas)
         pt.apply_design_vector(x, DESIGN_SPACE)
@@ -181,12 +206,11 @@ def run_workflow(engine: Optional[Any] = None):
     if not bases: return
     optimizer = HierarchicalOptimizer(engine=engine, base_params=pybamm.ParameterValues(engine.base_params))
 
-    print("Executing Hierarchical Optimization (Layer 3)...")
-    print("Each objective function is individually optimized and then composed.")
+    print("Executing Sensitivity-Driven Hierarchical Optimization (Layer 3)...")
+    print("Each objective function is individually optimized using its primary drivers.")
 
     cathodes = db[MaterialCategory.CATHODE_DOPANT] if db[MaterialCategory.CATHODE_DOPANT] else [None]
     salts = db[MaterialCategory.SALT] if db[MaterialCategory.SALT] else [None]
-    # MTMS functionalization is excluded from ranking search and handled in Layer 4 (Validation)
 
     material_results = []
     for cat, salt in [(c, s) for c in cathodes[:2] for s in salts[:2]]:
@@ -198,15 +222,41 @@ def run_workflow(engine: Optional[Any] = None):
             d = regularize_salt_props(bases["salt"]["properties"], salt.properties)
             for k, v in d.items(): deltas.setdefault(k, {}).update(v)
 
-        print(f"Optimizing system: {cat.name if cat else 'Base'} + {salt.name if salt else 'Base'}")
+        print(f"\nEvaluating system: {cat.name if cat else 'Base'} + {salt.name if salt else 'Base'}")
 
-        x0 = np.array([np.mean(b) for b in DESIGN_BOUNDS])
+        x_base = np.array([np.mean(b) for b in DESIGN_BOUNDS])
+
+        # 1. Sensitivity Analysis
+        G = optimizer.compute_sensitivity(x_base, deltas)
+        G_abs = np.abs(G)
+
         opt_designs = {}
-        for mode in ["energy", "power", "stability"]:
-            res = minimize(optimizer._objective, x0, args=(deltas, mode), bounds=DESIGN_BOUNDS, method='L-BFGS-B', options={'maxiter': 10})
-            opt_designs[mode] = res.x
+        modes = ["energy", "power", "stability"]
+        obj_names = ["Energy", "Power", "Stability"]
 
-        # Composition: weighted average of optimal design vectors
+        threshold = 0.5
+        for i, mode in enumerate(modes):
+            # Identify primary drivers for this objective
+            max_s = np.max(G_abs[i, :]) + 1e-12
+            active_indices = [j for j in range(len(DESIGN_SPACE)) if G_abs[i, j] / max_s > threshold]
+
+            print(f"  Primary Drivers for {obj_names[i]}: {[DESIGN_SPACE[j] for j in active_indices]}")
+
+            # 2. Optimization using identified parameters
+            x0_active = x_base[active_indices]
+            bounds_active = [DESIGN_BOUNDS[j] for j in active_indices]
+
+            res = minimize(
+                optimizer._objective, x0_active,
+                args=(x_base, active_indices, deltas, mode),
+                bounds=bounds_active, method='L-BFGS-B', options={'maxiter': 10}
+            )
+
+            x_opt = x_base.copy()
+            x_opt[active_indices] = res.x
+            opt_designs[mode] = x_opt
+
+        # 3. Composition: weighted average of optimal design vectors
         final_x = (0.4 * opt_designs["energy"] + 0.3 * opt_designs["power"] + 0.3 * opt_designs["stability"])
 
         pt = ParamTransform(optimizer.base_params)
@@ -215,7 +265,6 @@ def run_workflow(engine: Optional[Any] = None):
         final_metrics = optimizer.simulate(pt.get_parameter_values())
 
         if final_metrics["success"]:
-            # Score is based on total energy density for physical grounding
             material_results.append({
                 "cat": cat, "salt": salt,
                 "x": final_x, "metrics": final_metrics, "deltas": deltas,
