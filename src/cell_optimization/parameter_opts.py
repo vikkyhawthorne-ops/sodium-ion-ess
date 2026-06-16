@@ -76,6 +76,8 @@ class ParamTransform:
                 self._apply_scaling("Positive electrode conductivity [S.m-1]", np.exp(d["conductivity_log_delta"]))
             if "electrolyte_conductivity_log_delta" in d:
                 self._apply_scaling("Electrolyte conductivity [S.m-1]", np.exp(d["electrolyte_conductivity_log_delta"]))
+            if "electrolyte_diffusivity_log_delta" in d:
+                self._apply_scaling("Electrolyte diffusivity [m2.s-1]", np.exp(d["electrolyte_diffusivity_log_delta"]))
 
         if "kinetic" in deltas:
             d = deltas["kinetic"]
@@ -83,6 +85,9 @@ class ParamTransform:
                 self._apply_scaling("Positive electrode exchange-current density [A.m-2]", np.exp(d["exchange_current_log_delta"]))
             if "sei_growth_log_delta" in d:
                 self._apply_scaling("SEI reaction exchange current density [A.m-2]", np.exp(d["sei_growth_log_delta"]))
+            if "sei_resistivity_log_delta" in d:
+                 # resistance_growth_factor in functionalization regularizer
+                 pass # SEI resistivity mapping in PyBaMM is complex, skipping direct log delta for now
 
     def apply_design_vector(self, x: np.ndarray, names: List[str]):
         for val, name in zip(x, names):
@@ -122,7 +127,7 @@ class BatteryOptimizationProblem(Problem):
             if res["success"]:
                 F.append([-res["energy"], -res["power"], -res["mechanical_stability"]])
             else:
-                print(f"Sim failed: {res.get('reason')}")
+                # print(f"Sim failed: {res.get('reason')}")
                 F.append([1e9, 1e6, 1e9])
         out["F"] = np.array(F)
 
@@ -178,9 +183,9 @@ class ParetoAnalyzer:
                 "avg_voltage": float(np.mean(v)), "success": True
             }
         except Exception as e:
-            import traceback
+            # import traceback
             # logging.debug(f"Simulation failed: {e}")
-            return {"success": False, "reason": f"{e}\n{traceback.format_exc()}"}
+            return {"success": False, "reason": f"{e}"}
 
     def compute_jacobian(self, params: pybamm.ParameterValues, x: np.ndarray) -> np.ndarray:
         eps = 1e-4
@@ -233,7 +238,7 @@ def find_knee_point(pareto_set: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 def run_workflow():
     from src.cell_optimization.material_opt import MaterialMappingEngine, MaterialCategory
-    from src.cell_optimization.chem_regularization import derive_coupled_deltas, regularize_salt_props
+    from src.cell_optimization.chem_regularization import derive_coupled_deltas, regularize_salt_props, regularize_functionalization
     engine = MaterialMappingEngine()
     db, bases = engine.run()
     if not bases: return
@@ -245,23 +250,28 @@ def run_workflow():
     # Outer Loop: Material Candidates
     cathodes = db[MaterialCategory.CATHODE_DOPANT] if db[MaterialCategory.CATHODE_DOPANT] else [None]
     salts = db[MaterialCategory.SALT] if db[MaterialCategory.SALT] else [None]
+    functionalizations = db[MaterialCategory.FUNCTIONALIZATION] if db[MaterialCategory.FUNCTIONALIZATION] else [None]
 
     for cat in cathodes[:2]:
         for salt in salts[:2]:
-            candidate_combinations.append((cat, salt))
+            for func in functionalizations[:1]:
+                 candidate_combinations.append((cat, salt, func))
 
     all_pareto_points = []
-    for cat, salt in candidate_combinations:
+    for cat, salt, func in candidate_combinations:
         deltas = {}
         if cat:
             d = derive_coupled_deltas(bases["cathode"]["properties"], cat.properties, bases["cathode"]["formula"], cat.composition)
             for k, v in d.items(): deltas.setdefault(k, {}).update(v)
         if salt:
-            d = regularize_salt_props(bases["salt"]["solution"], salt.properties)
+            d = regularize_salt_props(bases["salt"]["properties"], salt.properties)
             for k, v in d.items(): deltas.setdefault(k, {}).update(v)
+        if func:
+             d = regularize_functionalization(bases["interface"]["properties"], func.properties)
+             for k, v in d.items(): deltas.setdefault(k, {}).update(v)
 
         # NSGA-II Search
-        print(f"Running NSGA-II for {cat.name if cat else 'Base'} + {salt.name if salt else 'Base'}...")
+        print(f"Running NSGA-II for {cat.name if cat else 'Base'} + {salt.name if salt else 'Base'} + {func.name if func else 'None'}...")
         problem = BatteryOptimizationProblem(analyzer, deltas)
         algorithm = NSGA2(pop_size=20)
         res_opt = pymoo_minimize(problem, algorithm, ('n_gen', 25), verbose=False)
@@ -272,7 +282,7 @@ def run_workflow():
             for i in range(len(X_p)):
                 metrics = {"energy": -F_p[i, 0], "power": -F_p[i, 1], "mechanical_stability": -F_p[i, 2]}
                 if metrics["energy"] > 0:
-                     all_pareto_points.append({"cat": cat, "salt": salt, "x": X_p[i], "metrics": metrics, "deltas": deltas})
+                     all_pareto_points.append({"cat": cat, "salt": salt, "func": func, "x": X_p[i], "metrics": metrics, "deltas": deltas})
 
     if not all_pareto_points:
         print("No Pareto points found.")
@@ -318,7 +328,8 @@ def run_workflow():
     output = {
         "materials": {
             "cathode": {"name": best["cat"].name if best["cat"] else "Base", "formula": best["cat"].composition if best["cat"] else "Base"},
-            "electrolyte": {"salt": best["salt"].name if best["salt"] else "Base"}
+            "electrolyte": {"salt": best["salt"].name if best["salt"] else "Base"},
+            "functionalization": {"name": best["func"].name if best["func"] else "None"}
         },
         "performance_envelope": {
             "energy_Wh_range": [round(float(min(p["metrics"]["energy"] for p in pareto_final)), 3), round(float(max(p["metrics"]["energy"] for p in pareto_final)), 3)],

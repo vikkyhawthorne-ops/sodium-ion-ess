@@ -89,29 +89,38 @@ def derive_coupled_deltas(base_props, proxy_props, base_formula, proxy_formula) 
     }
 
 def regularize_salt_props(base_salt_props: Dict[str, float], candidate_salt_props: Dict[str, float]) -> Dict[str, Any]:
+    """Derive electrolyte deltas from physical residuals (dG for conductivity, dV for viscosity)."""
     try:
-        c_ratio = candidate_salt_props["conductivity"] / base_salt_props["conductivity"]
-        v_ratio = candidate_salt_props["viscosity"] / base_salt_props["viscosity"]
-        t_diff = candidate_salt_props["transference_number"] - base_salt_props["transference_number"]
+        # Conductivity mapping: exp(-dG/2kT)
+        dG = (candidate_salt_props.get("band_gap", 0) - base_salt_props.get("band_gap", 0)) / 1.0
+        # Viscosity/Diffusivity mapping: correlated with volume change
+        dV = (candidate_salt_props.get("volume_per_atom", 1.0) - base_salt_props.get("volume_per_atom", 1.0)) / 1.0
+
         return {
             "transport": {
-                "electrolyte_conductivity_log_delta": float(np.log(c_ratio)),
-                "electrolyte_diffusivity_log_delta": float(-np.log(v_ratio)),
-                "transference_number_delta": float(t_diff)
+                "electrolyte_conductivity_log_delta": float(-0.5 * dG / KT * 0.01), # Scaled mapping
+                "electrolyte_diffusivity_log_delta": float(-1.0 * dV)
             }
         }
     except Exception: return {"transport": {}}
 
-def regularize_functionalization(candidate_props: Dict[str, float]) -> Dict[str, Any]:
-    return {
-        "kinetic": {
-            "sei_growth_log_delta": float(np.log(candidate_props.get("sei_growth_factor", 1.0))),
-            "exchange_current_log_delta": float(np.log(candidate_props.get("exchange_current_factor", 1.0)))
-        },
-        "transport": {
-            "sei_resistivity_log_delta": float(np.log(candidate_props.get("resistance_growth_factor", 1.0)))
-        },
-        "thermodynamic": {
-            "initial_sodium_loss_delta": float(candidate_props.get("initial_sodium_loss_factor", 1.0) - 1.0)
+def regularize_functionalization(base_props: Dict[str, float], candidate_props: Dict[str, float]) -> Dict[str, Any]:
+    """MTMS Functionalization regularized via stability and volume residuals."""
+    try:
+        dS = (base_props.get("stability", 0) - candidate_props.get("stability", 0)) / 0.2
+        dV = (candidate_props.get("volume_per_atom", 1.0) - base_props.get("volume_per_atom", 1.0)) / 1.0
+
+        # Mapping to SEI growth and exchange current
+        return {
+            "kinetic": {
+                "sei_growth_log_delta": float(-0.5 * dS),
+                "exchange_current_log_delta": float(0.2 * dS)
+            },
+            "transport": {
+                "sei_resistivity_log_delta": float(-0.3 * dS)
+            },
+            "thermodynamic": {
+                "initial_sodium_loss_delta": float(-0.1 * dS)
+            }
         }
-    }
+    except Exception: return {"kinetic": {}, "transport": {}, "thermodynamic": {}}

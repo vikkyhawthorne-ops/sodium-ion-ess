@@ -4,6 +4,7 @@ import re
 import math
 import numpy as np
 import logging
+import hashlib
 from typing import List, Dict, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -27,33 +28,23 @@ class MaterialCategory(Enum):
     SALT = auto()
     FUNCTIONALIZATION = auto()
 
-# --- DATABASES ---
-SALT_DATABASE = {
-    "NaPF6": {"conductivity": 0.8, "transference_number": 0.35, "viscosity": 4.5},
-    "NaBOB": {"conductivity": 0.6, "transference_number": 0.45, "viscosity": 7.2},
-    "NaTCP": {"conductivity": 0.5, "transference_number": 0.50, "viscosity": 12.0}
-}
-
-MTMS_DATABASE = {
-    "MTMS": {
-        "sei_growth_factor": 0.75,
-        "resistance_growth_factor": 0.85,
-        "exchange_current_factor": 1.2,
-        "initial_sodium_loss_factor": 0.9
-    }
-}
-
-ALLOWED_SALTS = list(SALT_DATABASE.keys())
-ALLOWED_FUNCTIONALIZATION = list(MTMS_DATABASE.keys())
-
+# --- FORMULAS FROM PAPER.MD ---
 BASE_CATHODE_PRIORITIES = ["Na4Fe3(PO4)2P2O7", "Na2FeP2O7", "NaFeP2O7"]
 BASE_SALT_FORMULA = "NaPF6"
 BASE_INTERFACE_FORMULA = "C2H4O"
 DOPANTS = ["Mn", "Cr", "Ni"]
 
+# New salt/functionalization candidates from paper.md
+SALTS = {
+    "NaBOB": "NaBC4O8",
+    "NaTCP": "NaC4N3"
+}
+FUNCTIONALIZATION = {
+    "MTMS": "C4H12O3Si"
+}
+
 OQMD_URL = "https://oqmd.org/oqmdapi/formationenergy"
 CACHE_FILE = "material_cache.json"
-CACHE_VERSION = "v23"
 
 @dataclass
 class MaterialCandidate:
@@ -66,11 +57,17 @@ class MaterialCandidate:
 class MaterialMappingEngine:
     def __init__(self):
         logging.basicConfig(level=logging.INFO)
+        # Use provided MP Key
+        self.mp_key = os.environ.get("MP_API_KEY", "JkablwdTl5nO4UUa5iwcjOvMKLq10BWl")
+        self.cache_version = self._generate_cache_version()
         self.cache = self._load_cache()
         self.session = self._setup_session() if requests else None
-        # Provide base_params for Layer 3
         self.base_params = get_parameter_values()
-        self.mp_key = os.environ.get("MP_API_KEY")
+
+    def _generate_cache_version(self) -> str:
+        # Dynamic cache version based on formulas
+        all_formulas = "".join(BASE_CATHODE_PRIORITIES + [BASE_SALT_FORMULA, BASE_INTERFACE_FORMULA] + DOPANTS + list(SALTS.values()) + list(FUNCTIONALIZATION.values()))
+        return hashlib.md5(all_formulas.encode()).hexdigest()[:8]
 
     def _setup_session(self):
         session = requests.Session()
@@ -82,20 +79,22 @@ class MaterialMappingEngine:
         if os.path.exists(CACHE_FILE):
             try:
                 with open(CACHE_FILE, "r") as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    if data.get("version") == self.cache_version:
+                         return data.get("entries", {})
             except (json.JSONDecodeError, IOError):
-                return {}
+                pass
         return {}
 
     def _save_cache(self):
         try:
             with open(CACHE_FILE, "w") as f:
-                json.dump(self.cache, f, indent=2)
+                json.dump({"version": self.cache_version, "entries": self.cache}, f, indent=2)
         except IOError as e:
             logging.warning(f"Failed to save cache: {e}")
 
     def _resolve_material(self, formula: str, source_override: Optional[str] = None, chemsys: Optional[str] = None) -> Tuple[Optional[Dict[str, float]], str]:
-        cache_key = f"RESOLVE:{formula if not chemsys else chemsys}:{CACHE_VERSION}"
+        cache_key = f"RESOLVE:{formula if not chemsys else chemsys}"
         if cache_key in self.cache:
             return self.cache[cache_key]["props"], self.cache[cache_key].get("source", "UNKNOWN")
 
@@ -144,26 +143,31 @@ class MaterialMappingEngine:
         return None, "NONE"
 
     def run(self) -> Tuple[Dict[MaterialCategory, List[MaterialCandidate]], Dict[str, Any]]:
-        print(f"Executing Strict Material Resolution (Layer 1)...")
+        print(f"Executing API-Based Material Resolution (Layer 1)...")
         system = {cat: [] for cat in MaterialCategory}
         bases = {}
 
+        # 1. Resolve Cathode Base
         for f in BASE_CATHODE_PRIORITIES:
             p, src = self._resolve_material(f, source_override="MP")
             if p:
                 bases["cathode"] = {"formula": f, "properties": p, "source": src}
                 break
 
-        p_salt, src_salt = self._resolve_material(BASE_SALT_FORMULA)
-        if p_salt:
-            bases["salt"] = {"formula": BASE_SALT_FORMULA, "properties": p_salt, "source": src_salt, "solution": SALT_DATABASE[BASE_SALT_FORMULA]}
+        # 2. Resolve Salt Base (NaPF6)
+        p_salt_base, src_salt_base = self._resolve_material(BASE_SALT_FORMULA)
+        if p_salt_base:
+            bases["salt"] = {"formula": BASE_SALT_FORMULA, "properties": p_salt_base, "source": src_salt_base}
 
+        # 3. Resolve Interface Base
         p_int, src_int = self._resolve_material(BASE_INTERFACE_FORMULA)
-        if p_int: bases["interface"] = {"formula": BASE_INTERFACE_FORMULA, "properties": p_int, "source": src_int}
+        if p_int:
+            bases["interface"] = {"formula": BASE_INTERFACE_FORMULA, "properties": p_int, "source": src_int}
 
         if not all(k in bases for k in ["cathode", "salt", "interface"]):
             return system, {}
 
+        # 4. Resolve Cathode Dopants
         for d in DOPANTS:
             chemsys = f"Na-Fe-{d}-P-O"
             p, src = self._resolve_material(formula=f"Na4Fe2.7{d}0.3P4O15", chemsys=chemsys)
@@ -174,10 +178,16 @@ class MaterialMappingEngine:
             if p:
                 system[MaterialCategory.CATHODE_DOPANT].append(MaterialCandidate(name=f"{d}-doped", category=MaterialCategory.CATHODE_DOPANT, composition=f"Doped-{d}", properties=p, provenance=src))
 
-        for name in ALLOWED_SALTS:
-            system[MaterialCategory.SALT].append(MaterialCandidate(name=name, category=MaterialCategory.SALT, composition=name, properties=SALT_DATABASE[name], provenance="LITERATURE"))
+        # 5. Resolve Salts (NaBOB, NaTCP) from API
+        for name, formula in SALTS.items():
+             p, src = self._resolve_material(formula)
+             if p:
+                 system[MaterialCategory.SALT].append(MaterialCandidate(name=name, category=MaterialCategory.SALT, composition=formula, properties=p, provenance=src))
 
-        for name in ALLOWED_FUNCTIONALIZATION:
-            system[MaterialCategory.FUNCTIONALIZATION].append(MaterialCandidate(name=name, category=MaterialCategory.FUNCTIONALIZATION, composition=name, properties=MTMS_DATABASE[name], provenance="LITERATURE"))
+        # 6. Resolve Functionalization (MTMS) from API
+        for name, formula in FUNCTIONALIZATION.items():
+             p, src = self._resolve_material(formula)
+             if p:
+                 system[MaterialCategory.FUNCTIONALIZATION].append(MaterialCandidate(name=name, category=MaterialCategory.FUNCTIONALIZATION, composition=formula, properties=p, provenance=src))
 
         return system, bases
