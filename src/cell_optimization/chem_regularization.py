@@ -45,7 +45,6 @@ def compute_chemical_realization(
         dV = abs(geom_norm(proxy_props, base_props)["strain"]) / 0.05
 
         # Realization score: higher means proxy is chemically similar to base
-        # Used to attenuate deltas if chemistry differs significantly
         realization = np.tanh(overlap * 3.0) * np.exp(-0.5 * (dE + dV))
         return float(np.clip(realization, 0.01, 1.0))
     except Exception:
@@ -54,11 +53,9 @@ def compute_chemical_realization(
 def derive_coupled_deltas(base_props, proxy_props, base_formula, proxy_formula) -> dict:
     # 2.3 Physical residuals
     dE = thermo_norm(proxy_props.get("formation_energy", 0), base_props.get("formation_energy", 0))
-    dG = (proxy_props.get("band_gap", 0) - base_props.get("band_gap", 0)) / KT
-    dV = geom_norm(proxy_props, base_props)["strain"]
-
     # Stability improvement dS (positive means more stable)
     dS = (base_props.get("stability", 0) - proxy_props.get("stability", 0)) / KT
+    dV = geom_norm(proxy_props, base_props)["strain"]
 
     # Realization Factor: Regularizes deltas for different chemistries
     R = compute_chemical_realization(base_formula, proxy_formula, base_props, proxy_props)
@@ -66,11 +63,16 @@ def derive_coupled_deltas(base_props, proxy_props, base_formula, proxy_formula) 
     # 2.4 Physically grounded coupling rules attenuated by Realization
     # Voltage shift follows Nernstian/Energy relation
     voltage_boost = -dE * KT * R
-    # Conductivity follows Arrhenius/Band-gap relation: exp(-Eg/2kT)
-    conductivity_log_delta = -0.5 * dG * R
+
+    # Ionic Conductivity Model: sigma = sigma0 * exp(-Ea/kT)
+    # Ea proxied from absolute formation energy dispersion
+    Ea_base = 0.5 * abs(base_props.get("formation_energy", -1.0))
+    Ea_proxy = 0.5 * abs(proxy_props.get("formation_energy", -1.0))
+    conductivity_log_delta = (Ea_base - Ea_proxy) / KT * R
+
     # Diffusion/Kinetics coupled to volume and energy barrier shifts
-    diffusivity_log_delta = (dV - 0.2 * dG) * R
-    reaction_rate_log_delta = (0.1 * dE - 0.3 * dG) * R
+    diffusivity_log_delta = (dV - 0.1 * abs(dE)) * R
+    reaction_rate_log_delta = (0.1 * dE + 0.1 * dS) * R
     stability_shift = dS * R
 
     return {
@@ -95,43 +97,52 @@ def regularize_salt_props(base_salt_formula: str, candidate_salt_formula: str, b
     try:
         R = compute_chemical_realization(base_salt_formula, candidate_salt_formula, base_salt_props, candidate_salt_props)
 
-        # Physical residuals
-        dG = (candidate_salt_props.get("band_gap", 0) - base_salt_props.get("band_gap", 0)) / KT
+        # Ionic conductivity activation energy proxy
+        Ea_base = 0.3 * abs(base_salt_props.get("formation_energy", -1.0))
+        Ea_can = 0.3 * abs(candidate_salt_props.get("formation_energy", -1.0))
+
         v_can = candidate_salt_props.get("volume_per_atom", 1.0)
         v_base = base_salt_props.get("volume_per_atom", 1.0)
         dV = (v_can - v_base) / v_base
 
         return {
             "transport": {
-                "electrolyte_conductivity_log_delta": float(-0.5 * dG * R),
+                "electrolyte_conductivity_log_delta": float((Ea_base - Ea_can) / KT * R),
                 "electrolyte_diffusivity_log_delta": float(-1.0 * dV * R)
             }
         }
     except Exception: return {"transport": {}}
 
 def regularize_functionalization(base_int_formula: str, candidate_func_formula: str, base_props: Dict[str, float], candidate_props: Dict[str, float]) -> Dict[str, Any]:
-    """MTMS Functionalization regularized via network dilution and chemical realization."""
+    """MTMS Functionalization via film growth surrogate and chemical realization."""
     try:
         R = compute_chemical_realization(base_int_formula, candidate_func_formula, base_props, candidate_props)
 
-        # Connectivity fraction for MTMS (phi = 0.75)
-        phi = 0.75
-        alpha_v = 1.0
-        alpha_d = 1.5
-
+        # Stability shift
         dS = (base_props.get("stability", 0) - candidate_props.get("stability", 0)) / KT
 
-        # Mapping to SEI kinetics and transport attenuated by Realization
+        # Film growth surrogate (ODE placeholder): slower growth for improved stability
+        # Mapping to SEI kinetics (log growth delta)
         return {
             "kinetic": {
-                "sei_growth_log_delta": float(-dS * phi * R),
-                "exchange_current_log_delta": float(0.1 * dS * R)
+                "sei_growth_log_delta": float(-0.8 * dS * R),
+                "exchange_current_log_delta": float(0.2 * dS * R)
             },
             "transport": {
-                "sei_resistivity_log_delta": float(-alpha_d * dS * phi * R)
+                "sei_resistivity_log_delta": float(-0.5 * dS * R)
             },
             "thermodynamic": {
-                "initial_sodium_loss_delta": float(-alpha_v * dS * phi * R)
+                "initial_sodium_loss_delta": float(-0.3 * dS * R)
             }
         }
     except Exception: return {"kinetic": {}, "transport": {}, "thermodynamic": {}}
+
+def mechanical_stability_metric(stress_tensor: Optional[np.ndarray] = None, principal_stresses: Optional[List[float]] = None) -> float:
+    """Von Mises yield proxy for mechanical stability."""
+    if principal_stresses and len(principal_stresses) >= 3:
+        s1, s2, s3 = principal_stresses
+        von_mises = np.sqrt(0.5 * ((s1-s2)**2 + (s2-s3)**2 + (s3-s1)**2))
+        return float(-von_mises) # Negative for minimization-to-maximization consistency
+    elif principal_stresses:
+        return float(-max(np.abs(principal_stresses)))
+    return -1e-6

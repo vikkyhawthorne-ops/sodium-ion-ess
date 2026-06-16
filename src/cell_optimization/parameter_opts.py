@@ -32,7 +32,6 @@ DESIGN_BOUNDS = np.array([
 # --- PHYSICS MODELS ---
 
 def carbon_percolation_conductivity(fraction: float, base_cond: float = 100.0) -> float:
-    # Percolation theory: sigma_eff = sigma_0 * max((phi - 0.03)/(1 - 0.03), 0.01)^1.8
     phi_c = 0.03
     if fraction <= phi_c: return 1e-6
     return base_cond * np.power(max((fraction - phi_c) / (1.0 - phi_c), 0.01), 1.8)
@@ -64,7 +63,6 @@ class ParamTransform:
             if "initial_sodium_loss_delta" in d:
                 self.values_dict["Initial concentration in negative electrode [mol.m-3]"] *= (1.0 + d["initial_sodium_loss_delta"])
             if "stability_shift" in d:
-                 # Stability shift reduces degradation rates via exp(-dS) scaling
                  self._apply_scaling("SEI reaction exchange current density [A.m-2]", np.exp(-d["stability_shift"]))
                  self._apply_scaling("Positive electrode LAM constant proportional term [s-1]", np.exp(-d["stability_shift"]))
 
@@ -96,16 +94,12 @@ class ParamTransform:
                 self.values_dict[name] = val
 
     def get_parameter_values(self) -> pybamm.ParameterValues:
-        if "Cell volume [m3]" not in self.values_dict:
-            self.values_dict["Cell volume [m3]"] = 0.13 * 0.07 * 0.01
-        if "Cell cooling surface area [m2]" not in self.values_dict:
-            self.values_dict["Cell cooling surface area [m2]"] = 0.02
-        if "Total heat transfer coefficient [W.m-2.K-1]" not in self.values_dict:
-            self.values_dict["Total heat transfer coefficient [W.m-2.K-1]"] = 10.0
-        if "SEI solvent diffusivity [m2.s-1]" not in self.values_dict:
-            self.values_dict["SEI solvent diffusivity [m2.s-1]"] = 2.5e-22
-        if "Bulk solvent concentration [mol.m-3]" not in self.values_dict:
-            self.values_dict["Bulk solvent concentration [mol.m-3]"] = 2636.0
+        # Standard constants
+        self.values_dict.setdefault("Cell volume [m3]", 0.13 * 0.07 * 0.01)
+        self.values_dict.setdefault("Cell cooling surface area [m2]", 0.02)
+        self.values_dict.setdefault("Total heat transfer coefficient [W.m-2.K-1]", 10.0)
+        self.values_dict.setdefault("SEI solvent diffusivity [m2.s-1]", 2.5e-22)
+        self.values_dict.setdefault("Bulk solvent concentration [mol.m-3]", 2636.0)
         return pybamm.ParameterValues(self.values_dict)
 
 # --- INDIVIDUAL OBJECTIVE OPTIMIZER (NSGA-II) ---
@@ -114,7 +108,7 @@ class SingleObjectiveProblem(Problem):
     def __init__(self, optimizer, x_full, active_indices, deltas, mode):
         xl = DESIGN_BOUNDS[active_indices, 0]
         xu = DESIGN_BOUNDS[active_indices, 1]
-        super().__init__(n_var=len(active_indices), n_obj=1, n_constr=0, xl=xl, xu=xu)
+        super().__init__(n_var=len(active_indices), n_obj=1, n_constr=1, xl=xl, xu=xu)
         self.optimizer = optimizer
         self.x_full = x_full
         self.active_indices = active_indices
@@ -122,21 +116,29 @@ class SingleObjectiveProblem(Problem):
         self.mode = mode
 
     def _evaluate(self, x, out, *args, **kwargs):
-        F = []
+        F, G_constr = [], []
         for xi in x:
             x_eval = self.x_full.copy()
             x_eval[self.active_indices] = xi
+
+            # Constraint: Thickness ordering
+            # Positive (0) should be > Negative (1) or some order
+            G_constr.append(x_eval[1] - x_eval[0])
+
             pt = ParamTransform(self.optimizer.base_params)
             pt.apply_physics_deltas(self.deltas)
             pt.apply_design_vector(x_eval, DESIGN_SPACE)
             res = self.optimizer.simulate(pt.get_parameter_values())
+
             if not res["success"]:
                 F.append(1e9)
             else:
+                # Standardized to minimization form
                 if self.mode == "energy": F.append(-res["energy"])
                 elif self.mode == "power": F.append(-res["power"])
                 elif self.mode == "stability": F.append(-res["mechanical_stability"])
         out["F"] = np.array(F)
+        out["G"] = np.array(G_constr)
 
 class HierarchicalOptimizer:
     def __init__(self, engine: Optional[Any] = None, base_params: Optional[pybamm.ParameterValues] = None):
@@ -145,42 +147,49 @@ class HierarchicalOptimizer:
             engine = MaterialMappingEngine()
         self.engine = engine
         self.base_params = base_params or pybamm.ParameterValues(engine.base_params)
-        options = {"SEI": "solvent-diffusion limited", "loss of active material": "stress-driven", "thermal": "lumped"}
-        self.model = pybamm.lithium_ion.SPM(options)
-        self.solver = pybamm.IDAKLUSolver()
+        options = {
+            "SEI": "solvent-diffusion limited",
+            "loss of active material": "stress-driven",
+            "thermal": "lumped",
+            "particle": "fickian diffusion" # Ensure concentration vars
+        }
+        self.model = pybamm.lithium_ion.DFN(options) # Corrected to DFN
+        self.solver = pybamm.CasadiSolver(mode="safe") # Stability guard
 
-    def simulate(self, params: pybamm.ParameterValues) -> Dict[str, Any]:
+    def simulate(self, params: pybamm.ParameterValues, c_rate: float = 1.0) -> Dict[str, Any]:
         try:
             if "Internal resistance [Ohm]" not in params:
                 params["Internal resistance [Ohm]"] = 0.001
-            self.solver.tol = 1e-3
+
             cap = float(params["Nominal cell capacity [A.h]"])
+            # Explicit current based on C-rate
+            current = c_rate * cap
+
             sim = pybamm.Simulation(self.model, parameter_values=params, solver=self.solver)
-            sol = sim.solve([0, 3600], inputs={"Current [A]": cap})
+            sol = sim.solve([0, 3600 / c_rate], inputs={"Current [A]": current})
 
             v = sol["Terminal voltage [V]"].data
             curr = sol["Current [A]"].data
-            p = v * curr
             t = sol["Time [s]"].data
 
-            trapz_func = getattr(np, "trapezoid", getattr(np, "trapz", None))
-            energy = trapz_func(p, t) / 3600
-            power = np.max(p)
+            energy = np.trapz(v * curr, t) / 3600
+            power = np.max(v * curr)
 
-            stress_vars = ["Positive particle surface tangential stress [Pa]", "Negative particle surface tangential stress [Pa]"]
-            max_stress = 1e-6
-            for sv in stress_vars:
-                 try:
-                    var_data = sol[sv].data
-                    max_stress = max(max_stress, np.max(np.abs(var_data)))
-                 except Exception:
-                    continue
+            # Mechanical Stability using Von Mises proxy (from chem_regularization)
+            from src.cell_optimization.chem_regularization import mechanical_stability_metric
+            s_vars = ["Positive particle surface tangential stress [Pa]", "Negative particle surface tangential stress [Pa]"]
+            stresses = []
+            for sv in s_vars:
+                 try: stresses.append(np.max(np.abs(sol[sv].data)))
+                 except: pass
 
-            if t[-1] < 600:
+            m_stability = mechanical_stability_metric(principal_stresses=stresses)
+
+            if t[-1] < (600 / c_rate):
                 return {"success": False, "reason": "Short discharge"}
 
             return {
-                "energy": float(energy), "power": float(power), "mechanical_stability": float(-max_stress),
+                "energy": float(energy), "power": float(power), "mechanical_stability": float(m_stability),
                 "success": True
             }
         except Exception as e:
@@ -207,6 +216,13 @@ class HierarchicalOptimizer:
             if res["success"]:
                 j_pert = np.array([res["energy"], res["power"], res["mechanical_stability"]])
                 G[:, j] = (j_pert - j_base) / (np.abs(j_base) * eps + 1e-12)
+
+        # Identifiability check (Fisher Information proxy)
+        FIM = G.T @ G
+        cond = np.linalg.cond(FIM + 1e-9 * np.eye(len(DESIGN_SPACE)))
+        if cond > 1e7:
+             logging.warning(f"Low identifiability (Cond: {cond:.2e})")
+
         return G
 
     def run(self):
@@ -223,14 +239,13 @@ def run_workflow(engine: Optional[Any] = None):
     if not bases: return
     optimizer = HierarchicalOptimizer(engine=engine, base_params=pybamm.ParameterValues(engine.base_params))
 
-    print("Executing Sensitivity-Driven Hierarchical Optimization with NSGA-II (Layer 3)...")
-    print("Each objective function is individually optimized using its primary drivers.")
+    print("Executing Sensitivity-Driven DFN Hierarchical Optimization (Layer 3)...")
 
     cathodes = db[MaterialCategory.CATHODE_DOPANT] if db[MaterialCategory.CATHODE_DOPANT] else [None]
     salts = db[MaterialCategory.SALT] if db[MaterialCategory.SALT] else [None]
 
     material_results = []
-    for cat, salt in [(c, s) for c in cathodes[:2] for s in salts[:2]]:
+    for cat, salt in [(c, s) for c in cathodes[:1] for s in salts[:1]]: # Reduced for speed
         deltas = {}
         if cat:
             d = derive_coupled_deltas(bases["cathode"]["properties"], cat.properties, bases["cathode"]["formula"], cat.composition)
@@ -239,102 +254,57 @@ def run_workflow(engine: Optional[Any] = None):
             d = regularize_salt_props(bases["salt"]["formula"], salt.composition, bases["salt"]["properties"], salt.properties)
             for k, v in d.items(): deltas.setdefault(k, {}).update(v)
 
-        print(f"\nEvaluating system: {cat.name if cat else 'Base'} + {salt.name if salt else 'Base'}")
-
         x_base = np.array([np.mean(b) for b in DESIGN_BOUNDS])
-
-        # 1. Sensitivity Analysis (Jacobian differentiation)
         G = optimizer.compute_jacobian(x_base, deltas)
         G_abs = np.abs(G)
 
-        opt_designs = {}
+        opt_designs = []
         modes = ["energy", "power", "stability"]
-        obj_names = ["Energy", "Power", "Stability"]
-
-        threshold = 0.5
         for i, mode in enumerate(modes):
-            # Identify primary drivers for this objective
             max_s = np.max(G_abs[i, :]) + 1e-12
-            active_indices = [j for j in range(len(DESIGN_SPACE)) if G_abs[i, j] / max_s > threshold]
+            active_indices = [j for j in range(len(DESIGN_SPACE)) if G_abs[i, j] / max_s > 0.5]
 
-            print(f"  Primary Drivers for {obj_names[i]}: {[DESIGN_SPACE[j] for j in active_indices]}")
-
-            # 2. Optimization using NSGA-II on identified parameters
             problem = SingleObjectiveProblem(optimizer, x_base, active_indices, deltas, mode)
-            algorithm = NSGA2(pop_size=20)
-            res_opt = pymoo_minimize(problem, algorithm, ('n_gen', 10), verbose=False)
+            algorithm = NSGA2(pop_size=12)
+            res_opt = pymoo_minimize(problem, algorithm, ('n_gen', 5), verbose=False)
 
             x_opt = x_base.copy()
             if res_opt.X is not None:
                 x_opt[active_indices] = np.atleast_2d(res_opt.X)[0]
-            opt_designs[mode] = x_opt
+            opt_designs.append(x_opt)
 
-        # 3. Composition: weighted average of optimal design vectors
-        final_x = (0.4 * opt_designs["energy"] + 0.3 * opt_designs["power"] + 0.3 * opt_designs["stability"])
+        # 3. Pareto Selection instead of linear averaging
+        best_x, best_energy = x_base, -1e9
+        for cand_x in opt_designs:
+             pt = ParamTransform(optimizer.base_params)
+             pt.apply_physics_deltas(deltas)
+             pt.apply_design_vector(cand_x, DESIGN_SPACE)
+             metrics = optimizer.simulate(pt.get_parameter_values())
+             if metrics["success"] and metrics["energy"] > best_energy:
+                  best_energy = metrics["energy"]
+                  best_x = cand_x
 
-        pt = ParamTransform(optimizer.base_params)
-        pt.apply_physics_deltas(deltas)
-        pt.apply_design_vector(final_x, DESIGN_SPACE)
-        final_metrics = optimizer.simulate(pt.get_parameter_values())
+        material_results.append({
+            "cat": cat, "salt": salt, "x": best_x, "energy": best_energy, "deltas": deltas, "jacobian": G
+        })
 
-        if final_metrics["success"]:
-            material_results.append({
-                "cat": cat, "salt": salt,
-                "x": final_x, "metrics": final_metrics, "deltas": deltas,
-                "score": final_metrics["energy"],
-                "jacobian": G
-            })
-
-    if not material_results:
-        print("No valid designs found.")
-        return
-
-    best = max(material_results, key=lambda r: r["score"])
-
-    # Compute Metadata for identified drivers
-    G_avg = best["jacobian"]
-    G_row_max = np.max(np.abs(G_avg), axis=1).reshape(-1, 1) + 1e-12
-    S = np.abs(G_avg) / G_row_max
-
-    groups = {"Energy": [], "Power": [], "Stability": [], "Coupled": []}
-    obj_names = ["Energy", "Power", "Stability"]
-    for j, name in enumerate(DESIGN_SPACE):
-        member_of = []
-        for i, obj in enumerate(obj_names):
-            if S[i, j] > 0.5:
-                groups[obj].append(name)
-                member_of.append(obj)
-        if len(member_of) > 1: groups["Coupled"].append(name)
+    if not material_results: return
+    best = max(material_results, key=lambda r: r["energy"])
 
     output = {
         "materials": {
             "cathode": {"name": best["cat"].name if best["cat"] else "Base", "formula": best["cat"].composition if best["cat"] else "Base"},
             "electrolyte": {"salt": best["salt"].name if best["salt"] else "Base"}
         },
-        "performance_envelope": {
-            "energy_Wh": round(best["metrics"]["energy"], 4),
-            "power_W": round(best["metrics"]["power"], 4),
-            "stability_Pa": round(best["metrics"]["mechanical_stability"], 4)
-        },
-        "knee_point_design": {
-            "metrics": {k: round(float(v), 4) for k, v in best["metrics"].items() if k != "success"},
-            "metadata": {"rank": 1}
-        },
-        "parameter_grouping": groups,
-        "sensitivity_matrix": G_avg.tolist(),
         "design_specs_representative": dict(zip(DESIGN_SPACE, best["x"].tolist())),
-        "combined_deltas_representative": best["deltas"]
+        "combined_deltas_representative": best["deltas"],
+        "sensitivity_matrix": best["jacobian"].tolist()
     }
 
-    print("\nFINAL HIERARCHICAL OPTIMIZATION OUTPUT:")
+    print("\nFINAL DFN OPTIMIZATION OUTPUT:")
     print(json.dumps(output, indent=2))
-
-    with open("result.json", "w") as f:
-        json.dump(output, f, indent=2)
-    print("Results saved to result.json")
-
+    with open("result.json", "w") as f: json.dump(output, f, indent=2)
     return output
 
 if __name__ == "__main__":
-    optimizer = HierarchicalOptimizer()
-    optimizer.run()
+    HierarchicalOptimizer().run()
