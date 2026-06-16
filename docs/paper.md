@@ -100,13 +100,16 @@ Selected material modifications are projected onto the validated DFN parameter s
 $\theta' = \theta_{base} (1 + \Delta \theta_{material})$
 This ensures DFN simulation validity by maintaining compatibility with the calibrated baseline.
 
-3. Stage E-F: Differentiable Sensitivity Manifold Optimizer (DSMO)
-The projected design space ($\theta = [\theta_s, \theta_m]$) is optimized using a coupled multiphysics operator $y = F(\theta)$.
+3. Stage E-F: Multi-Objective Optimization & Objective-Specific Sensitivity Analysis
+The projected design space ($\theta = [\theta_s, \theta_m]$) is optimized as a multi-objective problem using the coupled multiphysics operator $y = F(\theta) = [E(\theta), P(\theta), M(\theta)]^T$, where the three objectives are: maximize energy capacity $E(\theta)$, maximize power capability $P(\theta)$, and maximize mechanical stability $M(\theta)$ (minimize damage).
 
-The framework utilizes a Gauss–Newton (Levenberg-Marquardt) update on the sensitivity manifold to determine the optimal configuration:
-    $\theta_{k+1} = \theta_k - \eta (S^T S + \lambda I)^{-1} S^T (y - y_{target})$
+The framework employs the following four-phase approach:
+*   **Phase 1: Multi-Objective Search (NSGA-II):** For each material combination (dopant–salt pairing), Non-dominated Sorting Genetic Algorithm II (NSGA-II) is applied to the three-objective space. The algorithm simultaneously explores design configurations that optimize energy, power, and mechanical stability, generating a Pareto-optimal front for each material pairing.
+*   **Phase 2: Objective-Specific Sensitivity Analysis:** For each Pareto point, the sensitivity of each objective function to design parameters is computed via numerical Jacobian differentiation: $G_{ij} = \partial y_i / \partial \theta_j$. This yields a $3 \times 8$ sensitivity matrix capturing how energy, power, and mechanical stability each respond to structural and material design variables.
+*   **Phase 3: Cross-Pareto Aggregation & Normalization:** Sensitivities are aggregated (averaged) over all Pareto-optimal designs across all material combinations. Row-wise normalization produces the sensitivity manifold $S_{ij}$, where each objective is independently normalized: $S_{ij} = G_{ij} / \max_k(G_{ik})$. This reveals which parameters drive each specific objective.
+*   **Phase 4: Pareto Filtering & Knee-Point Selection:** Non-dominated solutions from all material combinations are aggregated. A single robust knee-point design is identified as the configuration closest to the ideal point in the normalized objective space, balancing all three competing objectives. This design is reported alongside objective-specific parameter groupings (parameters with $S_{ij} > 0.5$ for objective $i$ are identified as primary drivers for that objective).
 
-The final optimized configuration is validated through a coupled multiphysics framework in PyBaMM, assessing the electrochemical and thermal response under representative operating profiles. While this work focuses on a foundational design space, the cell architecture remains amenable to further performance enhancement via composite electrode structuring, advanced pore network engineering, perturbing other dopant sites (beyond the Fe-site) and exploring a broader range of electrolyte systems (solvents and additives) to further enhance cycle life and energy density. The current optimization scope is intentionally streamlined to accommodate the computational constraints of the DFN solver while effectively demonstrating the viability of physics-based optimization for enhancing the cost-efficiency and performance of sodium-ion energy storage systems.
+The selected configuration is validated through a coupled multiphysics framework in PyBaMM, assessing the electrochemical and thermal response under representative operating profiles. While this work focuses on a foundational design space, the cell architecture remains amenable to further performance enhancement via composite electrode structuring, advanced pore network engineering, perturbing other dopant sites (beyond the Fe-site) and exploring a broader range of electrolyte systems (solvents and additives) to further enhance cycle life and energy density. The current optimization scope is intentionally streamlined to accommodate the computational constraints of the DFN solver while effectively demonstrating the viability of physics-based optimization for enhancing the cost-efficiency and performance of sodium-ion energy storage systems.
 Computed cell-level performance metrics include:  Energy capacity (kWh), Nominal voltage (V), Continuous current (A), Peak current (A), Charge time (h or min under rated C-rate), Power capability (kW or C-rate equivalent), Cycle life (cycles to end-of-life under defined SOH threshold) 
 
 Metric	Baseline	Optimized
@@ -125,8 +128,6 @@ The plant model represents the physical hardware of the 16S1P sodium-ion battery
 *   **Casing:** Poly-material moisture barrier (aluminum-free) with no secondary coating.
 *   **Coating Thickness:** Specified at 50–150 $\mu$m, governing internal thermal conductance.
 *   **Internal Dynamics:** Core-casing distributed thermal nodes with DFN-informed concentration states ($c_s, c_e$) and 2-RC polarization branches.
-
-
 
 **Thermal Node Topology:**
 *   Cell Core (heat source) → Cell Casing (poly) → Ambient (convection).
@@ -158,22 +159,20 @@ The BMS implements real-time estimation of non-measurable internal states:
 *   **SOH Inference (RLS):** Recursive Least Squares (RLS) algorithms identify internal resistance growth ($R_0$ drift) to estimate capacity fade and power degradation.
 *   **Temperature Inference:** Distributed sensing combined with a lumped thermal observer provides core temperature estimates where direct sensing is unavailable.
 
-**2.2 Protection & Diagnostic Layer**
+**2.2 Safety Enforcement & Current Arbitration**
 Core safety logic monitors and mitigates hazardous conditions:
-*   **Voltage Protection:** Hard-coded thresholds for over-voltage (OV) and under-voltage (UV) to prevent lithium/sodium plating and electrolyte decomposition.
-*   **Thermal Protection:** Over-temperature (OT) shutdown logic triggered if any cell core exceeds the $T_{max}$ envelope.
-*   **Impedance Diagnostics:** Detection of abnormal impedance rise or sudden voltage drops indicating internal shorts or catastrophic degradation.
-
-**2.3 Safety Enforcement & Current Arbitration**
-The BMS regulates the current command ($I_{cmd}$) to maintain the pack within the Safe Operating Area (SOA):
-*   **Thermal Derating:** Exponential current limiting as cell temperatures approach the safe limit ($T_{limit}$).
-*   **SOC Boundary Derating:** Smooth current tapering at high/low SOC to prevent accidental threshold violations.
-*   **Internal Arbitration:** The final current command is a function of the user request and the most restrictive safety constraint: $I_{cmd} = f(I_{req}, SOC, T, SOH)$.
+*   **Overcurrent in Discharge (OCD):** Protects the battery pack from excessive load current. By setting trip points (such as OCD1 and OCD2 for varying pulse durations), the pack only delivers the current it was designed to handle.
+*   **Overcurrent in Charge:** Monitors current in both directions. This protects the pack from rogue chargers that might output unsafe levels of voltage or current, which could lead to cell venting.
+*   **Temperature Monitoring:** A robust BMS should monitor temperature to prevent thermal runaway. The video highlights the importance of granularity with four specific settings:
+    *   **Over Temperature in Discharge (OTD):** Protects against overheating during high-current use.
+    *   **Over Temperature in Charge (OTC):** Ensures the pack stays cool during the charging process.
+    *   **Under Temperature in Discharge/Charge:** Prevents the battery from being used or charged in excessively cold conditions where cell chemistry might be damaged.
+*   **Short Circuit Protection (SD):** This is described as one of the most critical safety features. A short circuit can cause a massive current spike (potentially hundreds of amps), leading to rapid heating, venting, and fire. The BMS must be able to detect and isolate the battery from the load immediately upon detecting a short.
 
 **2.4 Control & Balancing Layer**
 *   **State Machine:** Deterministic management of Standby, Precharge, Run, and Fault states.
 *   **Cell Equalization:** Cell balancing using adaptive, SOH-aware equalization strategies to minimize cell-to-cell SOC dispersion and mitigate accelerated degradation under varying operating conditions.
-*   **Adaptive MPC:** Operational regulation using adaptive Model Predictive Control to optimize performance across the operational envelope.
+*   **Control Objective:** Determine the optimal charge-discharge trajectory given the estimated state to maximize pack performance while respecting safety, thermal, and SOC constraints.
 
 3. RESEARCH SCOPE DECOMPOSITION
 This research maintains a clean separation between the physical plant and the control algorithms:

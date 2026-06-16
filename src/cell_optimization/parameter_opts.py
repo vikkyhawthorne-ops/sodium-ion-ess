@@ -263,8 +263,8 @@ def run_workflow():
         # NSGA-II Search
         print(f"Running NSGA-II for {cat.name if cat else 'Base'} + {salt.name if salt else 'Base'}...")
         problem = BatteryOptimizationProblem(analyzer, deltas)
-        algorithm = NSGA2(pop_size=12)
-        res_opt = pymoo_minimize(problem, algorithm, ('n_gen', 5), verbose=False)
+        algorithm = NSGA2(pop_size=20)
+        res_opt = pymoo_minimize(problem, algorithm, ('n_gen', 25), verbose=False)
 
         if res_opt.X is not None:
             X_p = np.atleast_2d(res_opt.X)
