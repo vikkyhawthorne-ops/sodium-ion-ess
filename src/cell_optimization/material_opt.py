@@ -63,6 +63,7 @@ class MaterialMappingEngine:
         self.cache = self._load_cache()
         self.session = self._setup_session() if requests else None
         self.base_params = get_parameter_values()
+        self._run_result = None # Instance-level cache for run()
 
     def _generate_cache_version(self) -> str:
         # Dynamic cache version based on formulas
@@ -93,12 +94,13 @@ class MaterialMappingEngine:
         except IOError as e:
             logging.warning(f"Failed to save cache: {e}")
 
-    def _resolve_material(self, formula: str, source_override: Optional[str] = None, chemsys: Optional[str] = None) -> Tuple[Optional[Dict[str, float]], str]:
+    def _resolve_material(self, formula: str, source_override: Optional[str] = None, chemsys: Optional[str] = None) -> Tuple[Optional[Dict[str, float]], str, str]:
         cache_key = f"RESOLVE:{formula if not chemsys else chemsys}"
         if cache_key in self.cache:
-            return self.cache[cache_key]["props"], self.cache[cache_key].get("source", "UNKNOWN")
+            entry = self.cache[cache_key]
+            return entry["props"], entry.get("source", "UNKNOWN"), entry.get("formula", formula)
 
-        props, source = None, "NONE"
+        props, source, resolved_formula = None, "NONE", formula
         if MPRester and self.mp_key and (source_override == "MP" or source_override is None):
             try:
                 with MPRester(api_key=self.mp_key) as mpr:
@@ -110,59 +112,66 @@ class MaterialMappingEngine:
                     if docs:
                         docs.sort(key=lambda d: d.energy_above_hull)
                         best = docs[0]
+                        resolved_formula = best.formula_pretty
                         props = {
                             "stability": float(best.energy_above_hull),
                             "formation_energy": float(best.formation_energy_per_atom),
                             "band_gap": float(best.band_gap if best.band_gap is not None else 0.0),
-                            "volume_per_atom": float(best.volume / best.nsites if best.nsites else 1.0)
+                            "volume_per_atom": float(best.volume / best.nsites if best.nsites else 1.0),
+                            "resolved_formula": resolved_formula
                         }
                         source = "MATERIALS_PROJECT"
             except Exception: pass
 
         if props is None and self.session and (source_override == "OQMD" or source_override is None):
             try:
-                params = {"composition": formula, "limit": 1, "fields": "delta_e,stability,band_gap,volume,natoms"}
+                params = {"composition": formula, "limit": 1, "fields": "composition,delta_e,stability,band_gap,volume,natoms"}
                 r = self.session.get(OQMD_URL, params=params, timeout=10)
                 if r.status_code == 200:
                     data = r.json().get("data", [])
                     if data:
                         best = data[0]
+                        resolved_formula = best.get("composition", formula)
                         props = {
                             "stability": float(best.get("stability", 0.1)),
                             "formation_energy": float(best.get("delta_e", 0.0)),
                             "band_gap": float(best.get("band_gap", 0.0)),
-                            "volume_per_atom": float(best.get("volume", 1.0)) / float(best.get("natoms", 1.0))
+                            "volume_per_atom": float(best.get("volume", 1.0)) / float(best.get("natoms", 1.0)),
+                            "resolved_formula": resolved_formula
                         }
                         source = "OQMD"
             except Exception: pass
 
         if props:
-            self.cache[cache_key] = {"props": props, "source": source}
+            self.cache[cache_key] = {"props": props, "source": source, "formula": resolved_formula}
             self._save_cache()
-            return props, source
-        return None, "NONE"
+            return props, source, resolved_formula
+        return None, "NONE", formula
 
     def run(self) -> Tuple[Dict[MaterialCategory, List[MaterialCandidate]], Dict[str, Any]]:
+        if self._run_result is not None:
+             return self._run_result
+
         print(f"Executing API-Based Material Resolution (Layer 1)...")
         system = {cat: [] for cat in MaterialCategory}
         bases = {}
 
         # 1. Resolve Cathode Base
         for f in BASE_CATHODE_PRIORITIES:
-            p, src = self._resolve_material(f, source_override="MP")
+            p, src, rf = self._resolve_material(f, source_override="MP")
             if p:
-                bases["cathode"] = {"formula": f, "properties": p, "source": src}
+                bases["cathode"] = {"formula": rf, "properties": p, "source": src}
                 break
 
         # 2. Resolve Salt Base (NaPF6)
-        p_salt_base, src_salt_base = self._resolve_material(BASE_SALT_FORMULA)
+        p_salt_base, src_salt_base, rf_salt_base = self._resolve_material(BASE_SALT_FORMULA)
         if p_salt_base:
-            bases["salt"] = {"formula": BASE_SALT_FORMULA, "properties": p_salt_base, "source": src_salt_base}
+            bases["salt"] = {"formula": rf_salt_base, "properties": p_salt_base, "source": src_salt_base}
 
         # 3. Resolve Interface Base
-        p_int, src_int = self._resolve_material(BASE_INTERFACE_FORMULA)
+        p_int, src_int, rf_int = self._resolve_material(BASE_INTERFACE_FORMULA)
         if p_int:
-            bases["interface"] = {"formula": BASE_INTERFACE_FORMULA, "properties": p_int, "source": src_int}
+            bases["interface"] = {"formula": rf_int, "properties": p_int, "source": src_int}
 
         if not all(k in bases for k in ["cathode", "salt", "interface"]):
             return system, {}
@@ -170,24 +179,25 @@ class MaterialMappingEngine:
         # 4. Resolve Cathode Dopants
         for d in DOPANTS:
             chemsys = f"Na-Fe-{d}-P-O"
-            p, src = self._resolve_material(formula=f"Na4Fe2.7{d}0.3P4O15", chemsys=chemsys)
+            p, src, rf = self._resolve_material(formula=f"Na4Fe2.7{d}0.3P4O15", chemsys=chemsys)
             if not p:
                 chemsys = f"Na-{d}-P-O"
-                p, src = self._resolve_material(formula=f"Na{d}PO4", chemsys=chemsys)
+                p, src, rf = self._resolve_material(formula=f"Na{d}PO4", chemsys=chemsys)
 
             if p:
-                system[MaterialCategory.CATHODE_DOPANT].append(MaterialCandidate(name=f"{d}-doped", category=MaterialCategory.CATHODE_DOPANT, composition=f"Doped-{d}", properties=p, provenance=src))
+                system[MaterialCategory.CATHODE_DOPANT].append(MaterialCandidate(name=f"{d}-doped", category=MaterialCategory.CATHODE_DOPANT, composition=rf, properties=p, provenance=src))
 
         # 5. Resolve Salts (NaBOB, NaTCP) from API
         for name, formula in SALTS.items():
-             p, src = self._resolve_material(formula)
+             p, src, rf = self._resolve_material(formula)
              if p:
-                 system[MaterialCategory.SALT].append(MaterialCandidate(name=name, category=MaterialCategory.SALT, composition=formula, properties=p, provenance=src))
+                 system[MaterialCategory.SALT].append(MaterialCandidate(name=name, category=MaterialCategory.SALT, composition=rf, properties=p, provenance=src))
 
         # 6. Resolve Functionalization (MTMS) from API
         for name, formula in FUNCTIONALIZATION.items():
-             p, src = self._resolve_material(formula)
+             p, src, rf = self._resolve_material(formula)
              if p:
-                 system[MaterialCategory.FUNCTIONALIZATION].append(MaterialCandidate(name=name, category=MaterialCategory.FUNCTIONALIZATION, composition=formula, properties=p, provenance=src))
+                 system[MaterialCategory.FUNCTIONALIZATION].append(MaterialCandidate(name=name, category=MaterialCategory.FUNCTIONALIZATION, composition=rf, properties=p, provenance=src))
 
-        return system, bases
+        self._run_result = (system, bases)
+        return self._run_result

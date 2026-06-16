@@ -44,7 +44,8 @@ def compute_chemical_realization(
         dE = abs(thermo_norm(proxy_props.get("formation_energy", 0), base_props.get("formation_energy", 0)))
         dV = abs(geom_norm(proxy_props, base_props)["strain"]) / 0.05
 
-        # Realization score based on overlap and residual attenuation
+        # Realization score: higher means proxy is chemically similar to base
+        # Used to attenuate deltas if chemistry differs significantly
         realization = np.tanh(overlap * 3.0) * np.exp(-0.5 * (dE + dV))
         return float(np.clip(realization, 0.01, 1.0))
     except Exception:
@@ -59,10 +60,10 @@ def derive_coupled_deltas(base_props, proxy_props, base_formula, proxy_formula) 
     # Stability improvement dS (positive means more stable)
     dS = (base_props.get("stability", 0) - proxy_props.get("stability", 0)) / KT
 
-    # Realization Factor
+    # Realization Factor: Regularizes deltas for different chemistries
     R = compute_chemical_realization(base_formula, proxy_formula, base_props, proxy_props)
 
-    # 2.4 Physically grounded coupling rules
+    # 2.4 Physically grounded coupling rules attenuated by Realization
     # Voltage shift follows Nernstian/Energy relation
     voltage_boost = -dE * KT * R
     # Conductivity follows Arrhenius/Band-gap relation: exp(-Eg/2kT)
@@ -89,23 +90,30 @@ def derive_coupled_deltas(base_props, proxy_props, base_formula, proxy_formula) 
         }
     }
 
-def regularize_salt_props(base_salt_props: Dict[str, float], candidate_salt_props: Dict[str, float]) -> Dict[str, Any]:
-    """Derive electrolyte deltas from physical residuals (dG for conductivity, dV for viscosity)."""
+def regularize_salt_props(base_salt_formula: str, candidate_salt_formula: str, base_salt_props: Dict[str, float], candidate_salt_props: Dict[str, float]) -> Dict[str, Any]:
+    """Derive electrolyte deltas attenuated by chemical realization."""
     try:
+        R = compute_chemical_realization(base_salt_formula, candidate_salt_formula, base_salt_props, candidate_salt_props)
+
+        # Physical residuals
         dG = (candidate_salt_props.get("band_gap", 0) - base_salt_props.get("band_gap", 0)) / KT
-        dV = (candidate_salt_props.get("volume_per_atom", 1.0) - base_salt_props.get("volume_per_atom", 1.0)) / 1.0
+        v_can = candidate_salt_props.get("volume_per_atom", 1.0)
+        v_base = base_salt_props.get("volume_per_atom", 1.0)
+        dV = (v_can - v_base) / v_base
 
         return {
             "transport": {
-                "electrolyte_conductivity_log_delta": float(-0.5 * dG),
-                "electrolyte_diffusivity_log_delta": float(-1.0 * dV)
+                "electrolyte_conductivity_log_delta": float(-0.5 * dG * R),
+                "electrolyte_diffusivity_log_delta": float(-1.0 * dV * R)
             }
         }
     except Exception: return {"transport": {}}
 
-def regularize_functionalization(base_props: Dict[str, float], candidate_props: Dict[str, float]) -> Dict[str, Any]:
-    """MTMS Functionalization regularized via weighted network dilution model."""
+def regularize_functionalization(base_int_formula: str, candidate_func_formula: str, base_props: Dict[str, float], candidate_props: Dict[str, float]) -> Dict[str, Any]:
+    """MTMS Functionalization regularized via network dilution and chemical realization."""
     try:
+        R = compute_chemical_realization(base_int_formula, candidate_func_formula, base_props, candidate_props)
+
         # Connectivity fraction for MTMS (phi = 0.75)
         phi = 0.75
         alpha_v = 1.0
@@ -113,17 +121,17 @@ def regularize_functionalization(base_props: Dict[str, float], candidate_props: 
 
         dS = (base_props.get("stability", 0) - candidate_props.get("stability", 0)) / KT
 
-        # Mapping to SEI kinetics and transport using network dilution exponents
+        # Mapping to SEI kinetics and transport attenuated by Realization
         return {
             "kinetic": {
-                "sei_growth_log_delta": float(-dS * phi),
-                "exchange_current_log_delta": float(0.1 * dS)
+                "sei_growth_log_delta": float(-dS * phi * R),
+                "exchange_current_log_delta": float(0.1 * dS * R)
             },
             "transport": {
-                "sei_resistivity_log_delta": float(-alpha_d * dS * phi)
+                "sei_resistivity_log_delta": float(-alpha_d * dS * phi * R)
             },
             "thermodynamic": {
-                "initial_sodium_loss_delta": float(-alpha_v * dS * phi)
+                "initial_sodium_loss_delta": float(-alpha_v * dS * phi * R)
             }
         }
     except Exception: return {"kinetic": {}, "transport": {}, "thermodynamic": {}}

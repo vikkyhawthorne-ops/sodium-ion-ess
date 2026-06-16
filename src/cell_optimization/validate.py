@@ -36,7 +36,7 @@ class OptimizationValidator:
         if MaterialCategory.FUNCTIONALIZATION in db and db[MaterialCategory.FUNCTIONALIZATION]:
             mtms = db[MaterialCategory.FUNCTIONALIZATION][0]
             print(f"Applying fixed functionalization: {mtms.name}")
-            f_deltas = regularize_functionalization(bases["interface"]["properties"], mtms.properties)
+            f_deltas = regularize_functionalization(bases["interface"]["formula"], mtms.composition, bases["interface"]["properties"], mtms.properties)
             # Merge functionalization deltas into combined deltas
             for cat, props in f_deltas.items():
                 self.deltas.setdefault(cat, {}).update(props)

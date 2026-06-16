@@ -236,7 +236,7 @@ def run_workflow(engine: Optional[Any] = None):
             d = derive_coupled_deltas(bases["cathode"]["properties"], cat.properties, bases["cathode"]["formula"], cat.composition)
             for k, v in d.items(): deltas.setdefault(k, {}).update(v)
         if salt:
-            d = regularize_salt_props(bases["salt"]["properties"], salt.properties)
+            d = regularize_salt_props(bases["salt"]["formula"], salt.composition, bases["salt"]["properties"], salt.properties)
             for k, v in d.items(): deltas.setdefault(k, {}).update(v)
 
         print(f"\nEvaluating system: {cat.name if cat else 'Base'} + {salt.name if salt else 'Base'}")
