@@ -8,6 +8,7 @@ from pymoo.core.problem import Problem
 from pymoo.algorithms.soo.nonconvex.ga import GA
 from pymoo.optimize import minimize as pymoo_minimize
 from nfpp_sodium_ion.src.cell_parameters.cell_alpha import get_parameter_values
+from src.simulation.utilities.mechanical.fenics_model import ThermoelasticStrainModel
 from pint import UnitRegistry
 
 # Unit registry for dimensional consistency (Issue 14)
@@ -143,6 +144,7 @@ class SingleObjectiveProblem(Problem):
 
     def _evaluate(self, x, out, *args, **kwargs):
         F, G_all = [], []
+        from src.cell_optimization.chem_regularization import mechanical_stability_metric
         for xi in x:
             x_eval = self.x_full.copy(); x_eval[self.active_indices] = xi
             # Issue 14: t_p <= t_n. Normalized constraint (Issue 4.2).
@@ -156,9 +158,15 @@ class SingleObjectiveProblem(Problem):
             if validate_params(pv):
                 res = self.optimizer.simulate(pv)
                 if res["success"]:
-                    if self.mode == "energy": f_val = -res["energy"]
-                    elif self.mode == "power": f_val = -res["power"]
-                    elif self.mode == "stability": f_val = -res["mechanical_stability"]
+                    # Stage 1: Fast thermal check
+                    if res["T_max"] > 333.15: # 60 degC limit
+                        f_val = 1e9
+                    else:
+                        if self.mode == "energy": f_val = -res["energy"]
+                        elif self.mode == "power": f_val = -res["power"]
+                        elif self.mode == "stability":
+                            # Stage 1 Stability proxy
+                            f_val = -mechanical_stability_metric(stresses=res["stresses"])
 
             # Objective scaling (Issue 4.1)
             scale = abs(f_val) + 1e-9
@@ -182,8 +190,9 @@ class HierarchicalOptimizer:
         self.model = pybamm.lithium_ion.DFN(options)
         self.solver = pybamm.IDAKLUSolver(rtol=1e-7, atol=1e-9, max_step_size=5.0)
         self.sim = pybamm.Simulation(self.model, solver=self.solver)
+        self.mech_model = ThermoelasticStrainModel()
 
-    def simulate(self, params: pybamm.ParameterValues, c_rate: float = 1.0) -> Dict[str, Any]:
+    def simulate(self, params: pybamm.ParameterValues, c_rate: float = 1.0, return_sol: bool = False) -> Dict[str, Any]:
         try:
             self.sim.parameter_values = params
             sol = self.sim.solve([0, 3600 / c_rate], inputs={"Current [A]": c_rate * float(params["Nominal cell capacity [A.h]"])})
@@ -196,23 +205,50 @@ class HierarchicalOptimizer:
 
             energy = float(energy_wh)
             power = np.max(v * curr)
-            from src.cell_optimization.chem_regularization import mechanical_stability_metric
+
+            # Cheap thermal check (Stage 1)
+            T_max = np.max(sol["Cell temperature [K]"].data)
+
+            # Post-processing proxy (deprecated by FEM solve, but used for fast ranking)
             stresses = []
             for sv in ["Positive particle surface tangential stress [Pa]", "Negative particle surface tangential stress [Pa]"]:
                  try: stresses.append(np.max(np.abs(sol[sv].data)))
                  except: pass
-            m_stability = mechanical_stability_metric(stresses=stresses)
-            return {"energy": float(energy), "power": float(power), "mechanical_stability": float(m_stability), "success": True}
+
+            res = {
+                "energy": float(energy),
+                "power": float(power),
+                "T_max": float(T_max),
+                "stresses": stresses,
+                "success": True
+            }
+            if return_sol:
+                res["sol"] = sol
+            return res
         except Exception as e:
             return {"success": False, "reason": f"{e}"}
 
     def evaluate_stability_pde(self, params: pybamm.ParameterValues, mode: str) -> Tuple[bool, float]:
-        res = self.simulate(params)
+        """Stage 2: Expensive FEM thermo-mechanical solve."""
+        res = self.simulate(params, return_sol=True)
         if not res["success"]: return False, -1e9
-        if mode == "energy": stability = res["mechanical_stability"] - 0.05 * abs(res["power"])
-        elif mode == "power": stability = res["mechanical_stability"] - 0.1 * res["energy"]
-        else: stability = res["mechanical_stability"]
-        return True, stability
+
+        # Call FEniCSx solver
+        try:
+            mech_res = self.mech_model.solve_strain(res["sol"], params)
+            max_strain = mech_res["max_strain"]
+            critical_strain = self.mech_model.critical_thresholds.get("NFPP", 2e-3)
+            eta = max_strain / critical_strain
+
+            stability = -eta
+            # If failed (eta > 1), large penalty
+            if eta > 1.0:
+                stability -= 10.0 * (eta - 1.0)**2
+
+            return True, float(stability)
+        except Exception as e:
+            logging.error(f"FEM solve failed: {e}")
+            return False, -1e9
 
     def compute_jacobian(self, x: np.ndarray, deltas: Dict[str, Any]) -> np.ndarray:
         eps = 1e-4
@@ -220,7 +256,13 @@ class HierarchicalOptimizer:
         pt.apply_physics_deltas(deltas); pt.apply_design_vector(x, DESIGN_SPACE)
         base_res = self.simulate(pt.get_parameter_values())
         if not base_res["success"]: return np.zeros((3, len(DESIGN_SPACE)))
-        j_base = np.array([base_res["energy"], base_res["power"], base_res["mechanical_stability"]])
+
+        from src.cell_optimization.chem_regularization import mechanical_stability_metric
+        j_base = np.array([
+            base_res["energy"],
+            base_res["power"],
+            mechanical_stability_metric(stresses=base_res["stresses"])
+        ])
 
         G = np.zeros((3, len(DESIGN_SPACE)))
         for j in range(len(DESIGN_SPACE)):
@@ -233,7 +275,11 @@ class HierarchicalOptimizer:
             pt_p.apply_physics_deltas(deltas); pt_p.apply_design_vector(x_pert, DESIGN_SPACE)
             res = self.simulate(pt_p.get_parameter_values())
             if res["success"]:
-                j_pert = np.array([res["energy"], res["power"], res["mechanical_stability"]])
+                j_pert = np.array([
+                    res["energy"],
+                    res["power"],
+                    mechanical_stability_metric(stresses=res["stresses"])
+                ])
                 # Log-space differentiation for Jacobian stability (Issue 4.3)
                 G[:, j] = (np.log(np.abs(j_pert) + 1e-12) - np.log(np.abs(j_base) + 1e-12)) / eps
 
