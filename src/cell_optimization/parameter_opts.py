@@ -175,7 +175,7 @@ class SingleObjectiveProblem(Problem):
             # Penalty shaping (Issue 4.2)
             penalty = 100 * np.square(max(g, 0))
             F.append(f_val + penalty)
-            G_all.append(g)
+            G_all.append([g])
 
         out["F"] = np.array(F); out["G"] = np.array(G_all)
 

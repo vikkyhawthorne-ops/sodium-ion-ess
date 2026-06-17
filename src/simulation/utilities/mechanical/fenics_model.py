@@ -38,8 +38,14 @@ class ThermoelasticStrainModel:
             strain = 1e-5 * (T - 298.15) + 0.02 * soc
             return {"max_strain": float(strain)}
 
-        # Electrode dimensions (Pouch section)
-        L, W, H = 0.130, 0.070, 1e-4
+        # Electrode dimensions (Pouch section) from paper.md and cell_alpha.py
+        L = params.get("Electrode height [m]", 0.130)
+        W = params.get("Electrode width [m]", 0.070)
+        H_p = params.get("Positive electrode thickness [m]", 100e-6)
+        H_n = params.get("Negative electrode thickness [m]", 120e-6)
+        H_s = params.get("Separator thickness [m]", 25e-6)
+        H = H_p + H_n + H_s # Total stack height for mechanical PDE
+
         domain = mesh.create_box(MPI.COMM_WORLD, [[0, 0, 0], [L, W, H]], [10, 10, 3])
         V = fem.functionspace(domain, ("CG", 1, (3,)))
         u = ufl.TrialFunction(V)
