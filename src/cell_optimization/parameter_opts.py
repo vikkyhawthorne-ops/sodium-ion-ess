@@ -84,6 +84,9 @@ class ParamTransform:
             d = deltas["transport"]
             if "diffusivity_log_delta" in d:
                 self._apply_scaling("Positive particle diffusivity [m2.s-1]", np.exp(d["diffusivity_log_delta"]))
+            if "negative_diffusivity_delta" in d:
+                 # Applied via latent degradation scalar: D_eff = D0 * (1 - k2*theta)
+                 self._apply_scaling("Negative particle diffusivity [m2.s-1]", 1.0 + d["negative_diffusivity_delta"])
             if "conductivity_log_delta" in d:
                 self._apply_scaling("Positive electrode conductivity [S.m-1]", np.exp(d["conductivity_log_delta"]))
             if "electrolyte_conductivity_log_delta" in d:
@@ -94,11 +97,19 @@ class ParamTransform:
         if "kinetic" in deltas:
             d = deltas["kinetic"]
             if "exchange_current_log_delta" in d:
+                # Used for both dopant and latent SEI kinetics suppression
                 self._apply_scaling("Positive electrode exchange-current density [A.m-2]", np.exp(d["exchange_current_log_delta"]))
+                self._apply_scaling("Negative electrode exchange-current density [A.m-2]", np.exp(d["exchange_current_log_delta"]))
             if "sei_growth_log_delta" in d:
                 self._apply_scaling("SEI reaction exchange current density [A.m-2]", np.exp(d["sei_growth_log_delta"]))
             if "sei_resistivity_log_delta" in d:
                 self._apply_scaling("SEI resistivity [Ohm.m]", np.exp(d["sei_resistivity_log_delta"]))
+
+        if "mechanical" in deltas:
+             d = deltas["mechanical"]
+             if "modulus_degradation_factor" in d:
+                  # E_eff = E0 * (1 - beta * theta_surf)
+                  self._apply_scaling("Negative electrode Young's modulus [Pa]", d["modulus_degradation_factor"])
 
     def apply_design_vector(self, x: np.ndarray, names: List[str]):
         for val, name in zip(x, names):

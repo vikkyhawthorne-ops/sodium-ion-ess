@@ -51,36 +51,48 @@ class OptimizationValidator:
         p = pt.get_parameter_values()
         return p
 
-    def solve_mechanical_integrity(self, T_avg: float, cs_avg: float, L: float) -> Dict[str, float]:
+    def solve_mechanical_integrity(self, T_avg: float, cs_avg: float, L: float, params: pybamm.ParameterValues) -> Dict[str, float]:
         """
         High-fidelity 1D Thermo-Mechanical Solver using FEniCSx (dolfinx).
+        Pure thermo-chemo-elastic deformation solver (elastic-only coupling).
         """
         T_val = float(np.mean(T_avg))
         cs_val = float(np.mean(cs_avg))
 
+        # Effective Young's Modulus from parameters (includes degradation loss)
+        E_eff = float(params.get("Negative electrode Young's modulus [Pa]", 10e9))
+
         if dolfinx is None:
             # Simple physical proxy
-            E = 10e9
             alpha_t = 1e-5
             alpha_s = 2e-5
             strain = alpha_t * (T_val - 298.15) + alpha_s * cs_val
-            stress = E * strain
+            stress = E_eff * strain
             return {"max_stress_pa": float(stress), "mechanical_integrity_factor": float(stress / 50e6)}
 
         try:
             domain = mesh.create_interval(MPI.COMM_WORLD, 20, [0.0, float(L)])
             V = fem.functionspace(domain, ("Lagrange", 1))
             u, v = ufl.TrialFunction(V), ufl.TestFunction(V)
-            E, alpha_t, alpha_s = 10e9, 1e-5, 2e-5
+
+            # Expansion coefficients
+            alpha_t = 1e-5 # Thermal
+            alpha_s = 2e-5 # Chemical (Lithiation)
             delta_T, delta_c = T_val - 298.15, cs_val
-            a = ufl.inner(E * ufl.grad(u)[0], ufl.grad(v)[0]) * ufl.dx
-            L_rhs = ufl.inner(E * (alpha_t * delta_T + alpha_s * delta_c), ufl.grad(v)[0]) * ufl.dx
+
+            # Governing Equation: div(sigma) = 0
+            # sigma = E_eff * (eps(u) - eps_chem - eps_thermal)
+            a = ufl.inner(E_eff * ufl.grad(u)[0], ufl.grad(v)[0]) * ufl.dx
+            L_rhs = ufl.inner(E_eff * (alpha_t * delta_T + alpha_s * delta_c), ufl.grad(v)[0]) * ufl.dx
+
             fdim = domain.topology.dim - 1
             boundary_facets = mesh.locate_entities_boundary(domain, fdim, lambda x: np.isclose(x[0], 0.0))
             bc = fem.dirichletbc(default_scalar_type(0), fem.locate_dofs_topological(V, fdim, boundary_facets), V)
             problem = LinearProblem(a, L_rhs, bcs=[bc], petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
             uh = problem.solve()
-            sigma = E * (np.gradient(uh.x.array, float(L)/20.0) - alpha_t * delta_T - alpha_s * delta_c)
+
+            # Stress calculation
+            sigma = E_eff * (np.gradient(uh.x.array, float(L)/20.0) - alpha_t * delta_T - alpha_s * delta_c)
             max_sigma = np.max(np.abs(sigma))
             return {"max_stress_pa": float(max_sigma), "mechanical_integrity_factor": float(max_sigma / 50e6)}
         except Exception:
@@ -116,7 +128,8 @@ class OptimizationValidator:
 
             cs_n = sol["X-averaged negative particle concentration [mol.m-3]"].data
 
-            mech = self.solve_mechanical_integrity(temp[-1], cs_n[-1], self.design.get("Negative electrode thickness [m]", 100e-6))
+            # Pass parameters to mechanical solver to access E_eff
+            mech = self.solve_mechanical_integrity(temp[-1], cs_n[-1], self.design.get("Negative electrode thickness [m]", 100e-6), params)
 
             trapz_func = getattr(np, "trapezoid", getattr(np, "trapz", None))
             energy = trapz_func(v * sol["Current [A]"].data, sol["Time [s]"].data) / 3600
