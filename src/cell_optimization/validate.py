@@ -101,7 +101,8 @@ class OptimizationValidator:
             mech = self.solve_mechanical_integrity(sol, params)
 
             trapz_func = getattr(np, "trapezoid", getattr(np, "trapz", None))
-            energy = trapz_func(v * sol["Current [A]"].data, sol["Time [s]"].data) / 3600
+            # Energy calculation (Issue 5.1) - Discharge E is always positive
+            energy = trapz_func(np.abs(v * sol["Current [A]"].data), sol["Time [s]"].data) / 3600
 
             sei_growth = 0.0
             try:

@@ -129,7 +129,7 @@ class ParamTransform:
         self.values_dict.setdefault("Bulk solvent concentration [mol.m-3]", 2636.0)
         return pybamm.ParameterValues(self.values_dict)
 
-# --- INDIVIDUAL OBJECTIVE OPTIMIZER (NSGA-II) ---
+# --- INDIVIDUAL OBJECTIVE OPTIMIZER (GA) ---
 
 class SingleObjectiveProblem(Problem):
     def __init__(self, optimizer, x_full, active_indices, deltas, mode):
@@ -204,7 +204,7 @@ class HierarchicalOptimizer:
             energy_wh = trapz_func(power_vals, t) / 3600
 
             energy = float(energy_wh)
-            power = np.max(v * curr)
+            power = np.max(power_vals)
 
             # Cheap thermal check (Stage 1)
             T_max = np.max(sol["Cell temperature [K]"].data)
@@ -367,6 +367,20 @@ def run_workflow(engine: Optional[Any] = None):
         "parameter_grouping": groups
     }
     with open("result.json", "w") as f: json.dump(output, f, indent=2)
+
+    print("\n" + "="*50)
+    print("HIERARCHICAL OPTIMIZATION COMPLETE")
+    print("="*50)
+    print(f"Optimal Material: {output['materials']['cathode']['name']} / {output['materials']['electrolyte']['salt']}")
+    print("-" * 50)
+    print("Optimized Design Vector:")
+    for k, v in output['design_specs_representative'].items():
+        print(f"  {k:40s}: {v:12.6e}")
+    print("-" * 50)
+    print(f"Final Energy: {best['metrics']['energy']:.4f} Wh")
+    print(f"Final Power:  {best['metrics']['power']:.4f} W")
+    print("="*50 + "\n")
+
     return output
 
 if __name__ == "__main__": HierarchicalOptimizer().run()
