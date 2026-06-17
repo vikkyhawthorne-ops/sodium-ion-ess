@@ -10,6 +10,11 @@ def thermo_norm(x, ref=0.0):
     # Boltzmann scaling: nondimensionalizing energy residuals
     return (x - ref) / KT
 
+def normalized_residual(value, scale):
+    if scale <= 0:
+        return 0.0
+    return value / scale
+
 def stoich_norm(formula: str) -> dict:
     try:
         comp = Composition(formula)
@@ -21,20 +26,14 @@ def stoich_norm(formula: str) -> dict:
 
 def activation_energy_proxy(base_props: Dict[str, float], cand_props: Dict[str, float]) -> float:
     """
-    Normalized Activation Energy Proxy Model (Issue 3.2).
-    Ea = || z_base - z_cand ||_2
+    Transport-grounded Activation Energy Proxy Model (Issue 3.2).
+    Ea = 0.5*dr + 0.3*dV + 0.2*dS
     """
-    z1 = np.array([
-        base_props.get("ionic_radius", 1.0),
-        base_props.get("volume_per_atom", 1.0),
-        base_props.get("stability", 0.1)
-    ])
-    z2 = np.array([
-        cand_props.get("ionic_radius", 1.0),
-        cand_props.get("volume_per_atom", 1.0),
-        cand_props.get("stability", 0.1)
-    ])
-    return float(np.linalg.norm(z1 - z2))
+    radius_term = abs(cand_props.get("ionic_radius", 1.0) - base_props.get("ionic_radius", 1.0))
+    volume_term = abs(cand_props.get("volume_per_atom", 1.0) - base_props.get("volume_per_atom", 1.0))
+    stability_term = abs(cand_props.get("stability", 0.0) - base_props.get("stability", 0.0))
+
+    return float(0.5 * radius_term + 0.3 * volume_term + 0.2 * stability_term)
 
 def compute_chemical_realization(
     base_formula: str,
@@ -63,7 +62,10 @@ def compute_chemical_realization(
 def derive_coupled_deltas(base_props, proxy_props, base_formula, proxy_formula) -> dict:
     # 2.3 Physical residuals normalized by KT (Issue 16)
     dE = thermo_norm(proxy_props.get("formation_energy", 0), base_props.get("formation_energy", 0))
-    dS = (base_props.get("stability", 0) - proxy_props.get("stability", 0)) / KT
+
+    stability_delta = proxy_props.get("stability", 0) - base_props.get("stability", 0)
+    stability_scale = max(abs(base_props.get("stability", 1.0)), abs(proxy_props.get("stability", 1.0)), 1e-12)
+    dS = normalized_residual(stability_delta, stability_scale)
 
     vp = proxy_props.get("volume_per_atom", 1.0)
     vb = base_props.get("volume_per_atom", 1.0)
@@ -75,9 +77,10 @@ def derive_coupled_deltas(base_props, proxy_props, base_formula, proxy_formula) 
     # 2.4 Physically grounded coupling rules attenuated by Realization
     # Correct electrochemical mapping (Issue 3.3)
     F = 96485.0
-    NA = 6.022e23
+    NA = 6.02214076e23
     # dE * KT is the energy difference in eV/atom
-    voltage_boost = -(dE * KT * NA / F) * R
+    energy_joule = dE * KT * 1.602176634e-19
+    voltage_boost = -(energy_joule * NA / F) * R
 
     # Ionic Conductivity Model using Ea proxy
     Ea_base = activation_energy_proxy(base_props, base_props)

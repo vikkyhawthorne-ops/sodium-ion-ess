@@ -145,8 +145,8 @@ class SingleObjectiveProblem(Problem):
         F, G_all = [], []
         for xi in x:
             x_eval = self.x_full.copy(); x_eval[self.active_indices] = xi
-            # Issue 14: x_pos (0) - x_neg (1) <= 0. Normalized constraint (Issue 4.2).
-            g = (x_eval[0] - x_eval[1]) / (x_eval[1] + 1e-9)
+            # Issue 14: t_p <= t_n. Normalized constraint (Issue 4.2).
+            g = (x_eval[0] - x_eval[1]) / max(DESIGN_BOUNDS[0][1], DESIGN_BOUNDS[1][1])
 
             pt = ParamTransform(self.optimizer.base_params)
             pt.apply_physics_deltas(self.deltas); pt.apply_design_vector(x_eval, DESIGN_SPACE)
@@ -160,8 +160,12 @@ class SingleObjectiveProblem(Problem):
                     elif self.mode == "power": f_val = -res["power"]
                     elif self.mode == "stability": f_val = -res["mechanical_stability"]
 
+            # Objective scaling (Issue 4.1)
+            scale = abs(f_val) + 1e-9
+            f_val /= scale
+
             # Penalty shaping (Issue 4.2)
-            penalty = 1e3 * np.maximum(g, 0)**2
+            penalty = 100 * np.square(max(g, 0))
             F.append(f_val + penalty)
             G_all.append(g)
 
@@ -185,14 +189,13 @@ class HierarchicalOptimizer:
             sol = self.sim.solve([0, 3600 / c_rate], inputs={"Current [A]": c_rate * float(params["Nominal cell capacity [A.h]"])})
             v, curr, t = sol["Terminal voltage [V]"].data, sol["Current [A]"].data, sol["Time [s]"].data
 
-            # Discharge-only energy tracking (Issue 5.1)
-            power_vals = v * curr
-            sign = np.sign(np.mean(curr))
+            # Energy calculation (Issue 5.1) - Discharge E is always positive
+            power_vals = np.abs(v * curr)
             trapz_func = getattr(np, "trapezoid", getattr(np, "trapz", None))
-            energy_wh = sign * trapz_func(np.abs(power_vals), t) / 3600
+            energy_wh = trapz_func(power_vals, t) / 3600
 
             energy = float(energy_wh)
-            power = np.max(power_vals)
+            power = np.max(v * curr)
             from src.cell_optimization.chem_regularization import mechanical_stability_metric
             stresses = []
             for sv in ["Positive particle surface tangential stress [Pa]", "Negative particle surface tangential stress [Pa]"]:
@@ -222,8 +225,10 @@ class HierarchicalOptimizer:
         G = np.zeros((3, len(DESIGN_SPACE)))
         for j in range(len(DESIGN_SPACE)):
             x_pert = x.copy()
-            # Issue 3C: Scaled additive perturbation
-            x_pert[j] += eps * max(abs(x[j]), 1.0)
+            # Issue 4.3: Scaled additive perturbation using parameter bounds
+            lower, upper = DESIGN_BOUNDS[j]
+            delta = eps * (upper - lower)
+            x_pert[j] += delta
             pt_p = ParamTransform(self.base_params)
             pt_p.apply_physics_deltas(deltas); pt_p.apply_design_vector(x_pert, DESIGN_SPACE)
             res = self.simulate(pt_p.get_parameter_values())
@@ -232,9 +237,11 @@ class HierarchicalOptimizer:
                 # Log-space differentiation for Jacobian stability (Issue 4.3)
                 G[:, j] = (np.log(np.abs(j_pert) + 1e-12) - np.log(np.abs(j_base) + 1e-12)) / eps
 
-        # Proper SVD cutoff for FIM conditioning (Issue 4.4)
+        # Adaptive SVD conditioning for FIM (Issue 4.4)
         U, S, Vt = np.linalg.svd(G, full_matrices=False)
-        S = np.maximum(S, 1e-8)
+        cond_limit = 1e6
+        smax = S[0]
+        S = np.array([max(s, smax / cond_limit) for s in S])
         G = (U * S) @ Vt
         return G
 
