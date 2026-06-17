@@ -8,7 +8,7 @@ import hashlib
 from typing import List, Dict, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum, auto
-from pymatgen.core import Composition
+from pymatgen.core import Composition, Element
 
 try:
     import requests
@@ -60,12 +60,14 @@ class MaterialCandidate:
     provenance: str = "OQMD"
 
 def generate_doped_formula(dopant, x):
-    # Charge-balanced formulation via Na vacancy compensation (Issue 2)
+    # Charge neutrality via Na vacancy compensation (Issue 2 fix)
     try:
         dopant_charge = DOPANT_CHARGES[dopant]
         delta_q = (dopant_charge - FE_CHARGE)
-        # charge compensation via Na vacancies
-        na_deficit = x * delta_q
+        # charge compensation via Na vacancies: each Fe site substituted by a higher valence dopant
+        # requires removing (dopant_charge - FE_CHARGE) Na+ ions.
+        # Total sites substituted = 3.0 * x
+        na_deficit = 3.0 * x * delta_q
 
         comp = Composition({
             "Na": 4.0 - na_deficit,
@@ -76,13 +78,25 @@ def generate_doped_formula(dopant, x):
         })
         return comp.reduced_formula
     except Exception:
-        # Fallback to simple site fraction
-        return f"Na4Fe{3.0*(1.0-x):.2f}{dopant}{3.0*x:.2f}P4O15"
+        return f"Na{4.0-x*(DOPANT_CHARGES.get(dopant,2)-2):.2f}Fe{3.0*(1.0-x):.2f}{dopant}{3.0*x:.2f}P4O15"
+
+def ionic_radius_proxy(formula: str) -> float:
+    """Computes a weighted average ionic radius for the composition (Issue 4)."""
+    try:
+        comp = Composition(formula)
+        total_atoms = sum(comp.values())
+        avg_radius = 0.0
+        for el, count in comp.items():
+             el_obj = Element(el)
+             radius = el_obj.average_ionic_radius or el_obj.atomic_radius or 1.0
+             avg_radius += (count / total_atoms) * radius
+        return float(avg_radius)
+    except Exception:
+        return 1.0
 
 class MaterialMappingEngine:
     def __init__(self):
         logging.basicConfig(level=logging.INFO)
-        # MP API Key must be configured via environment variable exclusively (Safety)
         self.mp_key = os.environ.get("MP_API_KEY")
         self.cache = self._load_cache()
         self.session = self._setup_session() if requests else None
@@ -112,7 +126,6 @@ class MaterialMappingEngine:
             logging.warning(f"Failed to save cache: {e}")
 
     def _resolve_material(self, formula: str, source_override: Optional[str] = None, chemsys: Optional[str] = None) -> Tuple[Optional[Dict[str, float]], str, str]:
-        # Canonicalize formula for cache safety (Issue 9)
         try:
              canonical_formula = Composition(formula).reduced_formula
         except Exception:
@@ -127,21 +140,21 @@ class MaterialMappingEngine:
 
         def process_docs(docs):
             if not docs: return None, "NONE", canonical_formula
-            docs = sorted(docs, key=lambda d: d.energy_above_hull)[:5]
-
-            # Boltzmann weighting tied to KT (Issue 8)
-            T_eff = KT
-            e_hull = np.array([float(d.energy_above_hull) for d in docs])
-            weights = np.exp(-e_hull / T_eff)
+            ALPHA = 20.0
+            filtered_docs = [d for d in docs if float(d.energy_above_hull) <= 0.1]
+            if not filtered_docs: return None, "NONE", canonical_formula
+            stabilities = np.array([float(d.energy_above_hull) for d in filtered_docs])
+            weights = np.exp(-ALPHA * stabilities)
             weights /= np.sum(weights)
-
+            best_formula = filtered_docs[0].formula_pretty
             p = {
-                "stability": float(np.sum(weights * e_hull)),
-                "formation_energy": float(np.sum(weights * np.array([float(d.formation_energy_per_atom) for d in docs]))),
-                "band_gap": float(np.sum(weights * np.array([float(d.band_gap if d.band_gap is not None else 0.0) for d in docs]))),
-                "volume_per_atom": float(np.sum(weights * np.array([float(d.volume / d.nsites if d.nsites else 1.0) for d in docs]))),
-                "uncertainty_formation_energy": float(np.std([float(d.formation_energy_per_atom) for d in docs])),
-                "resolved_formula": docs[0].formula_pretty
+                "stability": float(np.sum(weights * stabilities)),
+                "formation_energy": float(np.sum(weights * np.array([float(d.formation_energy_per_atom) for d in filtered_docs]))),
+                "band_gap": float(np.sum(weights * np.array([float(d.band_gap if d.band_gap is not None else 0.0) for d in filtered_docs]))),
+                "volume_per_atom": float(np.sum(weights * np.array([float(d.volume / d.nsites if d.nsites else 1.0) for d in filtered_docs]))),
+                "uncertainty_formation_energy": float(np.std([float(d.formation_energy_per_atom) for d in filtered_docs])),
+                "ionic_radius": ionic_radius_proxy(best_formula),
+                "resolved_formula": best_formula
             }
             return p, "MATERIALS_PROJECT", p["resolved_formula"]
 
@@ -152,15 +165,12 @@ class MaterialMappingEngine:
                         docs = mpr.materials.summary.search(chemsys=chemsys, fields=['formula_pretty', 'formation_energy_per_atom', 'energy_above_hull', 'band_gap', 'volume', 'nsites'])
                     else:
                         docs = mpr.materials.summary.search(formula=canonical_formula, fields=['formula_pretty', 'formation_energy_per_atom', 'energy_above_hull', 'band_gap', 'volume', 'nsites'])
-
-                    if docs:
-                        props, source, resolved_formula = process_docs(docs)
-            except Exception as e:
-                 logging.exception(f"MP resolution failed for {canonical_formula}: {e}")
+                    if docs: props, source, resolved_formula = process_docs(docs)
+            except Exception as e: logging.exception(f"MP resolution failed: {e}")
 
         if props is None and self.session and (source_override == "OQMD" or source_override is None):
             try:
-                params = {"composition": canonical_formula, "limit": 5, "fields": "composition,delta_e,stability,band_gap,volume,natoms"}
+                params = {"composition": canonical_formula, "limit": 10, "fields": "composition,delta_e,stability,band_gap,volume,natoms"}
                 r = self.session.get(OQMD_URL, params=params, timeout=10)
                 if r.status_code == 200:
                     data = r.json().get("data", [])
@@ -176,8 +186,7 @@ class MaterialMappingEngine:
                         docs = [Doc(d) for d in data]
                         props, source, resolved_formula = process_docs(docs)
                         source = "OQMD"
-            except Exception as e:
-                 logging.exception(f"OQMD resolution failed for {canonical_formula}: {e}")
+            except Exception as e: logging.exception(f"OQMD resolution failed: {e}")
 
         if props:
             self.cache[cache_key] = {"props": props, "source": source, "formula": resolved_formula}
@@ -186,72 +195,43 @@ class MaterialMappingEngine:
         return None, "NONE", canonical_formula
 
     def run(self) -> Tuple[Dict[MaterialCategory, List[MaterialCandidate]], Dict[str, Any]]:
-        if self._run_result is not None:
-             return self._run_result
-
+        if self._run_result is not None: return self._run_result
         print(f"Executing API-Based Material Resolution (Layer 1)...")
         system = {cat: [] for cat in MaterialCategory}
-        bases = {}
-        seen = set() # Issue 10
-
-        # Explicit Resolution Policy (Issue 3)
+        bases, seen = {}, set()
         SOURCES = ["MP", "OQMD"]
-
         for f in BASE_CATHODE_PRIORITIES:
             for src_name in SOURCES:
                 p, src, rf = self._resolve_material(f, source_override=src_name)
-                if p:
-                    bases["cathode"] = {"formula": rf, "properties": p, "source": src}
-                    break
+                if p: bases["cathode"] = {"formula": rf, "properties": p, "source": src}; break
             if "cathode" in bases: break
-
         for src_name in SOURCES:
             p, src, rf = self._resolve_material(BASE_SALT_FORMULA, source_override=src_name)
-            if p:
-                bases["salt"] = {"formula": rf, "properties": p, "source": src}
-                break
-
+            if p: bases["salt"] = {"formula": rf, "properties": p, "source": src}; break
         for src_name in SOURCES:
             p, src, rf = self._resolve_material(BASE_INTERFACE_FORMULA, source_override=src_name)
-            if p:
-                bases["interface"] = {"formula": rf, "properties": p, "source": src}
-                break
-
-        if not all(k in bases for k in ["cathode", "salt", "interface"]):
-            return system, {}
-
+            if p: bases["interface"] = {"formula": rf, "properties": p, "source": src}; break
+        if not all(k in bases for k in ["cathode", "salt", "interface"]): return system, {}
         for d in DOPANTS:
-            # Issue 2: Charge neutrality via vacancy compensation
             for x in [0.05, 0.1, 0.15]:
                 formula = generate_doped_formula(d, x)
                 chemsys = f"Na-Fe-{d}-P-O"
-
                 for src_name in SOURCES:
                     p, src, rf = self._resolve_material(formula=formula, chemsys=chemsys, source_override=src_name)
-                    if p:
-                        if rf not in seen:
-                            system[MaterialCategory.CATHODE_DOPANT].append(MaterialCandidate(name=f"{d}-doped-x{x}", category=MaterialCategory.CATHODE_DOPANT, composition=rf, properties=p, provenance=src))
-                            seen.add(rf)
-                        break
-                if f"{d}-doped-x{x}" in [c.name for c in system[MaterialCategory.CATHODE_DOPANT]]: break
-
+                    if p and rf not in seen:
+                        system[MaterialCategory.CATHODE_DOPANT].append(MaterialCandidate(name=f"{d}-doped-x{x}", category=MaterialCategory.CATHODE_DOPANT, composition=rf, properties=p, provenance=src))
+                        seen.add(rf); break
         for name, formula in SALTS.items():
             for src_name in SOURCES:
                 p, src, rf = self._resolve_material(formula, source_override=src_name)
-                if p:
-                    if rf not in seen:
-                        system[MaterialCategory.SALT].append(MaterialCandidate(name=name, category=MaterialCategory.SALT, composition=rf, properties=p, provenance=src))
-                        seen.add(rf)
-                    break
-
+                if p and rf not in seen:
+                    system[MaterialCategory.SALT].append(MaterialCandidate(name=name, category=MaterialCategory.SALT, composition=rf, properties=p, provenance=src))
+                    seen.add(rf); break
         for name, formula in FUNCTIONALIZATION.items():
             for src_name in SOURCES:
                 p, src, rf = self._resolve_material(formula, source_override=src_name)
-                if p:
-                    if rf not in seen:
-                        system[MaterialCategory.FUNCTIONALIZATION].append(MaterialCandidate(name=name, category=MaterialCategory.FUNCTIONALIZATION, composition=rf, properties=p, provenance=src))
-                        seen.add(rf)
-                    break
-
+                if p and rf not in seen:
+                    system[MaterialCategory.FUNCTIONALIZATION].append(MaterialCandidate(name=name, category=MaterialCategory.FUNCTIONALIZATION, composition=rf, properties=p, provenance=src))
+                    seen.add(rf); break
         self._run_result = (system, bases)
         return self._run_result

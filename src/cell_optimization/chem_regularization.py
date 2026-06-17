@@ -19,13 +19,19 @@ def stoich_norm(formula: str) -> dict:
     except Exception:
         return {}
 
-def geom_norm(props, base_props):
-    vp = props.get("volume_per_atom", 1.0)
-    vb = base_props.get("volume_per_atom", 1.0)
-    return {
-        "volume_ratio": vp / vb,
-        "strain": (vp - vb) / vb
-    }
+def activation_energy_proxy(base_props: Dict[str, float], cand_props: Dict[str, float]) -> float:
+    """
+    Hierarchical Activation Energy Proxy Model (Issue 4).
+    Ea = a*dr + b*dV + c*Ehull
+    """
+    # Relative weights
+    a, b, c = 0.5, 0.2, 0.3
+
+    dr = abs(cand_props.get("ionic_radius", 1.0) - base_props.get("ionic_radius", 1.0))
+    dV = abs(cand_props.get("volume_per_atom", 1.0) - base_props.get("volume_per_atom", 1.0))
+    Ehull = cand_props.get("stability", 0.1)
+
+    return a * dr + b * dV + c * Ehull
 
 def compute_chemical_realization(
     base_formula: str,
@@ -42,29 +48,35 @@ def compute_chemical_realization(
 
         # Physical Residual Mismatch (nondimensionalized)
         dE = abs(thermo_norm(proxy_props.get("formation_energy", 0), base_props.get("formation_energy", 0)))
-        dV = abs(geom_norm(proxy_props, base_props)["strain"]) / 0.05
+        vp = proxy_props.get("volume_per_atom", 1.0)
+        vb = base_props.get("volume_per_atom", 1.0)
+        dV = abs(vp - vb) / vb / 0.05
 
-        # Realization score: higher means proxy is chemically similar to base
         realization = np.tanh(overlap * 3.0) * np.exp(-0.5 * (dE + dV))
         return float(np.clip(realization, 0.01, 1.0))
     except Exception:
         return 0.1
 
 def derive_coupled_deltas(base_props, proxy_props, base_formula, proxy_formula) -> dict:
-    # 2.3 Physical residuals
+    # 2.3 Physical residuals normalized by KT (Issue 16)
     dE = thermo_norm(proxy_props.get("formation_energy", 0), base_props.get("formation_energy", 0))
-    # Stability improvement dS (positive means more stable)
     dS = (base_props.get("stability", 0) - proxy_props.get("stability", 0)) / KT
-    dV = geom_norm(proxy_props, base_props)["strain"]
+
+    vp = proxy_props.get("volume_per_atom", 1.0)
+    vb = base_props.get("volume_per_atom", 1.0)
+    dV = (vp - vb) / vb
 
     # Realization Factor: Regularizes deltas for different chemistries
     R = compute_chemical_realization(base_formula, proxy_formula, base_props, proxy_props)
 
     # 2.4 Physically grounded coupling rules attenuated by Realization
     voltage_boost = -dE * KT * R
-    Ea_base = 0.5 * abs(base_props.get("formation_energy", -1.0))
-    Ea_proxy = 0.5 * abs(proxy_props.get("formation_energy", -1.0))
+
+    # Ionic Conductivity Model using Ea proxy
+    Ea_base = activation_energy_proxy(base_props, base_props)
+    Ea_proxy = activation_energy_proxy(base_props, proxy_props)
     conductivity_log_delta = (Ea_base - Ea_proxy) / KT * R
+
     diffusivity_log_delta = (dV - 0.1 * abs(dE)) * R
     reaction_rate_log_delta = (0.1 * dE + 0.1 * dS) * R
     stability_shift = dS * R
@@ -90,9 +102,12 @@ def regularize_salt_props(base_salt_formula: str, candidate_salt_formula: str, b
     """Derive electrolyte deltas attenuated by chemical realization."""
     try:
         R = compute_chemical_realization(base_salt_formula, candidate_salt_formula, base_salt_props, candidate_salt_props)
-        Ea_base = 0.3 * abs(base_salt_props.get("formation_energy", -1.0))
-        Ea_can = 0.3 * abs(candidate_salt_props.get("formation_energy", -1.0))
+
+        # Ea proxy-based conductivity
+        Ea_base = activation_energy_proxy(base_salt_props, base_salt_props)
+        Ea_can = activation_energy_proxy(base_salt_props, candidate_salt_props)
         dEa_norm = (Ea_base - Ea_can) / KT
+
         v_can = candidate_salt_props.get("volume_per_atom", 1.0)
         v_base = base_salt_props.get("volume_per_atom", 1.0)
         dV = (v_can - v_base) / v_base
@@ -106,35 +121,29 @@ def regularize_salt_props(base_salt_formula: str, candidate_salt_formula: str, b
     except Exception: return {"transport": {}}
 
 def regularize_functionalization(base_int_formula: str, candidate_func_formula: str, base_props: Dict[str, float], candidate_props: Dict[str, float]) -> Dict[str, Any]:
-    """
-    MTMS Functionalization integrated via latent degradation scalar theta_surf.
-    θ_surf couples electrochemistry to mechanics.
-    """
+    """MTMS Functionalization via film growth surrogate and chemical realization."""
     try:
         R = compute_chemical_realization(base_int_formula, candidate_func_formula, base_props, candidate_props)
         dS = (base_props.get("stability", 0) - candidate_props.get("stability", 0)) / KT
 
-        # 1. Latent degradation scalar theta_surf based on stability residuals
-        # Clamped in [0, 1] as requested
-        # Improved stability (positive dS) leads to LOWER theta_surf (less degradation)
-        theta_surf = np.clip(1.0 - np.exp(-abs(dS) * R), 0.0, 1.0)
-
-        # 2. Electrochemical degradation channels (j0 suppression, Diffusivity reduction)
-        # k1, k2 are sensitivity coefficients
-        k1, k2, beta = 2.0, 0.5, 0.3
-
+        # Mapping to SEI kinetics (Issue 6)
         return {
             "kinetic": {
-                "exchange_current_log_delta": float(-k1 * theta_surf) # j0_eff = j0 * exp(-k1 * theta)
+                "sei_growth_log_delta": float(-0.8 * dS * R),
+                "exchange_current_log_delta": float(0.2 * dS * R)
             },
             "transport": {
-                "negative_diffusivity_delta": float(-k2 * theta_surf) # D_eff = D0 * (1 - k2 * theta)
+                "sei_resistivity_log_delta": float(-0.5 * dS * R)
+            },
+            "thermodynamic": {
+                "initial_sodium_loss_delta": float(-0.3 * dS * R)
             },
             "mechanical": {
-                "modulus_degradation_factor": float(1.0 - beta * theta_surf) # E_eff = E0 * (1 - beta * theta)
+                # Modulus degradation factor (Issue 1 - from reviewer feedback)
+                "modulus_degradation_factor": float(1.0 - 0.3 * np.clip(1.0 - np.exp(-abs(dS)*R), 0.0, 1.0))
             }
         }
-    except Exception: return {"kinetic": {}, "transport": {}, "mechanical": {}}
+    except Exception: return {"kinetic": {}, "transport": {}, "thermodynamic": {}, "mechanical": {}}
 
 def mechanical_stability_metric(stresses: Optional[List[float]] = None) -> float:
     """Von Mises yield proxy for mechanical stability."""

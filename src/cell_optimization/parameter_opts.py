@@ -84,9 +84,6 @@ class ParamTransform:
             d = deltas["transport"]
             if "diffusivity_log_delta" in d:
                 self._apply_scaling("Positive particle diffusivity [m2.s-1]", np.exp(d["diffusivity_log_delta"]))
-            if "negative_diffusivity_delta" in d:
-                 # Applied via latent degradation scalar: D_eff = D0 * (1 - k2*theta)
-                 self._apply_scaling("Negative particle diffusivity [m2.s-1]", 1.0 + d["negative_diffusivity_delta"])
             if "conductivity_log_delta" in d:
                 self._apply_scaling("Positive electrode conductivity [S.m-1]", np.exp(d["conductivity_log_delta"]))
             if "electrolyte_conductivity_log_delta" in d:
@@ -97,7 +94,6 @@ class ParamTransform:
         if "kinetic" in deltas:
             d = deltas["kinetic"]
             if "exchange_current_log_delta" in d:
-                # Used for both dopant and latent SEI kinetics suppression
                 self._apply_scaling("Positive electrode exchange-current density [A.m-2]", np.exp(d["exchange_current_log_delta"]))
                 self._apply_scaling("Negative electrode exchange-current density [A.m-2]", np.exp(d["exchange_current_log_delta"]))
             if "sei_growth_log_delta" in d:
@@ -108,7 +104,6 @@ class ParamTransform:
         if "mechanical" in deltas:
              d = deltas["mechanical"]
              if "modulus_degradation_factor" in d:
-                  # E_eff = E0 * (1 - beta * theta_surf)
                   self._apply_scaling("Negative electrode Young's modulus [Pa]", d["modulus_degradation_factor"])
 
     def apply_design_vector(self, x: np.ndarray, names: List[str]):
@@ -153,12 +148,10 @@ class SingleObjectiveProblem(Problem):
             # Issue 14: x_pos (0) - x_neg (1) <= 0
             G.append(x_eval[0] - x_eval[1])
             pt = ParamTransform(self.optimizer.base_params)
-            pt.apply_physics_deltas(self.deltas)
-            pt.apply_design_vector(x_eval, DESIGN_SPACE)
+            pt.apply_physics_deltas(self.deltas); pt.apply_design_vector(x_eval, DESIGN_SPACE)
             pv = pt.get_parameter_values()
             if not validate_params(pv):
-                 F.append(1e9)
-                 continue
+                 F.append(1e9); continue
             res = self.optimizer.simulate(pv)
             if not res["success"]: F.append(1e9)
             else:
@@ -173,27 +166,20 @@ class HierarchicalOptimizer:
             from src.cell_optimization.material_opt import MaterialMappingEngine
             engine = MaterialMappingEngine()
         self.engine = engine
-        # Patch PyBaMM DFN with NFPP parameter set (Issue 1)
         self.base_params = base_params or pybamm.ParameterValues(get_parameter_values())
         options = {"SEI": "solvent-diffusion limited", "loss of active material": "stress-driven", "thermal": "lumped"}
         self.model = pybamm.lithium_ion.DFN(options)
-        # Configured IDAKLUSolver for stability (Issue 2)
         self.solver = pybamm.IDAKLUSolver(rtol=1e-7, atol=1e-9, max_step_size=5.0)
-        # Reuse simulation object for efficiency (Issue 3A)
         self.sim = pybamm.Simulation(self.model, solver=self.solver)
 
     def simulate(self, params: pybamm.ParameterValues, c_rate: float = 1.0) -> Dict[str, Any]:
         try:
-            # Issue 1: Always re-inject latest base parameters (manually updated if needed)
             self.sim.parameter_values = params
             sol = self.sim.solve([0, 3600 / c_rate], inputs={"Current [A]": c_rate * float(params["Nominal cell capacity [A.h]"])})
-
-            # Manual integration for reliability + NumPy 2.0 (Issue 12)
             v, curr, t = sol["Terminal voltage [V]"].data, sol["Current [A]"].data, sol["Time [s]"].data
             trapz_func = getattr(np, "trapezoid", getattr(np, "trapz", None))
             energy_val = trapz_func(v * curr, t) / 3600
             energy = (energy_val * ureg.Wh).to("Wh").magnitude
-
             power = np.max(v * curr)
             from src.cell_optimization.chem_regularization import mechanical_stability_metric
             stresses = []
@@ -206,19 +192,11 @@ class HierarchicalOptimizer:
             return {"success": False, "reason": f"{e}"}
 
     def evaluate_stability_pde(self, params: pybamm.ParameterValues, mode: str) -> Tuple[bool, float]:
-        """Runs DFN + stability score (Issue 7 REQUIRED FIX)."""
         res = self.simulate(params)
-        if not res["success"]:
-            return False, -1e9
-
-        # stability score per objective
-        if mode == "energy":
-            stability = res["mechanical_stability"] - 0.05 * abs(res["power"])
-        elif mode == "power":
-            stability = res["mechanical_stability"] - 0.1 * res["energy"]
-        else:
-            stability = res["mechanical_stability"]
-
+        if not res["success"]: return False, -1e9
+        if mode == "energy": stability = res["mechanical_stability"] - 0.05 * abs(res["power"])
+        elif mode == "power": stability = res["mechanical_stability"] - 0.1 * res["energy"]
+        else: stability = res["mechanical_stability"]
         return True, stability
 
     def compute_jacobian(self, x: np.ndarray, deltas: Dict[str, Any]) -> np.ndarray:
@@ -228,21 +206,17 @@ class HierarchicalOptimizer:
         base_res = self.simulate(pt.get_parameter_values())
         if not base_res["success"]: return np.zeros((3, len(DESIGN_SPACE)))
         j_base = np.array([base_res["energy"], base_res["power"], base_res["mechanical_stability"]])
-        # Issue 7: Unit normalization
         scale = np.maximum(np.abs(j_base), 1e-8)
         G = np.zeros((3, len(DESIGN_SPACE)))
         for j in range(len(DESIGN_SPACE)):
             x_pert = x.copy()
-            # Scaled additive perturbation to prevent collapse (Issue 3C)
-            x_pert[j] += eps * max(abs(x[j]), 1.0)
+            x_pert[j] += eps * max(abs(x[j]), 1.0) # Issue 3C: Scaled additive
             pt_p = ParamTransform(self.base_params)
             pt_p.apply_physics_deltas(deltas); pt_p.apply_design_vector(x_pert, DESIGN_SPACE)
             res = self.simulate(pt_p.get_parameter_values())
             if res["success"]:
                 j_pert = np.array([res["energy"], res["power"], res["mechanical_stability"]])
                 G[:, j] = (j_pert - j_base) / (scale * eps)
-
-        # Regularized FIM & Identifiability (Issue 17/18)
         FIM = G.T @ G + 1e-6 * np.eye(len(DESIGN_SPACE))
         cond = np.linalg.cond(FIM)
         if np.log10(cond) > 6:
@@ -263,7 +237,7 @@ def run_workflow(engine: Optional[Any] = None):
     print("Executing Sensitivity-Driven DFN Hierarchical Optimization (Layer 3)...")
     material_results = []
     # Full discovery loop (fixed truncation issue)
-    for cat, salt in [(c, s) for c in db[MaterialCategory.CATHODE_DOPANT][:2] for s in db[MaterialCategory.SALT][:2]]:
+    for cat, salt in [(c, s) for c in db[MaterialCategory.CATHODE_DOPANT] for s in db[MaterialCategory.SALT]]:
         deltas = {}
         if cat:
             d = derive_coupled_deltas(bases["cathode"]["properties"], cat.properties, bases["cathode"]["formula"], cat.composition)
@@ -284,22 +258,18 @@ def run_workflow(engine: Optional[Any] = None):
             if res_opt.X is not None: x_opt[active_indices] = np.atleast_2d(res_opt.X)[0]
             opt_designs.append(x_opt)
 
-        # Issue 7: Enforce PDE feasibility BEFORE composition
-        valid_candidates = []
-        stability_scores = []
+        valid_candidates, stability_scores = [], []
         for x, mode in zip(opt_designs, ["energy", "power", "stability"]):
             pt = ParamTransform(optimizer.base_params)
             pt.apply_physics_deltas(deltas); pt.apply_design_vector(x, DESIGN_SPACE)
             ok, score = optimizer.evaluate_stability_pde(pt.get_parameter_values(), mode)
             if ok:
-                valid_candidates.append(x)
-                stability_scores.append(score)
+                valid_candidates.append(x); stability_scores.append(score)
 
         if not valid_candidates: continue
 
-        # Selection per max stability score (Issue 7 REQUIRED FIX - Step 4)
+        # Issue 7 Step 4: Selection and interpolation
         x_star = valid_candidates[np.argmax(stability_scores)]
-        # Refine via local interpolation (Issue 7 - Step 4)
         final_x = 0.8 * x_star + 0.2 * np.mean(valid_candidates, axis=0)
 
         pt = ParamTransform(optimizer.base_params)
@@ -311,19 +281,14 @@ def run_workflow(engine: Optional[Any] = None):
     if not material_results: return
     best = max(material_results, key=lambda r: r["metrics"]["energy"])
 
-    # Accurate metadata for identified drivers
+    # Accurate metadata
     G_avg = best["jacobian"]
-    G_row_max = np.max(np.abs(G_avg), axis=1).reshape(-1, 1) + 1e-12
-    S = np.abs(G_avg) / G_row_max
-
+    S = np.abs(G_avg) / (np.max(np.abs(G_avg), axis=1).reshape(-1, 1) + 1e-12)
     groups = {"Energy": [], "Power": [], "Stability": [], "Coupled": []}
-    obj_names = ["Energy", "Power", "Stability"]
     for j, name in enumerate(DESIGN_SPACE):
         member_of = []
-        for i, obj in enumerate(obj_names):
-            if S[i, j] > 0.5:
-                groups[obj].append(name)
-                member_of.append(obj)
+        for i, obj in enumerate(["Energy", "Power", "Stability"]):
+            if S[i, j] > 0.5: groups[obj].append(name); member_of.append(obj)
         if len(member_of) > 1: groups["Coupled"].append(name)
 
     output = {
