@@ -5,7 +5,7 @@ import json
 import os
 from typing import Dict, Any, List, Tuple, Optional
 from pymoo.core.problem import Problem
-from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.algorithms.soo.nonconvex.ga import GA
 from pymoo.optimize import minimize as pymoo_minimize
 from nfpp_sodium_ion.src.cell_parameters.cell_alpha import get_parameter_values
 from pint import UnitRegistry
@@ -142,23 +142,30 @@ class SingleObjectiveProblem(Problem):
         self.mode = mode
 
     def _evaluate(self, x, out, *args, **kwargs):
-        F, G = [], []
+        F, G_all = [], []
         for xi in x:
             x_eval = self.x_full.copy(); x_eval[self.active_indices] = xi
-            # Issue 14: x_pos (0) - x_neg (1) <= 0
-            G.append(x_eval[0] - x_eval[1])
+            # Issue 14: x_pos (0) - x_neg (1) <= 0. Normalized constraint (Issue 4.2).
+            g = (x_eval[0] - x_eval[1]) / (x_eval[1] + 1e-9)
+
             pt = ParamTransform(self.optimizer.base_params)
             pt.apply_physics_deltas(self.deltas); pt.apply_design_vector(x_eval, DESIGN_SPACE)
             pv = pt.get_parameter_values()
-            if not validate_params(pv):
-                 F.append(1e9); continue
-            res = self.optimizer.simulate(pv)
-            if not res["success"]: F.append(1e9)
-            else:
-                if self.mode == "energy": F.append(-res["energy"])
-                elif self.mode == "power": F.append(-res["power"])
-                elif self.mode == "stability": F.append(-res["mechanical_stability"])
-        out["F"] = np.array(F); out["G"] = np.array(G)
+
+            f_val = 1e9
+            if validate_params(pv):
+                res = self.optimizer.simulate(pv)
+                if res["success"]:
+                    if self.mode == "energy": f_val = -res["energy"]
+                    elif self.mode == "power": f_val = -res["power"]
+                    elif self.mode == "stability": f_val = -res["mechanical_stability"]
+
+            # Penalty shaping (Issue 4.2)
+            penalty = 1e3 * np.maximum(g, 0)**2
+            F.append(f_val + penalty)
+            G_all.append(g)
+
+        out["F"] = np.array(F); out["G"] = np.array(G_all)
 
 class HierarchicalOptimizer:
     def __init__(self, engine: Optional[Any] = None, base_params: Optional[pybamm.ParameterValues] = None):
@@ -177,10 +184,15 @@ class HierarchicalOptimizer:
             self.sim.parameter_values = params
             sol = self.sim.solve([0, 3600 / c_rate], inputs={"Current [A]": c_rate * float(params["Nominal cell capacity [A.h]"])})
             v, curr, t = sol["Terminal voltage [V]"].data, sol["Current [A]"].data, sol["Time [s]"].data
+
+            # Discharge-only energy tracking (Issue 5.1)
+            power_vals = v * curr
+            sign = np.sign(np.mean(curr))
             trapz_func = getattr(np, "trapezoid", getattr(np, "trapz", None))
-            energy_val = trapz_func(v * curr, t) / 3600
-            energy = (energy_val * ureg.Wh).to("Wh").magnitude
-            power = np.max(v * curr)
+            energy_wh = sign * trapz_func(np.abs(power_vals), t) / 3600
+
+            energy = float(energy_wh)
+            power = np.max(power_vals)
             from src.cell_optimization.chem_regularization import mechanical_stability_metric
             stresses = []
             for sv in ["Positive particle surface tangential stress [Pa]", "Negative particle surface tangential stress [Pa]"]:
@@ -206,22 +218,24 @@ class HierarchicalOptimizer:
         base_res = self.simulate(pt.get_parameter_values())
         if not base_res["success"]: return np.zeros((3, len(DESIGN_SPACE)))
         j_base = np.array([base_res["energy"], base_res["power"], base_res["mechanical_stability"]])
-        scale = np.maximum(np.abs(j_base), 1e-8)
+
         G = np.zeros((3, len(DESIGN_SPACE)))
         for j in range(len(DESIGN_SPACE)):
             x_pert = x.copy()
-            x_pert[j] += eps * max(abs(x[j]), 1.0) # Issue 3C: Scaled additive
+            # Issue 3C: Scaled additive perturbation
+            x_pert[j] += eps * max(abs(x[j]), 1.0)
             pt_p = ParamTransform(self.base_params)
             pt_p.apply_physics_deltas(deltas); pt_p.apply_design_vector(x_pert, DESIGN_SPACE)
             res = self.simulate(pt_p.get_parameter_values())
             if res["success"]:
                 j_pert = np.array([res["energy"], res["power"], res["mechanical_stability"]])
-                G[:, j] = (j_pert - j_base) / (scale * eps)
-        FIM = G.T @ G + 1e-6 * np.eye(len(DESIGN_SPACE))
-        cond = np.linalg.cond(FIM)
-        if np.log10(cond) > 6:
-             logging.warning("System unidentifiable - regularizing sensitivity")
-             G += np.random.normal(0, 1e-3, G.shape)
+                # Log-space differentiation for Jacobian stability (Issue 4.3)
+                G[:, j] = (np.log(np.abs(j_pert) + 1e-12) - np.log(np.abs(j_base) + 1e-12)) / eps
+
+        # Proper SVD cutoff for FIM conditioning (Issue 4.4)
+        U, S, Vt = np.linalg.svd(G, full_matrices=False)
+        S = np.maximum(S, 1e-8)
+        G = (U * S) @ Vt
         return G
 
     def run(self):
@@ -253,7 +267,8 @@ def run_workflow(engine: Optional[Any] = None):
             max_s = np.max(np.abs(G[i, :])) + 1e-12
             active_indices = [j for j in range(len(DESIGN_SPACE)) if np.abs(G[i, j]) / max_s > 0.5]
             problem = SingleObjectiveProblem(optimizer, x_base, active_indices, deltas, mode)
-            res_opt = pymoo_minimize(problem, NSGA2(pop_size=12), ('n_gen', 5), verbose=False)
+            # Correct SOO algorithm (Issue 4.1)
+            res_opt = pymoo_minimize(problem, GA(pop_size=20), ('n_gen', 30), verbose=False)
             x_opt = x_base.copy()
             if res_opt.X is not None: x_opt[active_indices] = np.atleast_2d(res_opt.X)[0]
             opt_designs.append(x_opt)

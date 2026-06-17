@@ -21,17 +21,20 @@ def stoich_norm(formula: str) -> dict:
 
 def activation_energy_proxy(base_props: Dict[str, float], cand_props: Dict[str, float]) -> float:
     """
-    Hierarchical Activation Energy Proxy Model (Issue 4).
-    Ea = a*dr + b*dV + c*Ehull
+    Normalized Activation Energy Proxy Model (Issue 3.2).
+    Ea = || z_base - z_cand ||_2
     """
-    # Relative weights
-    a, b, c = 0.5, 0.2, 0.3
-
-    dr = abs(cand_props.get("ionic_radius", 1.0) - base_props.get("ionic_radius", 1.0))
-    dV = abs(cand_props.get("volume_per_atom", 1.0) - base_props.get("volume_per_atom", 1.0))
-    Ehull = cand_props.get("stability", 0.1)
-
-    return a * dr + b * dV + c * Ehull
+    z1 = np.array([
+        base_props.get("ionic_radius", 1.0),
+        base_props.get("volume_per_atom", 1.0),
+        base_props.get("stability", 0.1)
+    ])
+    z2 = np.array([
+        cand_props.get("ionic_radius", 1.0),
+        cand_props.get("volume_per_atom", 1.0),
+        cand_props.get("stability", 0.1)
+    ])
+    return float(np.linalg.norm(z1 - z2))
 
 def compute_chemical_realization(
     base_formula: str,
@@ -70,7 +73,11 @@ def derive_coupled_deltas(base_props, proxy_props, base_formula, proxy_formula) 
     R = compute_chemical_realization(base_formula, proxy_formula, base_props, proxy_props)
 
     # 2.4 Physically grounded coupling rules attenuated by Realization
-    voltage_boost = -dE * KT * R
+    # Correct electrochemical mapping (Issue 3.3)
+    F = 96485.0
+    NA = 6.022e23
+    # dE * KT is the energy difference in eV/atom
+    voltage_boost = -(dE * KT * NA / F) * R
 
     # Ionic Conductivity Model using Ea proxy
     Ea_base = activation_energy_proxy(base_props, base_props)

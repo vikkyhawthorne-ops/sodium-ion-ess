@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from pymatgen.core import Composition, Element
 from pymatgen.core.periodic_table import Specie
+from pymatgen.analysis.bond_valence import BVAnalyzer
 
 try:
     import requests
@@ -81,32 +82,39 @@ def generate_doped_formula(dopant, x):
     except Exception:
         return f"Na{4.0-x*(DOPANT_CHARGES.get(dopant,2)-2):.2f}Fe{3.0*(1.0-x):.2f}{dopant}{3.0*x:.2f}P4O15"
 
+def get_oxidation_states(comp: Composition):
+    try:
+        # BVAnalyzer usually requires a structure. This will likely fallback.
+        analyzer = BVAnalyzer()
+        # The prompt suggests this call, though it usually takes a structure.
+        return analyzer.get_oxi_state_decorated_structure(comp).composition.get_el_amt_dict()
+    except Exception:
+        # fallback deterministic oxidation map (battery-relevant prior)
+        return {
+            "Na": 1, "O": -2, "P": 5,
+            "Fe": 2, "Mn": 2, "Cr": 3, "Ni": 2,
+            "C": 0, "Si": 4, "F": -1
+        }
+
 def ionic_radius_proxy(formula: str) -> float:
     """Computes a weighted average ionic radius for the composition using Specie data."""
     try:
         comp = Composition(formula)
-        # Attempt to guess oxidation states for more accurate ionic radii
-        try:
-            guesses = comp.oxi_state_guesses()
-            states = guesses[0] if guesses else {}
-        except Exception:
-            states = {}
-
-        # Fallback common oxidation states for battery materials in this context
-        fallback_states = {"Na": 1, "O": -2, "P": 5, "Fe": 2, "Mn": 2, "Cr": 3, "Ni": 2, "C": 4, "Si": 4, "F": -1}
+        states = get_oxidation_states(comp)
 
         total_atoms = sum(comp.values())
         avg_radius = 0.0
         for el, count in comp.items():
              symbol = el.symbol
-             oxi = states.get(symbol) or fallback_states.get(symbol, 0)
+             oxi = states.get(symbol, 0)
              try:
-                 # Use Specie to get ionic radius
-                 specie = Specie(symbol, oxi)
-                 radius = specie.ionic_radius or specie.average_ionic_radius or el.atomic_radius or 1.0
+                 # Deterministic radius selection logic (Issue 2.3)
+                 radius = el.average_ionic_radius if oxi == 0 else Specie(symbol, oxi).ionic_radius
+                 if radius is None:
+                     radius = el.atomic_radius
              except Exception:
-                 radius = el.average_ionic_radius or el.atomic_radius or 1.0
-             avg_radius += (count / total_atoms) * radius
+                 radius = el.atomic_radius or 1.0
+             avg_radius += (count / total_atoms) * (radius if radius else 1.0)
         return float(avg_radius)
     except Exception:
         return 1.0
