@@ -9,10 +9,10 @@ The plant environment represents the physical microgrid hardware and electrochem
 *   **Microgrid Assets**:
     *   **Solar PV**: 100kWp mono-crystalline silicon array.
     *   **Primary Generation Array**: 50kW dispatchable power asset.
-    *   **BESS**: 100kWh / 50kW sodium-ion storage system.
+    *   **BESS**: 100kWh / 50kW sodium-ion storage system (208 modules).
 *   **Electrochemical Core**: 16S1P NFPP pouch-cell pack modules modeled via the Doyle-Fuller-Newman (DFN) framework.
 *   **Thermal Dynamics**: Distributed core-casing thermal nodes with natural convection and aging kinetics.
-*   **Power Conversion**: Full conversion system (STS, PQC, isolated DC/DC) regulating bidirectional flows.
+*   **Power Conditioning**: Utility-scale PCUs with step-up transformers and MV switchgear for grid interconnection.
 
 ### 2. Model-Informed Energy Dispatch (Core Contribution)
 The primary research focus is the real-time partitioning of stochastic solar power into physically constrained sinks while maintaining a stability manifold.
@@ -34,7 +34,7 @@ $U(t) = P_{load}(t) + P_{battery\_use}(t) + P_{dump\_equivalent}(t)$
 
 *   **Sustainability Constraint (MST)**: $U(t) \ge MST(t) = \frac{C_{opex}(t)}{p(t)}$
 *   **System Availability**: $\mathbb{P}(\text{instability}) \le \epsilon$
-*   **Degradation Control**: $\min \Delta SOH(t) + \Delta R_{inverter}(t)$
+*   **Degradation Control**: $\min \Delta SOH(t) + \Delta R_{PCU}(t)$
 *   **Energy Utilization Efficiency**: $\eta = \frac{\int P_{load}(t) dt}{\int P_{solar}(t) dt}$
 
 ### 3. Hierarchical Optimization
@@ -45,7 +45,7 @@ A multi-stage framework for cell design enhancement:
 ## Repository Structure
 
 - `src/cell_optimization/`: Material discovery engines and structural optimization scripts.
-- `src/power_plant/`: Power plant control logic, Simscape digital twin components, and energy dispatch validation.
+- `src/power_plant/`: Utility-scale power plant control logic, digital twin components, and energy dispatch validation.
 - `nfpp_sodium_ion/`: Registered PyBaMM parameter set for NFPP/Hard-Carbon chemistry.
 - `src/report.ipynb`: Orchestration notebook for the complete research pipeline.
 

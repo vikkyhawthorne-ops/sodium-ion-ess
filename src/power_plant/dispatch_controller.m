@@ -1,6 +1,6 @@
-%% MODEL-INFORMED ENERGY DISPATCH LAYER (Core Research Contribution)
-% Focus: Real-time partitioning of stochastic solar power into physically constrained sinks.
-% This module implements the Energy Decomposition and Dispatch Policy.
+%% POWER PLANT CONTROLLER (PPC) - ENERGY DISPATCH LAYER (Core Research Contribution)
+% Focus: Point of Common Coupling (PCC) stability and real-time partitioning.
+% This module implements the Utility-Scale Energy Decomposition and Dispatch Policy.
 
 function [P_targets, states] = dispatch_controller(inputs, params)
     % inputs: struct {P_solar, P_load_req, SOC, SOH, T_bat, V_grid, f_grid, price, Copex, P_array}
@@ -24,19 +24,21 @@ function [P_targets, states] = dispatch_controller(inputs, params)
     P_available = P_total_in - P_loss;
 
     %% 2. CONSTRAINT EVALUATION (Stability Manifold)
-    % 1.2 Electrochemical Buffering (P_bat) constraints
-    % Limited by SOC, SOH, and thermal state
+    % 1.2 Electrochemical Buffering (P_bat) & PCU Constraints
+    % Limited by SOC, SOH, thermal state, and Utility Inverter Capacity
     thermal_limit = max(0, 1 - exp((inputs.T_bat - params.T_crit)/5));
+    P_pcu_max = 150000; % 150 kVA Limit
+
     if inputs.SOC > params.SOC_max
         P_bat_max_charge = 0;
     else
-        P_bat_max_charge = params.P_max_bat * thermal_limit * inputs.SOH;
+        P_bat_max_charge = min(params.P_max_bat * thermal_limit * inputs.SOH, P_pcu_max);
     end
 
     if inputs.SOC < params.SOC_min
         P_bat_max_discharge = 0;
     else
-        P_bat_max_discharge = params.P_max_bat * thermal_limit * inputs.SOH;
+        P_bat_max_discharge = min(params.P_max_bat * thermal_limit * inputs.SOH, P_pcu_max);
     end
 
     %% 3. DISPATCH POLICY (Partitioning Logic)
@@ -51,10 +53,9 @@ function [P_targets, states] = dispatch_controller(inputs, params)
         MST = inputs.P_load_req * 0.5;
     end
 
-    % 1.3 Grid-Forming Stability Energy (P_reactive)
-    % Not energy consumption, but field support.
-    % Simplified proxy: P_reactive demand increases with V_grid/f_grid deviation
-    P_reactive = abs(inputs.V_grid - 1.0) * 10.0 + abs(inputs.f_grid - 60.0) * 5.0;
+    % 1.3 PPC Stability Functions: Frequency Droop & AVR (P_reactive)
+    % Managing PCC voltage and frequency via the utility-scale PCU.
+    P_reactive = abs(inputs.V_grid - 1.0) * 50.0 + abs(inputs.f_grid - 60.0) * 20.0;
 
     % 1.4 Unwanted Spectral Energy (P_harmonic)
     % Minimized penalty state
@@ -100,7 +101,7 @@ function [P_targets, states] = dispatch_controller(inputs, params)
     total_energy_delivered = total_energy_delivered + P_load;
     states.stability_index = 1.0 - (P_reactive / (params.P_max_bat + 1e-6));
 
-    % Sustainability & Economic Viability Check
+    % Sustainability & Economic Viability Check (PPC Compliance)
     % Violation if U < MST
     states.MST = MST;
     states.utilization = U;

@@ -141,15 +141,16 @@ The microgrid integrates diverse generation and storage assets to ensure reliabl
     *   **Role**: Primary dispatchable energy asset providing a stable baseline power to complement the stochastic solar subsystem.
 *   **Battery Energy Storage System (BESS)**:
     *   **Capacity**: 100 kWh total energy, 50 kW power rating.
-    *   **Core Unit**: 16S1P NFPP Sodium-Ion pouch-cell modules (optimized via DFN co-optimization).
+    *   **Core Unit**: 16S1P NFPP Sodium-Ion pouch-cell modules (48V nominal, 10Ah).
+    *   **Configuration**: 208 modules (packs) connected in a series-parallel arrangement to achieve the 100 kWh nameplate capacity.
     *   **Coupling**: DC-coupled via bidirectional isolated buck-boost converters.
 
-1.4 Power Conversion and Conditioning System
-The interface layer regulates bidirectional energy flow and grid stability.
-*   **Topology**: AC Grid → STS → PQC → Active Rectifier → DC Link → Bidirectional DC/DC.
-*   **Grid Interface:** Static Transfer Switch (STS) for <4ms grid/island transition.
-*   **PQC:** Series-injected DVR-equivalent sag compensator for voltage sag/swell mitigation.
-*   **Conversion:** Bidirectional isolated buck-boost stage with integrated PWM and LC filtering.
+1.4 Utility-Scale Power Conditioning & Interconnection
+The interface layer regulates high-power bidirectional energy flow and Point of Common Coupling (PCC) stability.
+*   **Architecture**: Multi-string Central Inverter → LV/MV Step-up Transformer → MV Switchgear → Utility Grid.
+*   **Power Conditioning Unit (PCU)**: Four-quadrant utility-scale inverter (150 kVA) enabling independent active ($P$) and reactive ($Q$) power control.
+*   **Interconnection**: 11kV/415V three-phase delta-wye transformer for galvanic isolation and grid impedance matching.
+*   **Protection**: Integrated MV reclosers, surge arresters, and anti-islanding relays at the PCC.
 
 1.5 Interconnects, Sensors & Faults
 *   **Busbars:** Nickel-plated copper with $I^2R$ Joule heating modeling.
@@ -187,7 +188,7 @@ $\max U(t) = P_{load}(t) + P_{battery\_use}(t) + P_{dump\_equivalent}(t)$
 **Subject to:**
 1.  **Economic Viability (Sustainability Constraint)**: $U(t) \ge MST(t)$
 2.  **System Availability**: $\mathbb{P}(\text{instability}) \le \epsilon$ (enforcing a "no collapse" manifold constraint).
-3.  **Degradation Constraint**: $\Delta SOH(t) \le \epsilon_{SOH}$ (minimizing battery and inverter wear).
+3.  **Degradation Constraint**: $\Delta SOH(t) \le \epsilon_{SOH}$ (minimizing battery and PCU wear).
 4.  **Energy Utilization Efficiency**: $\eta = \frac{\int P_{load}(t) dt}{\int P_{solar}(t) dt}$
 
 **2.3 Minimum Sustainable Throughput (MST) & Stability Manifold**
@@ -209,5 +210,5 @@ Stability is evaluated across four dimensions:
 
 3. RESEARCH SCOPE DECOMPOSITION
 This research maintains a clean separation between the physical plant and the partitioning algorithms:
-*   **Fixed Power Plant Model**: The NFPP Cell (DFN-informed electro-thermal proxy) and power conversion hardware are treated as the static environment.
+*   **Fixed Power Plant Model**: The NFPP Cell (DFN-informed electro-thermal proxy) and Utility-Scale Power Conditioning architecture are treated as the static environment.
 *   **Variable Energy Dispatch Layer**: The core contribution lies in the real-time partitioning of stochastic power into physically constrained sinks while maintaining a stability manifold and minimizing degradation.
