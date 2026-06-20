@@ -2,6 +2,7 @@ import pybamm
 import numpy as np
 import scipy.io as sio
 import os
+import json
 from src.simulation.utilities.parameters.parameter_builder import get_parameter_values
 from src.simulation.utilities.electrochemical.pybamm_driver import ElectrochemicalThermalDriverModel
 from src.simulation.utilities.thermal.pybamm_thermal import ThermalFieldModel
@@ -55,6 +56,18 @@ class StabilityValidator:
     def validate_optimized_design(self, optimized_subset=None):
         print("Validating optimized twin with full physics...")
 
+        # Enforce final_validation.json dependency
+        val_path = "final_validation.json"
+        if not os.path.exists(val_path):
+            raise FileNotFoundError(f"Missing mandatory pipeline artifact: {val_path}")
+
+        with open(val_path, "r") as f:
+            pipeline_data = json.load(f)
+
+        val_metrics = pipeline_data.get("validation")
+        if not val_metrics:
+            raise KeyError(f"Invalid validation data in {val_path}")
+
         design_updates = self.base_updates.copy()
         if optimized_subset:
             design = optimized_subset["design"]
@@ -104,10 +117,29 @@ class StabilityValidator:
             "cycle_life": float(min(res_1c["endurance"]["n_crit"], 1e12)),
             "envelope_sweep": envelope,
             "robustness_passed": bool(robustness_passed),
-            "merged_params": clean_params
+            "merged_params": clean_params,
+            # Simscape-Mapped Parameters (Derived from validated pipeline data)
+            # Default to null (None) if not found in DFN validation
+            "ssc_params": {
+                "Q_nom": float(val_metrics.get("capacity_ah", 10.0)),
+                "R_0": val_metrics.get("R_0"),
+                "V_nom": float(val_metrics.get("voltage_avg", 3.2)),
+                "R1": val_metrics.get("R1"),
+                "C1": val_metrics.get("C1"),
+                "R2": val_metrics.get("R2"),
+                "C2": val_metrics.get("C2"),
+                "R_ct": val_metrics.get("R_ct"),
+                "R_diff": val_metrics.get("R_diff")
+            }
         }
 
         return results
+
+    def export_to_json(self, results, output_path="src/power_plant/cell_params.json"):
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w") as f:
+            json.dump(results, f, indent=2)
+        print(f"Validated Model (JSON) exported to {output_path}")
 
     def export_to_matlab(self, results, output_path="src/power_plant/optimized_params.mat"):
         os.makedirs(os.path.dirname(output_path), exist_ok=True)

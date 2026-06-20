@@ -3,19 +3,25 @@
 % Updates: Standalone 16S1P pack and integrated power conversion digital twin.
 
 function plant = build_physical_plant(params)
-    % 0. Import Data from Pipeline (if available)
-    data_file = 'final_validation.json';
-    opt_params = struct();
-    if exist(data_file, 'file')
-        fid = fopen(data_file, 'r');
-        raw = fread(fid, inf);
-        str = char(raw');
-        fclose(fid);
-        data_decoded = jsondecode(str);
-        if isfield(data_decoded, 'validation')
-            opt_params = data_decoded.validation;
-        end
+    % 0. Import Data from Pipeline (Mandatory Dependency)
+    % Find file relative to script location
+    script_dir = fileparts(mfilename('fullpath'));
+    data_file = fullfile(script_dir, 'cell_params.json');
+
+    if ~exist(data_file, 'file')
+        error('Mandatory pipeline artifact missing: %s. Run simulation/envelope.py first.', data_file);
     end
+
+    fid = fopen(data_file, 'r');
+    raw = fread(fid, inf);
+    str = char(raw');
+    fclose(fid);
+    data_decoded = jsondecode(str);
+
+    if ~isfield(data_decoded, 'ssc_params')
+        error('Invalid data structure in %s. Missing ssc_params.', data_file);
+    end
+    ssc_params = data_decoded.ssc_params;
 
     % 1. Utility-Scale Interconnection & PCU
     plant.pccs.type = 'Utility-Scale Power Conditioning & Interconnection';
@@ -40,12 +46,16 @@ function plant = build_physical_plant(params)
         plant.bess.modules{m}.type = 'nfpp_cell.ssc';
         plant.bess.modules{m}.interface = 'central_inverter_pcu.ssc';
 
-        % Assign Pipeline-Informed Parameters
-        if ~isempty(fieldnames(opt_params))
-            plant.bess.modules{m}.R_0 = opt_params.R_0;
-            plant.bess.modules{m}.V_nom = opt_params.V_nom;
-            plant.bess.modules{m}.Q_nom = opt_params.capacity_ah;
-        end
+        % Assign Pipeline-Informed Parameters (Enforced)
+        plant.bess.modules{m}.R_0 = ssc_params.R_0;
+        plant.bess.modules{m}.V_nom = ssc_params.V_nom;
+        plant.bess.modules{m}.Q_nom = ssc_params.Q_nom;
+        plant.bess.modules{m}.R1 = ssc_params.R1;
+        plant.bess.modules{m}.C1 = ssc_params.C1;
+        plant.bess.modules{m}.R2 = ssc_params.R2;
+        plant.bess.modules{m}.C2 = ssc_params.C2;
+        plant.bess.modules{m}.R_ct = ssc_params.R_ct;
+        plant.bess.modules{m}.R_diff = ssc_params.R_diff;
     end
 
     % 4. Enclosure & Environment

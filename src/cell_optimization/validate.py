@@ -119,16 +119,7 @@ class OptimizationValidator:
                 "max_strain": mech["max_strain"],
                 "max_stress_pa": mech["max_stress_pa"],
                 "mechanical_integrity_factor": mech["mechanical_integrity_factor"],
-                "sei_growth_m": float(sei_growth),
-                # Simscape parameters
-                "R_0": float(params.get("Initial inner resistance [Ohm]", 0.01)),
-                "R1": 0.005,
-                "C1": 2000.0,
-                "R2": 0.005,
-                "C2": 5000.0,
-                "R_ct": 0.01,
-                "R_diff": 0.005,
-                "V_nom": float(np.mean(v))
+                "sei_growth_m": float(sei_growth)
             }
 
             print("Validation complete.")
