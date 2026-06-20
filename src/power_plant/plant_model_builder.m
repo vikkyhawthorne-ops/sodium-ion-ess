@@ -36,7 +36,14 @@ function plant = build_physical_plant(params)
     plant.generation.solar.capacity_kwp = 100;
     plant.generation.primary_array.capacity_kw = 50;
 
-    % 3. Modular AC-Coupled BESS Assembly (208 Modules)
+    % 3. Representation Loads & Fault Injection
+    plant.loads.type = 'Utility-Scale R-L Load';
+    plant.loads.model = 'utility_load.ssc';
+    plant.loads.p_nom_kw = 50;
+    plant.loads.q_nom_kvar = 20;
+    plant.faults.injection_hooks = {'Impedance Shift', 'Efficiency Drop', 'Sensor Drift'};
+
+    % 4. Modular AC-Coupled BESS Assembly (208 Modules)
     num_modules = 208;
     plant.bess.modules = cell(num_modules, 1);
     plant.bess.coupling = 'AC-Coupled via BESS-PCU';
@@ -57,12 +64,13 @@ function plant = build_physical_plant(params)
         plant.bess.modules{m}.C_th_core = ssc_params.C_th_core;
     end
 
-    % 4. Enclosure & Environment
+    % 5. Enclosure & Environment
     plant.enclosure.type = 'Containerized Utility-Scale ESS';
     plant.enclosure.dims = [6058, 2438, 2591]; % mm (20ft ISO)
 
     disp('Full Hybrid Solar-Storage Power Plant Digital Twin Built:');
     disp(['  Generation: 100kWp Solar PV + 50kW Primary Array (Data source: ', data_file, ')']);
     disp('  BESS: 100kWh (208 Modular 16S1P Units)');
+    disp('  Loads: 50kW Resistive + 20kVAr Inductive (with Fault Injection)');
     disp('  Architecture: Utility-Scale (PCU, Step-up XFMR, MV Switchgear) ready.');
 end

@@ -14,8 +14,8 @@ The plant environment represents the physical microgrid hardware and electrochem
 *   **Thermal Dynamics**: Distributed core-casing thermal nodes with natural convection and aging kinetics.
 *   **Power Conditioning**: Utility-scale PCUs with step-up transformers and MV switchgear for grid interconnection.
 
-### 2. Model-Informed Energy Dispatch (Core Contribution)
-The primary research focus is the real-time partitioning of stochastic solar power into physically constrained sinks while maintaining a stability manifold.
+### 2. Plant Health, Efficiency & Survivability (Core Contribution)
+The primary research focus is a model-informed controller that detects abnormal conditions and maximizes integrated plant efficiency using digital twin residuals.
 
 #### Fundamental Energy Decomposition
 Controlling the partition:

@@ -164,12 +164,22 @@ The integrated BESS unit, housing 208 modular 16S1P packs, the utility-scale PCU
 *   **Width:** 2,438 mm (Standard 20ft container width).
 *   **Height:** 2,591 mm (Standard 20ft container height).
 
-2. Model-Informed Energy Dispatch (Core Research Contribution)
-The dispatch system is designed as a real-time partitioning engine that manages stochastic solar power into physically constrained sinks.
+2. Model-Informed Plant Health, Efficiency, and Survivability Controller (Core Contribution)
+The control layer is reframed from a standard demand-following system to a plant health and survivability engine. The primary objective is to maximize integrated plant efficiency while ensuring the system state remains within the safe operating manifold.
 
-**Control Objective**: To ensure system stability under stochastic noise and fault conditions while simultaneously improving useful real power consumption.
+**Plant State Vector**: $x(t) = [V, I, f, THD, Q, P_{loss}, SOC, SOH, T, Z]$
 
-**Optimal Dispatch Problem**: To determine the critical system parameters and flow partition policies under which plant operation becomes economically and physically sustainable.
+**Control Objective**: $\max \int_0^T \eta_{plant}(t)\,dt$ subject to $x(t) \in \Omega_{safe}$.
+
+### 2.1 Fault Detection & Digital Twin Residuals
+Rather than simple load prediction, the system estimates deviations from expected behavior using digital twin residuals:
+$r(t) = y(t) - \hat{y}(t|x)$
+where $y(t)$ are measured variables and $\hat{y}$ is the digital twin prediction. The fault indicator $F(t) = ||r(t)||_W$ triggers diagnostic actions for inverter faults, thermal abnormalities, or battery degradation events.
+
+### 2.2 Plant Efficiency Optimization
+Efficiency is redefined as the ratio of useful plant power to total available power:
+$\eta_p = \frac{P_{useful\_plant}}{P_{available}}$
+The controller minimizes $P_{loss} = P_{inv} + P_{line} + P_{battery} + P_{thermal} + P_{harmonic}$ by optimizing flow partitions and minimizing unnecessary dissipation.
 
 **2.1 Fundamental Energy Decomposition**
 The system controls the partition of solar power:
@@ -196,15 +206,14 @@ $\max U(t) = P_{load}(t) + P_{battery\_use}(t) + P_{dump\_equivalent}(t)$
 3.  **Degradation Constraint**: $\Delta SOH(t) \le \epsilon_{SOH}$ (minimizing battery and PCU wear).
 4.  **Energy Utilization Efficiency**: $\eta = \frac{\int P_{load}(t) dt}{\int P_{solar}(t) dt}$
 
-**2.3 Minimum Sustainable Throughput (MST) & Stability Manifold**
-Sustainability and economic viability are enforced via a hard lower bound on system utilization. Let $R(t)$ be the revenue from useful energy and $C_{opex}(t)$ be the operating expenditure (maintenance, inverter losses, degradation, and auxiliary systems). The sustainability condition is defined as:
-$R(t) \ge C_{opex}(t) \Rightarrow p(t) \cdot U(t) \ge C_{opex}(t)$
-where $p(t)$ is the energy price.
+**2.3 MST as an Operating Boundary**
+The MST concept defines three distinct operating regions:
+1.  **Unhealthy Region ($pU(t) < C_{opex}$)**: The plant is economically unviable. Controller actions include increasing utilization, reducing avoidable losses, or investigating persistent faults.
+2.  **Normal Manifold**: Standard operating region where the focus is on maximizing $\eta_{plant}$.
+3.  **Stress Region**: High utilization risking accelerated degradation. Controller actions include limiting stress, absorbing/rejecting excess energy, and maintaining stability margins.
 
-The system identifies the **Minimum Sustainable Throughput (MST)**:
-$MST(t) = \frac{C_{opex}(t)}{p(t)}$
-
-This value represents the minimum energy throughput rate across the plant required to avoid economic collapse. If plant usage is too low, the system becomes non-viable; if usage is too high, it faces accelerated degradation and instability risk. The dispatch policy enforces this bound while maintaining the stability reserve (reactive compensation margin, battery headroom, and transient absorption capacity). If $P_{solar}(t) > MST(t)$, the system activates controlled dissipation or storage pathways to maintain the stability manifold.
+### 2.4 Representation Loads & Fault Injection
+The physical model incorporates realistic utility-scale loads, including inductive (R-L) components to simulate reactive power demand and harmonic coupling. A fault injection framework enables the simulation of impedance shifts, efficiency drops, and sensor drift to validate the survivability logic.
 
 **2.4 System Stability Dimensions**
 Stability is evaluated across four dimensions:
