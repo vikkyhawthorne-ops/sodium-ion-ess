@@ -1,6 +1,6 @@
 %% Physical Power Plant Builder
 % Ref: docs/paper.md
-% Updates: Model-Informed Energy Dispatch & Service Main Partitioning
+% Updates: Integrated Plant–Network Digital Twin for State Estimation
 
 function plant = build_physical_plant(params)
     % 0. Import Data from Pipeline (Mandatory Dependency)
@@ -30,25 +30,18 @@ function plant = build_physical_plant(params)
     plant.pccs.transformer.ratio = '415V/11kV';
     plant.pccs.switchgear.type = 'mv_switchgear.ssc';
 
-    % 2. Service Main & Energy Dispatch Interface (Point of Common Coupling)
-    % This component handles the real-time partitioning policy
+    % 2. Service Main & State Estimation Interface (PCC)
     plant.mains.model = 'service_main.ssc';
-    plant.mains.partition_channels = {
-        'P_load';     % Useful delivery
-        'P_bat';      % Electrochemical buffering
-        'P_reactive'; % Stability energy
-        'P_harmonic'; % Spectral penalty
-        'P_loss'      % Inefficiency
-    };
+    plant.mains.state_vector = {'V', 'I', 'f', 'THD', 'Q'};
 
     % 3. Microgrid Generation Assets
     plant.generation.solar.capacity_kwp = 100;
     plant.generation.primary_array.capacity_kw = 50;
 
-    % 4. Representation Loads & Safety Sinks
+    % 4. Representation Loads & Nodal Monitoring
     plant.loads.model = 'utility_load.ssc';
     plant.loads.p_nom_kw = 50;
-    plant.safety.dump_load = 'Resistive Sink (Controlled)';
+    plant.monitoring.feeders = 2;
 
     % 5. Modular AC-Coupled BESS Assembly (208 Modules / 100kWh)
     num_modules = 208;
@@ -74,10 +67,10 @@ function plant = build_physical_plant(params)
     plant.enclosure.type = '20ft ISO Containerized Utility-Scale ESS';
     plant.enclosure.dims_mm = [6058, 2438, 2591];
 
-    disp('--- Model-Informed Power Plant Digital Twin Initialization ---');
+    disp('--- Plant-Network Digital Twin Initialization ---');
     disp(['  Source: ', data_file]);
-    disp(['  Service Main: ', plant.mains.model, ' (Energy Partitioning PCC)']);
+    disp(['  Monitoring Interface: ', plant.mains.model, ' (PCC State Estimation)']);
     disp(['  Generation: 100kWp Solar + 50kW Primary']);
     disp(['  BESS: ', num2str(num_modules), ' Modular Units (100kWh Class)']);
-    disp('  Status: Ready for Dispatch Policy Optimization.');
+    disp('  Status: Ready for State Estimation & Fault Detection Analysis.');
 end

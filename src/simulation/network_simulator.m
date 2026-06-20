@@ -1,6 +1,6 @@
 %% Network Simulator
 % Ref: docs/paper.md section 3
-% Attaches different topologies and load profiles to 2 feeders with phase measurements.
+% Attaches different topologies and RLC load profiles to 2 feeders.
 
 function results = network_simulator(topologies, load_profiles)
     % 1. Initialization
@@ -8,32 +8,41 @@ function results = network_simulator(topologies, load_profiles)
         topologies = {'Radial', 'Ring'};
     end
     if nargin < 2
-        load_profiles = {ones(24,1)*50, ones(24,1)*30}; % kW for Feeder 1 & 2
+        % RLC Load Profiles: P (kW), Q (kVAr), Harmonics (THD %)
+        load_profiles = {
+            [ones(24,1)*50, ones(24,1)*15, ones(24,1)*2]; % Feeder 1
+            [ones(24,1)*30, ones(24,1)*10, ones(24,1)*5]  % Feeder 2
+        };
     end
 
     results = struct();
     results.timestamp = datestr(now);
     results.feeders = cell(2, 1);
 
-    % 2. Topology and Load Attachment Loop
+    % 2. Topology and RLC Load Attachment Loop
     for f = 1:2
         feeder_id = ['Feeder_', num2str(f)];
         topology = topologies{mod(f-1, length(topologies)) + 1};
         profile = load_profiles{f};
 
-        % 3. Phase Change Measurements (Simulated)
-        % V(t) = Vm * sin(wt + phi)
-        % I(t) = Im * sin(wt + phi - theta) where cos(theta) is Power Factor
-        pf = 0.95 - (rand() * 0.1); % 0.85 to 0.95
-        phase_shift_deg = acosd(pf);
+        P = profile(:,1);
+        Q = profile(:,2);
+        THD = profile(:,3);
+
+        % 3. Phase Change Measurements
+        % Calculate Phase Shift from P and Q (theta = atan(Q/P))
+        phase_shift_deg = atand(Q./P);
+        pf = cosd(phase_shift_deg);
 
         voltage_phase = [0, -120, 120]; % Balanced 3-Phase
-        current_phase = voltage_phase - phase_shift_deg;
+        current_phase = repmat(voltage_phase, length(pf), 1) - repmat(phase_shift_deg, 1, 3);
 
         % 4. Result Aggregation
         results.feeders{f}.id = feeder_id;
         results.feeders{f}.topology = topology;
-        results.feeders{f}.load_profile_kw = profile;
+        results.feeders{f}.rlc_profile.p_kw = P;
+        results.feeders{f}.rlc_profile.q_kvar = Q;
+        results.feeders{f}.rlc_profile.thd_percent = THD;
         results.feeders{f}.measurements.power_factor = pf;
         results.feeders{f}.measurements.phase_shift_deg = phase_shift_deg;
         results.feeders{f}.measurements.voltage_phases = voltage_phase;
@@ -46,7 +55,7 @@ function results = network_simulator(topologies, load_profiles)
     if fid ~= -1
         fprintf(fid, '%s', json_str);
         fclose(fid);
-        disp('Network simulation results exported to network_results.json');
+        disp('Network simulation results (RLC) exported to network_results.json');
     else
         warning('Could not open network_results.json for writing.');
     end
