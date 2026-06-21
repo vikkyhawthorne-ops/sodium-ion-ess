@@ -5,14 +5,14 @@ This repository implements a high-fidelity digital twin and optimization framewo
 
 ## Research Scope
 
-### 1. Plant–Network State Estimation & Fault Detection (Core Contribution)
-The primary research focus is an integrated plant–network digital twin that performs real-time estimation of all distribution lines, feeder buses, and asset states to ensure system integrity.
+### 1. Multi-Feeder State Realization & Anomaly Detection (Core Contribution)
+The primary research focus is the realization of network states and anomaly detection in a multi-feeder microgrid coupled by shared solar and BESS sources.
 
-#### Monitoring Objectives
-*   **Network State Estimation**: High-fidelity tracking of the state vector $x(t) = [V, I, f, THD, Q, P_{loss}, Z_{network}]$.
-*   **Residual-Based Fault Detection**: Detecting anomalies using digital twin comparisons: $r(t) = y(t) - \hat{y}(t)$.
-*   **System Availability Monitoring**: Ensuring $\mathbb{P}(\text{instability}) \le \epsilon$.
-*   **Degradation Analysis**: Monitoring $\Delta SOH(t)$ using internal telemetry and network performance metrics.
+#### Phase-Based Diagnostics
+*   **Shared Source Coupling**: Modeling $P_{source} = P_{solar} + P_{BESS} = \sum P_{F_i} + P_{loss}$.
+*   **Network Realization State**: Tracking $X_R = [\Delta \theta_{F1}, \dots, \Delta \theta_{Fn}]$ for phase-based anomaly detection.
+*   **Propagation Analysis**: Analyzing how disturbances in one feeder propagate through the shared source to affect the wider network.
+*   **Anomaly Localization**: Identifying feeder-level faults when $\Delta \theta_{Fi}$ deviates from the expected stability envelope.
 
 ### 2. DFN-Based NFPP Cell Optimization
 A hierarchical multi-stage framework for cell design enhancement:
@@ -22,13 +22,13 @@ A hierarchical multi-stage framework for cell design enhancement:
 ### 3. Physical Power Plant Model (Digital Twin)
 The plant environment represents the physical microgrid hardware:
 *   **Microgrid Assets**: 100kWp Solar PV, 50kW Primary Generation, and 100kWh BESS (208 modules).
-*   **Infrastructure**: Utility-scale power conditioning (150kVA PCU, Step-up transformer, MV Switchgear).
-*   **Nodal Interface**: Balanced 3-phase interface for real-time state estimation across feeders.
+*   **Multi-Feeder Topology**: Feeders coupled to a shared solar-BESS source via utility-scale power conditioning.
 
 ## Repository Structure
 
 - `src/cell_optimization/`: Material discovery engines and structural optimization scripts.
 - `src/power_plant/`: Utility-scale power plant digital twin components.
+- `src/simulation/`: Multi-feeder network simulators and phase dynamics analysis.
 - `nfpp_sodium_ion/`: Registered PyBaMM parameter set for NFPP/Hard-Carbon chemistry.
 - `src/report.ipynb`: Orchestration notebook for the complete research pipeline.
 

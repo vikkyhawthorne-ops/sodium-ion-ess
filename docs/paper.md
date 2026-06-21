@@ -10,32 +10,31 @@ A hierarchical Material-Structural framework optimizes the NFPP-based sodium-ion
 - **Design Space**: Structural parameters (thickness, porosity, particle size) and material parameters (dopants, electrolyte composition).
 - **Objectives**: Energy capacity, power capability, and thermo-mechanical stability.
 
-### 3. Integrated Plant–Network State Estimation & Fault Detection Framework (Core Contribution)
-The proposed framework provides diagnostic and estimation capabilities across the distribution network and integrated BESS-Solar microgrid. This is an analytical and monitoring layer rather than an active control system.
+### 3. Multi-Feeder Network State Realization & Anomaly Detection (Core Contribution)
+This framework provides diagnostic capabilities for a multi-feeder distribution network coupled by shared solar and BESS generation sources.
 
-#### 3.1 Network State Vector & State Estimation
-The system performs high-fidelity tracking of the plant-network state vector:
-$x(t) = [V, I, f, THD, Q, P_{loss}, Z_{network}]$
+#### 3.1 Shared Source Coupling Model
+The total power from shared sources is distributed across $n$ feeders:
+$P_{source}(t) = P_{solar}(t) + P_{BESS}(t) = \sum_{i=1}^{n} P_{F_i}(t) + P_{loss}(t)$
 
-Where:
-- **$[V, I, f, THD, Q]$**: Grid-interface and power quality metrics.
-- **$P_{loss}$**: Unavoidable conduction and network losses.
-- **$Z_{network}$**: Equivalent network impedance for fault localization.
+Feeders are physically coupled by:
+- **Source capacity & inverter limits**.
+- **Shared BESS constraints** (SOC, SOH, and thermal state).
+- **Common PCC conditions** (voltage and frequency).
 
-Note: Internal BESS states (SOC, SOH, T) are monitored at the module level via internal telemetry but are distinct from the network-level state estimation vector.
+Disturbances on one feeder (e.g., fault or abnormal load $\Delta P_{Fi}$) propagate through the shared source, altering the operating point for all feeders.
 
-#### 3.2 Residual-Based Fault Detection
-The framework estimates deviations from expected behavior using digital twin residuals:
-$r(t) = y(t) - \hat{y}(t|x)$
-Where $y(t)$ are measured variables and $\hat{y}$ is the digital twin prediction. The fault indicator $F(t) = ||r(t)||_W$ triggers diagnostic actions for inverter faults, thermal abnormalities, or battery degradation events.
+#### 3.2 Network State Realization
+The state of each feeder $i$ is defined by its nodal voltage and phase angles:
+$x_i = [V_{i1}, \theta_{i1}, \dots, V_{im}, \theta_{im}]$
 
-#### 3.3 Monitoring & Estimation Objectives
-1. **System Availability**: $\mathbb{P}(\text{instability}) \le \epsilon$ (no-collapse monitoring manifold).
-2. **Degradation Monitoring**: Characterizing battery and PCU wear over time using internal telemetry and network-level impact.
-3. **Estimation Accuracy**: Minimizing the estimation error covariance of the network state vector.
+The global network state is $X = [x_1, \dots, x_n]$. To detect anomalies across the coupled system, we define the **Network Realization State**:
+$X_R = [\Delta \theta_{F1}, \Delta \theta_{F2}, \dots, \Delta \theta_{Fn}]$
 
-#### 3.4 Physical Power Plant Digital Twin
-The plant environment represents the physical microgrid hardware:
-- **Microgrid Assets**: 100kWp Solar PV, 50kW Primary Generation, and 100kWh BESS (208 modules).
-- **Infrastructure**: Utility-scale power conditioning (150kVA PCU, Step-up transformer, MV Switchgear).
-- **Balanced 3-Phase Interface**: Nodal monitoring points for real-time state estimation across feeders.
+This represents the feeder-level phase behavior relative to the nominal operating manifold. Anomaly detection is performed by evaluating:
+$\Delta \theta_{Fi} \notin \text{expected envelope}$
+
+#### 3.3 Diagnostic Objectives
+1. **Coupled Anomaly Localization**: Identifying which feeder is the source of a propagation event.
+2. **Phase Dynamics Tracking**: Monitoring $\Delta \theta_{Fi}$ as a high-sensitivity indicator of network stress or fault conditions.
+3. **Availability Under Stress**: Ensuring system stability ($\mathbb{P}(\text{instability}) \le \epsilon$) despite feeder-level disturbances.
