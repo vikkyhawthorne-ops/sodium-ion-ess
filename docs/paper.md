@@ -15,13 +15,14 @@ The proposed framework provides diagnostic and estimation capabilities across th
 
 #### 3.1 Network State Vector & State Estimation
 The system performs high-fidelity tracking of the plant-network state vector:
-$x(t) = [V, I, f, THD, Q, P_{loss}, SOC, SOH, T, Z_{network}]$
+$x(t) = [V, I, f, THD, Q, P_{loss}, Z_{network}]$
 
 Where:
 - **$[V, I, f, THD, Q]$**: Grid-interface and power quality metrics.
 - **$P_{loss}$**: Unavoidable conduction and network losses.
-- **$[SOC, SOH, T]$**: BESS internal electrochemical and thermal states derived from DFN-informed digital twins.
 - **$Z_{network}$**: Equivalent network impedance for fault localization.
+
+Note: Internal BESS states (SOC, SOH, T) are monitored at the module level via internal telemetry but are distinct from the network-level state estimation vector.
 
 #### 3.2 Residual-Based Fault Detection
 The framework estimates deviations from expected behavior using digital twin residuals:
@@ -30,7 +31,7 @@ Where $y(t)$ are measured variables and $\hat{y}$ is the digital twin prediction
 
 #### 3.3 Monitoring & Estimation Objectives
 1. **System Availability**: $\mathbb{P}(\text{instability}) \le \epsilon$ (no-collapse monitoring manifold).
-2. **Degradation Monitoring**: $\Delta SOH(t) \le \epsilon_{SOH}$ (characterizing battery and PCU wear over time).
+2. **Degradation Monitoring**: Characterizing battery and PCU wear over time using internal telemetry and network-level impact.
 3. **Estimation Accuracy**: Minimizing the estimation error covariance of the network state vector.
 
 #### 3.4 Physical Power Plant Digital Twin

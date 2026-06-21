@@ -9,10 +9,10 @@ This repository implements a high-fidelity digital twin and optimization framewo
 The primary research focus is an integrated plant–network digital twin that performs real-time estimation of all distribution lines, feeder buses, and asset states to ensure system integrity.
 
 #### Monitoring Objectives
-*   **Network State Estimation**: High-fidelity tracking of the state vector $x(t) = [V, I, f, THD, Q, P_{loss}, SOC, SOH, T, Z_{network}]$.
+*   **Network State Estimation**: High-fidelity tracking of the state vector $x(t) = [V, I, f, THD, Q, P_{loss}, Z_{network}]$.
 *   **Residual-Based Fault Detection**: Detecting anomalies using digital twin comparisons: $r(t) = y(t) - \hat{y}(t)$.
 *   **System Availability Monitoring**: Ensuring $\mathbb{P}(\text{instability}) \le \epsilon$.
-*   **Degradation Analysis**: Monitoring $\Delta SOH(t)$ for both BESS and Power Conditioning Units (PCUs).
+*   **Degradation Analysis**: Monitoring $\Delta SOH(t)$ using internal telemetry and network performance metrics.
 
 ### 2. DFN-Based NFPP Cell Optimization
 A hierarchical multi-stage framework for cell design enhancement:
