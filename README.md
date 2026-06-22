@@ -5,7 +5,12 @@ This repository implements a high-fidelity digital twin and optimization framewo
 
 ## Research Scope
 
-### 1. Multi-Feeder State Realization & Anomaly Detection (Core Contribution)
+### 1. DFN-Based NFPP Cell Optimization
+A hierarchical multi-stage framework for cell design enhancement:
+*   **Layered Material Mapping**: Decoupled architecture for eco-friendly salts (NaTCP, NaBOB), cathode dopants (Cr, Mn, Ni), and MTMS functionalization.
+*   **Parameter Optimization**: Hierarchical search for structural ($\theta_s$) and material ($\theta_m$) parameters using sensitivity-based Jacobian screening and Genetic Algorithms.
+
+### 2. Multi-feeder solar–BESS network state realization and anomaly detection using phase dynamics (Core Contribution)
 The primary research focus is the realization of network states and anomaly detection in a multi-feeder microgrid coupled by shared solar and BESS sources.
 
 #### Phase-Based Diagnostics
@@ -14,15 +19,11 @@ The primary research focus is the realization of network states and anomaly dete
 *   **Propagation Analysis**: Analyzing how disturbances in one feeder propagate through the shared source to affect the wider network.
 *   **Anomaly Localization**: Identifying feeder-level faults when $\Delta \theta_{Fi}$ deviates from the expected stability envelope.
 
-### 2. DFN-Based NFPP Cell Optimization
-A hierarchical multi-stage framework for cell design enhancement:
-*   **Layered Material Mapping**: Decoupled architecture for eco-friendly salts (NaTCP, NaBOB), cathode dopants (Cr, Mn, Ni), and MTMS functionalization.
-*   **Parameter Optimization**: Hierarchical search for structural ($\theta_s$) and material ($\theta_m$) parameters using sensitivity-based Jacobian screening and Genetic Algorithms.
-
 ### 3. Physical Power Plant Model (Digital Twin)
 The plant environment represents the physical microgrid hardware:
 *   **Microgrid Assets**: 100kWp Solar PV, 50kW Primary Generation, and 100kWh BESS (208 modules).
 *   **Multi-Feeder Topology**: Feeders coupled to a shared solar-BESS source via utility-scale power conditioning.
+*   **Architecture**: Multi-string Central Inverter → LV/MV Step-up Transformer → MV Switchgear → Utility Grid.
 
 ## Repository Structure
 

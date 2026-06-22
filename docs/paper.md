@@ -2,39 +2,185 @@
 
 ## Methodology
 
-### 1. Base Cell Model (Literature-Aligned NFPP Sodium-Ion Twin System)
-The electrochemical behavior is resolved using a Doyle-Fuller-Newman (DFN) framework implemented in PyBaMM. This captures the coupled evolution of State of Charge (SOC), State of Health (SOH), and heat generation.
+### Base Cell Model (Literature-Aligned NFPP Sodium-Ion Twin System)
+1. Electrochemical Core (DFN-Compatible Reaction)
+The sodium iron pyrophosphate (NFPP) cathode operates via reversible sodium intercalation:
+Na₂FePO₄P₂O₇ ⇌ NaₓFePO₄P₂O₇ + (2 − x)Na⁺ + (2 − x)e⁻
+Theoretical specific capacity: ~95–100 mAh g⁻¹, consistent with reported polyanionic NFPP sodium-ion cathode systems used in pouch-scale prototypes.
+2. Cathode Electrode Architecture (Composite Design)
+NFPP cathodes in practical sodium-ion full cells follow a carbon–binder–domain composite structure processed using N-methyl-2-pyrrolidone (NMP)-based slurry casting.
+Fixed composition:
+	Sodium iron pyrophosphate (NFPP) active material: 85 wt%
+	Conductive carbon additive (carbon black / acetylene black): 8 wt%
+	Binder: polyvinylidene fluoride (PVDF): 7 wt%
+This structure reflects standard aluminum current collector-based cathodes used in sodium-ion pouch cells with high-density electrode compaction.
+3. Anode Design (Hard Carbon System)
+Hard carbon anodes are implemented as disordered carbon networks with nanopore and turbostratic domains enabling sodium storage through adsorption, intercalation, and pore filling mechanisms.
+Fixed formulation:
+	Hard carbon active material: 88 wt%
+	Conductive carbon additive: 6 wt%
+	Binder: polyvinylidene fluoride (PVDF): 6 wt%
+Practical specific capacity: 250–300 mAh g⁻¹, consistent with full-cell hard carbon sodium storage behavior.
+4. Electrolyte System (Carbonate-Based Sodium Salt System)
+The electrolyte follows a standard sodium-ion full-cell carbonate formulation:
+	Sodium hexafluorophosphate (NaPF₆): 1.0 molar concentration
+	Sodium difluoro(oxalato)borate (NaDFOB): 0.2 molar concentration
+	Solvent system: ethylene carbonate and propylene carbonate in 1:1 volumetric ratio
+	Ionic conductivity: ~10 mS cm⁻¹ at 25°C
+5. Electrolyte Additive System (Interphase Engineering)
+Interfacial stability is controlled using electrolyte additives that regulate both solid electrolyte interphase and cathode electrolyte interphase formation:
+	Fluoroethylene carbonate (FEC): 3 wt%
+→ promotes stable solid electrolyte interphase (SEI) formation on the hard carbon anode
+	Vinylene carbonate (VC): 2 wt%
+→ enhances SEI uniformity and suppresses continuous electrolyte decomposition
+	Sodium difluoro(oxalato)borate (NaDFOB): functions as both co-salt and cathode electrolyte interphase (CEI) stabilizer
+The SEI is a passivation layer formed on the anode that regulates sodium-ion transport and prevents continuous electrolyte decomposition, while the CEI stabilizes cathode surface reactions and mitigates structural degradation.
+6. Pouch Cell Mechanical Architecture (Stacked Design)
+The full cell follows a stacked pouch configuration consistent with sodium-ion prototype manufacturing systems:
+	Form factor: stacked Z-fold pouch cell architecture
+	Nominal voltage: 3.0–3.2 volts
+	Target capacity class: 10 ampere-hour design point
+Layer stack:
+	Cathode current collector: aluminum foil (~15 micrometers)
+	Anode current collector: copper foil (~10 micrometers)
+	Separator: polyolefin trilayer membrane (~20 micrometers)
+	External casing: poly-based moisture barrier (no aluminum laminate)
+	Inner sealant: polypropylene-based sealing layer
 
-### 2. DFN-Based NFPP Cell Optimization Framework
-A hierarchical Material-Structural framework optimizes the NFPP-based sodium-ion cells.
-- **Design Space**: Structural parameters (thickness, porosity, particle size) and material parameters (dopants, electrolyte composition).
-- **Objectives**: Energy capacity, power capability, and thermo-mechanical stability.
+### Base Model Validation Framework
+1. Electrochemical–Thermal Driver Model
+The cell behavior is first resolved using a DFN-based electrochemical framework implemented in PyBaMM.
+This model captures the coupled evolution of:  state of charge (SOC) trajectory, state of health (SOH) degradation trajectory, heat generation rate Q(t)arising from reaction, ohmic, and polarization losses
+These quantities define the internal energetic state of the system under charge–discharge operation.
+2. Thermal Field Model (Heat Transport)
+The generated heat Q(t)is propagated through the cell using a thermal partial differential equation formulation implemented in PyBaMM thermal modules.
+This produces the spatial–temporal temperature field:  T(x,t)for spatially resolved thermal analysis or T(t) in lumped approximation for reduced-order cases
+3. Thermoelastic Strain-Based Structural Integrity Model
+The temperature field T(x,t)serves as the primary excitation for the mechanical response of the electrode–electrolyte–interphase system. The structural behavior is modeled as a reduced-order thermoelastic continuum implemented in FEniCSx.
+The continuum consists of electrode phases, binder matrix, electrolyte, and SEI/CEI interphases. The model focuses on deformation-producing strain evolution under coupled electrochemical–thermal loading.
+3.1 Deformation-producing strain drivers
+Strain-inducing expansion in the continuum is governed by:
+thermal expansion driven by spatial–temporal temperature gradients T(x,t)generated by:  reaction (entropic) heat, ohmic (Joule) heating in electrodes and electrolyte, charge-transfer (activation) losses, concentration polarization losses
+SOC-driven expansion from reversible insertion/deinsertion
+SOH-driven drift in stiffness and expansion response
+These mechanisms collectively define deformation loading across all phases of the continuum.
+3.2 Structural failure criterion (critical strain envelope)
+Structural integrity is not evaluated over the full strain field. Instead, only the lower-bound failure condition is retained:
+failure is triggered at the critical strain threshold envelope
+defined as the minimum strain level at which irreversible deformation initiates
+The model evaluates: ε_"crit" =min⁡("strain distribution at damage initiation")
+Failure occurs when local deformation-producing strain exceeds this critical envelope in any continuum phase.
+	Structural response metric (cycle–time deformation mapping)
+The structural output is expressed as a reduced endurance response under strain loading:  strain intensity evolution ε_"int"  (t), threshold cycle–time response under varying strain intensity levels (n_"crit" ," " t_"crit" )=f(ε_"int"  )
 
-### 3. Multi-Feeder Network State Realization & Anomaly Detection (Core Contribution)
-This framework provides diagnostic capabilities for a multi-feeder distribution network coupled by shared solar and BESS generation sources.
+where: n_"crit" = cycles to onset of irreversible deformation, t_"crit" = time to onset under operating profile, ε_"int" = applied or induced strain intensity
+This defines the deformation endurance boundary of the continuum under coupled electrochemical–thermal loading.
 
-#### 3.1 Shared Source Coupling Model
-The total power from shared sources is distributed across $n$ feeders:
-$P_{source}(t) = P_{solar}(t) + P_{BESS}(t) = \sum_{i=1}^{n} P_{F_i}(t) + P_{loss}(t)$
+### DFN-Based NFPP Cell Optimization Framework
+Methodological Scope Statement
+This work presents a multiphysics optimization framework for NFPP-based sodium-ion cells, where material variation is restricted to dopant-level and electrolyte (salt/solvent) chemistry, coupled with structural and thermal co-optimization.
 
-Feeders are physically coupled by:
-- **Source capacity & inverter limits**.
-- **Shared BESS constraints** (SOC, SOH, and thermal state).
-- **Common PCC conditions** (voltage and frequency).
+Objective Definition
+The cell design is optimized using a hierarchical Material-Structural framework. The primary objective is to discover chemistry modifications (dopants/salts/solvents) compatible with the already-validated NFPP architecture while simultaneously fine-tuning structural parameters. Cost reduction and performance gains.
 
-Disturbances on one feeder (e.g., fault or abnormal load $\Delta P_{Fi}$) propagate through the shared source, altering the operating point for all feeders.
+    **Design Space:**
+*   **Structural Parameters ($\theta_s$):** Electrode thickness ($L_c, L_a$), porosity ($\epsilon_c, \epsilon_a, \epsilon_{sep}$), tortuosity ($\tau$), active material loading and particle size ($r_p$).
+*   **Material Parameters ($\theta_m$):** NFPP fraction, conductive carbon fraction, and electrolyte composition (concentration/salts)
 
-#### 3.2 Network State Realization
-The state of each feeder $i$ is defined by its nodal voltage and phase angles:
+1. Stage A-C: Layered Material Mapping & Physics Framework
+This phase resolves performance properties for chemistry modifications using a decoupled architecture: a **Material Mapping Engine** for data resolution and a **Physics Layer** for property-to-parameter transformation.
+*   **Decoupled Mapping Engine:** The framework implements a prioritized resolution flow (OQMD Exact $\rightarrow$ MP Exact $\rightarrow$ Class Baselines) for a fixed candidate space (Mn/Cr/Ni dopants, NaBOB/NaTCP salts, MTMS functionalization). Strict stability-sorting ensures ground-state accuracy.
+*   **Physics Channel Models:** Performance deltas are derived through channel-specific physics models: Nernstian proxies for voltage shifts ($ΔV \propto -ΔE_f$), exponential thermal activation mapping for conductivity ($\sigma \propto \exp(-E_g/2kT)$), and interphase kinetic models for SEI growth, all scaled by a bounded stability realization factor.
+*   **Electrolyte & Fluorine Reduction:** Selection of non-fluorinated salts to reduce environmental burden and cost. Primary candidates include **NaBOB** (Sodium bis(oxalato)borate) for stability and **NaTCP** (Sodium tricyanomethanide) for high performance.
+*   **Electrode Doping:** Fe-site doping for cathodes using **Cr** (Cr³⁺ stabilizer), **Mn** (voltage booster), and **Ni** is evaluated via sensitivity-based optimization.
+*   **Alkyl Silane Functionalization:** Implementation of hard carbon electrode functionalization using **methyltrimethoxysilane (MTMS)**. This process replaces surface –OH groups with –Si–O–R groups on the hard carbon electrode, increasing hydrophobicity and promoting a more uniform SEI layer. The model accounts for reduced SEI kinetics (slower growth and lower irreversible capacity fade), slower interfacial resistance growth over cycles, and optimized exchange current density resulting from improved surface wetting and local ion accessibility.
+
+2. Stage D: Electrochemical Projection Layer
+Selected material modifications are translated into DFN-compatible perturbations through a physics-based parameter update stage rather than a simple multiplicative rescaling. For each candidate material pair, the workflow computes thermodynamic, transport, kinetic, and structural deltas, and applies them to the baseline parameter set using the implementation's transform routine:
+$\theta' = \mathcal{T}(\theta_{base}, \Delta \theta_{material})$
+where $\mathcal{T}$ denotes the parameter-mapping step used to preserve consistency with the calibrated DFN model.
+
+3. Stage E-F: Sensitivity-Driven Optimization & Validation
+The projected design space ($\theta = [\theta_s, \theta_m]$) is explored with a hierarchical workflow that combines sensitivity screening, objective-specific GA refinement, and expensive stability filtering. In the implementation, the design vector is first perturbed around a nominal point to estimate the Jacobian of the energy, power, and stability responses; only the most influential variables for each objective are retained for optimization instead of searching the full design space at once.
+*   **Phase 1: Sensitivity Screening:** For each material combination, the code computes the Jacobian of the three objective responses around the nominal design, normalizes the sensitivity magnitudes, and keeps only the variables whose normalized influence exceeds the objective-specific threshold (approximately 50% of the largest sensitivity).
+*   **Phase 2: Objective-Specific Optimization:** Three separate single-objective searches are executed with a pymoo genetic algorithm (GA) on the reduced active-variable sets. Each objective is evaluated from DFN-based metrics and scaled using a baseline reference value; infeasible configurations are penalized, including thermal-limit violations and the electrode-thickness ordering constraint.
+*   **Phase 3: Candidate Filtering:** The optimized candidates are re-evaluated with the expensive thermo-mechanical stability solver. Only designs that pass the PDE-based strain check remain eligible for ranking.
+*   **Phase 4: Final Design Composition:** Among the retained candidates, the point with the highest stability score is selected as the dominant design, and the final representative point is formed by blending this best candidate with the mean of the valid set using an 80/20 weighting to improve robustness.
+*   **Phase 5: Validation:** The selected configuration is re-simulated with the DFN workflow, and the final outputs include the chosen material pair, representative design vector, sensitivity matrix, and performance metrics used for downstream assessment. While this work focuses on a foundational design space, the cell architecture remains amenable to further performance enhancement via composite electrode structuring, advanced pore network engineering, perturbing other dopant sites (beyond the Fe-site), and exploring a broader range of electrolyte systems (solvents and additives) to further enhance cycle life and energy density. The current optimization scope is intentionally streamlined to accommodate the computational constraints of the DFN solver while effectively demonstrating the viability of physics-based optimization for enhancing the cost-efficiency and performance of sodium-ion energy storage systems.
+* **Computed cell-level performance metrics include:**  Energy capacity (kWh), Nominal voltage (V), Continuous current (A), Peak current (A), Charge time (h or min under rated C-rate), Power capability (kW or C-rate equivalent), Cycle life (cycles to end-of-life under defined SOH threshold)
+
+Metric	Baseline	Optimized
+Energy density	140 Wh/kg	155–165 Wh/kg
+Cycle life	5000	8000–9000
+
+### ESS Unit Model: Multiphysics Digital Twin
+The ESS is implemented as a high-fidelity digital twin coupling electrochemical, thermal, fluid, and mechanical domains.
+
+1. PHYSICAL POWER PLANT MODEL
+The plant model represents the physical hardware of the 16S1P sodium-ion battery pack and its associated infrastructure.
+
+1.1 Cell Configuration & Packaging
+*   **Topology:** 16S1P (48V nominal, 10Ah) organized into four 4-cell packs.
+*   **Heterogeneity:** Stochastic parameter variation ($\pm 2-5\%$ capacity, $\pm 1-3\%$ resistance) to model real-world manufacturing spread.
+*   **Casing:** Poly-material moisture barrier (aluminum-free) with no secondary coating.
+*   **Coating Thickness:** Specified at 50–150 $\mu$m, governing internal thermal conductance.
+*   **Internal Dynamics:** Core-casing distributed thermal nodes with DFN-informed concentration states ($c_s, c_e$) and 2-RC polarization branches.
+
+**Thermal Node Topology:**
+*   Cell Core (heat source) → Cell Casing (poly) → Ambient (convection).
+
+1.3 Microgrid Capacity & Modeling
+The microgrid integrates diverse generation and storage assets to ensure reliable energy delivery.
+
+*   **Solar PV Subsystem**:
+    *   **Model**: Mono-crystalline Silicon PV (High-efficiency 250W modules).
+    *   **Configuration**: 400 modules in a series-parallel array (100 kWp nameplate capacity).
+    *   **Inverter**: Central 100kW three-phase grid-tied inverter with MPPT.
+*   **Primary Generation Array**:
+    *   **Capacity**: 50 kW continuous generation capacity.
+    *   **Role**: Primary dispatchable energy asset providing a stable baseline power to complement the stochastic solar subsystem.
+*   **Battery Energy Storage System (BESS)**:
+    *   **Capacity**: 100 kWh total energy, 50 kW power rating.
+    *   **Core Unit**: 16S1P NFPP Sodium-Ion pouch-cell modules (48V nominal, 10Ah).
+    *   **Configuration**: 208 modules (packs) connected in a series-parallel arrangement to achieve the 100 kWh nameplate capacity.
+    *   **Coupling**: AC-coupled via dedicated utility-scale BESS Power Conditioning Units (PCUs).
+
+1.4 Utility-Scale Power Conditioning & Interconnection
+The interface layer regulates high-power bidirectional energy flow and Point of Common Coupling (PCC) stability.
+*   **Architecture**: Multi-string Central Inverter → LV/MV Step-up Transformer → MV Switchgear → Utility Grid.
+*   **Power Conditioning Unit (PCU)**: Four-quadrant utility-scale inverter (150 kVA) enabling independent active ($P$) and reactive ($Q$) power control.
+*   **Interconnection**: 11kV/415V three-phase delta-wye transformer for galvanic isolation and grid impedance matching.
+*   **Protection**: Integrated MV reclosers, surge arresters, and anti-islanding relays at the PCC.
+
+1.5 Power Plant Instrumentation & Monitoring
+The system integrates utility-scale monitoring to ensure compliant dispatch and stability.
+*   **BESS Data Interface**: Aggregated data link to internal battery management units providing real-time state estimates.
+*   **Power Quality Analyzers**: PCC-mounted analyzers for total harmonic distortion (THD) monitoring and phase-angle tracking.
+*   **Fault Management**: Utility-scale protective relaying (ANSI 50/51, 27/59) for overcurrent and voltage-out-of-bounds containment.
+
+1.6 Utility-Scale ESS Enclosure Dimensions
+The integrated BESS unit, housing 208 modular 16S1P packs, the utility-scale PCU, and thermal management systems, is designed with the following external dimensions (20ft ISO container scale):
+*   **Length:** 6,058 mm (Standard 20ft container length).
+*   **Width:** 2,438 mm (Standard 20ft container width).
+*   **Height:** 2,591 mm (Standard 20ft container height).
+
+### Multi-Feeder Solar–BESS Network State Realization & Anomaly Detection (Core Contribution)
+This research presents a framework for multi-feeder network state realization and anomaly detection using phase dynamics in coupled microgrid systems.
+
+#### 1. Multi-Feeder Network Structure
+The architecture consists of a multi-feeder distribution network with shared generation and storage sources.
+$P_{source}(t) = P_{solar}(t) + P_{BESS}(t)$
+This total source power is distributed across $n$ feeders:
+$P_{source}(t) = \sum_{i=1}^{n} P_{F_i}(t) + P_{loss}(t)$
+
+#### 2. Nodal State Realization
+Each feeder $i$ is characterized by its nodal voltage and phase angles:
 $x_i = [V_{i1}, \theta_{i1}, \dots, V_{im}, \theta_{im}]$
+The global network state is $X = [x_1, \dots, x_n]$.
 
-The global network state is $X = [x_1, \dots, x_n]$. To detect anomalies across the coupled system, we define the **Network Realization State**:
+#### 3. Source-Feeder Coupling & Anomaly Detection
+The feeders are coupled via shared source capacity, inverter limits, and battery constraints. Disturbances on one feeder ($\Delta P_{Fi}$) propagate through the shared source, altering the network realization state:
 $X_R = [\Delta \theta_{F1}, \Delta \theta_{F2}, \dots, \Delta \theta_{Fn}]$
-
-This represents the feeder-level phase behavior relative to the nominal operating manifold. Anomaly detection is performed by evaluating:
+representing feeder-level phase behavior. Anomalies are detected when feeder phase dynamics exceed the expected stability envelope:
 $\Delta \theta_{Fi} \notin \text{expected envelope}$
-
-#### 3.3 Diagnostic Objectives
-1. **Coupled Anomaly Localization**: Identifying which feeder is the source of a propagation event.
-2. **Phase Dynamics Tracking**: Monitoring $\Delta \theta_{Fi}$ as a high-sensitivity indicator of network stress or fault conditions.
-3. **Availability Under Stress**: Ensuring system stability ($\mathbb{P}(\text{instability}) \le \epsilon$) despite feeder-level disturbances.
+This allows for high-sensitivity detection of fault signatures propagating through the shared microgrid source.

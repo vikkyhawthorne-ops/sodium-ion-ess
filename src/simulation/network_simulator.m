@@ -1,69 +1,67 @@
-%% Multi-Feeder Network Simulator
-% Ref: docs/paper.md section 3
-% Models multi-feeder coupling via shared Solar-BESS sources.
-% Tracks Network Realization State: XR = [dTheta_F1, dTheta_F2, ..., dTheta_Fn]
+%% Multi-Feeder Network Simulator (Refactored)
+% Ref: docs/paper.md
+% Attaches different topologies and varying RLC load profiles to 2 feeders.
+% Shared Sources: Solar PV and BESS.
+% Output: Phase change measurements and JSON result export.
 
-function results = network_simulator(num_feeders, load_profiles, p_solar, p_bess)
+function results = network_simulator(p_solar, p_bess)
     % 1. Initialization
-    if nargin < 1, num_feeders = 3; end
-    if nargin < 2 || isempty(load_profiles)
-        % Random RLC Load Profiles for n feeders
-        load_profiles = cell(num_feeders, 1);
-        for i = 1:num_feeders
-            load_profiles{i} = [ones(24,1)*(30+rand()*20), ones(24,1)*(10+rand()*5), ones(24,1)*2];
-        end
-    end
-    if nargin < 3, p_solar = 80; end % kW
-    if nargin < 4, p_bess = 20; end  % kW
+    if nargin < 1, p_solar = 80; end % kW
+    if nargin < 2, p_bess = 20; end  % kW
+
+    num_feeders = 2;
+    topologies = {'Radial', 'Ring'};
+    duration_hours = 24;
 
     results = struct();
-    results.timestamp = datestr(now);
+    results.timestamp = datestr(now, 'yyyy-mm-ddTHH:MM:SS');
     results.shared_source.p_solar_kw = p_solar;
     results.shared_source.p_bess_kw = p_bess;
-    results.shared_source.p_total_available = p_solar + p_bess;
+    results.shared_source.p_total_kw = p_solar + p_bess;
 
     results.feeders = cell(num_feeders, 1);
     network_realization_state = zeros(num_feeders, 1);
 
-    % 2. Power Balance Calculation
+    % 2. Multi-Feeder Loop
     total_p_load = 0;
-    for i = 1:num_feeders
-        total_p_load = total_p_load + mean(load_profiles{i}(:,1));
-    end
-    results.p_loss_est_kw = results.shared_source.p_total_available - total_p_load;
-
-    % 3. Feeder-Level State Realization
     for f = 1:num_feeders
-        feeder_id = ['Feeder_', num2str(f)];
-        profile = load_profiles{f};
+        feeder_id = f;
+        topology = topologies{mod(f-1, length(topologies)) + 1};
 
-        P = profile(:,1);
-        Q = profile(:,2);
+        % 3. Varying RLC Load Profiles
+        % P (Real Power), Q (Reactive Power), THD (Harmonics)
+        p_profile = 30 + 20 * rand(duration_hours, 1);
+        q_profile = 10 + 5 * randn(duration_hours, 1);
+        thd_profile = 2 + rand(duration_hours, 1);
 
-        % Calculate Phase Dynamics (Realization State Component)
+        total_p_load = total_p_load + mean(p_profile);
+
+        % 4. Phase Change Measurements
         % theta = atan(Q/P)
-        theta_deg = atand(Q./P);
+        theta_deg = atand(q_profile ./ p_profile);
 
-        % Relative Phase Deviation (Simulated relative to nominal 0.95 PF)
-        nominal_theta = atand(sqrt(1-0.95^2)/0.95);
+        % Relative Phase Deviation (delta theta) relative to nominal 0.95 PF
+        nominal_theta = acosd(0.95);
         delta_theta = theta_deg - nominal_theta;
 
-        % 4. Result Aggregation
-        results.feeders{f}.id = feeder_id;
-        results.feeders{f}.p_kw = P;
-        results.feeders{f}.q_kvar = Q;
+        % 5. Anomaly Detection (Phase-based)
+        anomalies = abs(delta_theta) > 5.0;
+
+        % Result Aggregation
+        results.feeders{f}.feeder_id = feeder_id;
+        results.feeders{f}.topology = topology;
+        results.feeders{f}.p_kw = p_profile;
+        results.feeders{f}.q_kvar = q_profile;
+        results.feeders{f}.thd_percent = thd_profile;
         results.feeders{f}.theta_deg = theta_deg;
         results.feeders{f}.delta_theta = delta_theta;
+        results.feeders{f}.anomalies = anomalies;
 
         network_realization_state(f) = mean(delta_theta);
-
-        % 5. Anomaly Detection Logic
-        threshold = 5.0; % Degrees
-        results.feeders{f}.anomaly_detected = any(abs(delta_theta) > threshold);
     end
 
     results.network_realization_state_xr = network_realization_state;
-    results.global_anomaly = any(network_realization_state > 3.0); % Coupling threshold
+    results.p_loss_est_kw = results.shared_source.p_total_kw - total_p_load;
 
     % 6. Export to JSON
     json_str = jsonencode(results);
