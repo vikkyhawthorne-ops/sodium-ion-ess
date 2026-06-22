@@ -1,10 +1,9 @@
 %% Physical Power Plant Builder
 % Ref: docs/paper.md
-% Updates: Standalone 16S1P pack and integrated power conversion digital twin.
+% Updates: Multi-Feeder Shared Source Digital Twin
 
 function plant = build_physical_plant(params)
     % 0. Import Data from Pipeline (Mandatory Dependency)
-    % Find file relative to script location
     script_dir = fileparts(mfilename('fullpath'));
     data_file = fullfile(script_dir, 'cell_params.json');
 
@@ -23,30 +22,31 @@ function plant = build_physical_plant(params)
     end
     ssc_params = data_decoded.ssc_params;
 
-    % 1. Utility-Scale Interconnection & PCU
-    plant.pccs.type = 'Utility-Scale Power Conditioning & Interconnection';
+    % 1. Shared Source Architecture (Solar + BESS)
+    plant.sources.shared_bus.type = 'Balanced 3-Phase DC-Link AC Coupling';
+    plant.sources.solar.capacity_kwp = 100;
+    plant.sources.bess.capacity_kwh = 100;
+
+    % 2. Shared Power Conditioning Unit (PCU)
     plant.pccs.pcu.type = 'central_inverter_pcu.ssc';
     plant.pccs.pcu.rating_kva = 150;
+    plant.pccs.pcu.coupling = 'Shared Source Coupling';
     plant.pccs.transformer.type = 'step_up_transformer.ssc';
-    plant.pccs.transformer.ratio = '415V/11kV';
     plant.pccs.switchgear.type = 'mv_switchgear.ssc';
 
-    % 2. Microgrid Generation Assets
-    plant.generation.solar.model = 'Mono-crystalline PV';
-    plant.generation.solar.capacity_kwp = 100;
-    plant.generation.primary_array.capacity_kw = 50;
+    % 3. Multi-Feeder Distribution Network
+    plant.network.num_feeders = 3;
+    plant.network.topology = 'Radial Feeders from Shared PCC';
+    plant.network.monitoring.state_realization = 'Phase Dynamics (XR)';
 
-    % 3. Modular AC-Coupled BESS Assembly (208 Modules)
+    % 4. Modular AC-Coupled BESS Assembly (208 Modules)
     num_modules = 208;
     plant.bess.modules = cell(num_modules, 1);
-    plant.bess.coupling = 'AC-Coupled via BESS-PCU';
-
     for m = 1:num_modules
         plant.bess.modules{m}.id = ['Module_' num2str(m)];
         plant.bess.modules{m}.type = 'nfpp_cell.ssc';
-        plant.bess.modules{m}.interface = 'central_inverter_pcu.ssc';
 
-        % Assign Pipeline-Informed Parameters (Enforced)
+        % Assign DFN-Informed Parameters from Pipeline
         plant.bess.modules{m}.R_0 = ssc_params.R_0;
         plant.bess.modules{m}.V_nom = ssc_params.V_nom;
         plant.bess.modules{m}.Q_nom = ssc_params.Q_nom;
@@ -57,12 +57,13 @@ function plant = build_physical_plant(params)
         plant.bess.modules{m}.C_th_core = ssc_params.C_th_core;
     end
 
-    % 4. Enclosure & Environment
-    plant.enclosure.type = 'Containerized Utility-Scale ESS';
-    plant.enclosure.dims = [6058, 2438, 2591]; % mm (20ft ISO)
+    % 5. Enclosure & Environment
+    plant.enclosure.type = '20ft ISO Containerized Utility-Scale ESS';
+    plant.enclosure.dims_mm = [6058, 2438, 2591];
 
-    disp('Full Hybrid Solar-Storage Power Plant Digital Twin Built:');
-    disp(['  Generation: 100kWp Solar PV + 50kW Primary Array (Data source: ', data_file, ')']);
-    disp('  BESS: 100kWh (208 Modular 16S1P Units)');
-    disp('  Architecture: Utility-Scale (PCU, Step-up XFMR, MV Switchgear) ready.');
+    disp('--- Multi-Feeder Plant-Network Digital Twin Initialization ---');
+    disp(['  Source: ', data_file]);
+    disp(['  Architecture: Shared Solar-BESS (', num2str(plant.network.num_feeders), ' coupled feeders)']);
+    disp(['  BESS: ', num2str(num_modules), ' Modular Units (100kWh Class)']);
+    disp('  Diagnostic Target: Multi-Feeder State Realization (Phase Dynamics).');
 end

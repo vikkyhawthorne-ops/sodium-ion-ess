@@ -1,4 +1,4 @@
-# DFN-Based Co-Optimization of NFPP Sodium-Ion Cells and Model-Informed Energy Dispatch in Hybrid Solar–Battery Energy Storage Systems
+# DFN-Based Optimization of NFPP Sodium-Ion Cells within an Integrated Plant–Network Digital Twin Framework for Solar–BESS Microgrids
 
 ## Methodology
 
@@ -109,12 +109,6 @@ The projected design space ($\theta = [\theta_s, \theta_m]$) is explored with a 
 *   **Phase 5: Validation:** The selected configuration is re-simulated with the DFN workflow, and the final outputs include the chosen material pair, representative design vector, sensitivity matrix, and performance metrics used for downstream assessment. While this work focuses on a foundational design space, the cell architecture remains amenable to further performance enhancement via composite electrode structuring, advanced pore network engineering, perturbing other dopant sites (beyond the Fe-site), and exploring a broader range of electrolyte systems (solvents and additives) to further enhance cycle life and energy density. The current optimization scope is intentionally streamlined to accommodate the computational constraints of the DFN solver while effectively demonstrating the viability of physics-based optimization for enhancing the cost-efficiency and performance of sodium-ion energy storage systems.
 * **Computed cell-level performance metrics include:**  Energy capacity (kWh), Nominal voltage (V), Continuous current (A), Peak current (A), Charge time (h or min under rated C-rate), Power capability (kW or C-rate equivalent), Cycle life (cycles to end-of-life under defined SOH threshold) 
 
-Metric	Baseline	Optimized
-Energy density	140 Wh/kg	155–165 Wh/kg
-Cycle life	5000	8000–9000
-		
-ESS Unit Model: Multiphysics Digital Twin
-The ESS is implemented as a high-fidelity digital twin coupling electrochemical, thermal, fluid, and mechanical domains.
 
 1. PHYSICAL POWER PLANT MODEL
 The plant model represents the physical hardware of the 16S1P sodium-ion battery pack and its associated infrastructure.
@@ -145,75 +139,39 @@ The microgrid integrates diverse generation and storage assets to ensure reliabl
     *   **Configuration**: 208 modules (packs) connected in a series-parallel arrangement to achieve the 100 kWh nameplate capacity.
     *   **Coupling**: AC-coupled via dedicated utility-scale BESS Power Conditioning Units (PCUs).
 
-1.4 Utility-Scale Power Conditioning & Interconnection
 The interface layer regulates high-power bidirectional energy flow and Point of Common Coupling (PCC) stability.
 *   **Architecture**: Multi-string Central Inverter → LV/MV Step-up Transformer → MV Switchgear → Utility Grid.
-*   **Power Conditioning Unit (PCU)**: Four-quadrant utility-scale inverter (150 kVA) enabling independent active ($P$) and reactive ($Q$) power control.
-*   **Interconnection**: 11kV/415V three-phase delta-wye transformer for galvanic isolation and grid impedance matching.
-*   **Protection**: Integrated MV reclosers, surge arresters, and anti-islanding relays at the PCC.
 
-1.5 Power Plant Instrumentation & Monitoring
-The system integrates utility-scale monitoring to ensure compliant dispatch and stability.
+*   **Interconnection**: 11kV/415V three-phase delta-wye transformer for galvanic isolation and grid impedance matching.
 *   **BESS Data Interface**: Aggregated data link to internal battery management units providing real-time state estimates (SOC, SOH, and internal resistance).
 *   **Power Quality Analyzers**: PCC-mounted analyzers for total harmonic distortion (THD) monitoring and phase-angle tracking.
 *   **Fault Management**: Utility-scale protective relaying (ANSI 50/51, 27/59) for overcurrent and voltage-out-of-bounds containment.
 
-1.6 Utility-Scale ESS Enclosure Dimensions
-The integrated BESS unit, housing 208 modular 16S1P packs, the utility-scale PCU, and thermal management systems, is designed with the following external dimensions (20ft ISO container scale):
-*   **Length:** 6,058 mm (Standard 20ft container length).
-*   **Width:** 2,438 mm (Standard 20ft container width).
-*   **Height:** 2,591 mm (Standard 20ft container height).
 
-2. Model-Informed Energy Dispatch (Core Research Contribution)
-The dispatch system is designed as a real-time partitioning engine that manages stochastic solar power into physically constrained sinks.
 
-**Control Objective**: To ensure system stability under stochastic noise and fault conditions while simultaneously improving useful real power consumption.
+### Multi-Feeder Solar–BESS Network State Realization & Anomaly Detection (Core Contribution)
+This research presents a framework for multi-feeder network state realization and anomaly detection using phase dynamics in coupled microgrid systems.
 
-**Optimal Dispatch Problem**: To determine the critical system parameters and flow partition policies under which plant operation becomes economically and physically sustainable.
+#### 1. Multi-Feeder Network Structure
+The architecture consists of a multi-feeder distribution network with shared generation and storage sources.
+$P_{source}(t) = P_{solar}(t) + P_{BESS}(t)$
+This total source power is distributed across $n$ feeders:
+$P_{source}(t) = \sum_{i=1}^{n} P_{F_i}(t) + P_{loss}(t)$
 
-**2.1 Fundamental Energy Decomposition**
-The system controls the partition of solar power:
-$P_{solar}(t) = P_{load}(t) + P_{bat}(t) + P_{reactive}(t) + P_{harmonic}(t) + P_{dump}(t) + P_{loss}(t)$
+#### 2. Nodal State Realization
+Each feeder $i$ is characterized by its nodal voltage and phase angles:
+$x_i = [V_{i1}, \theta_{i1}, \dots, V_{im}, \theta_{im}]$
+The global network state is $X = [x_1, \dots, x_n]$.
 
-Where each term represents a distinct energy channel:
-*   **$P_{load}$ (Useful Real Power)**: Energy consumed by the system load. The primary objective is to maximize this delivery.
-*   **$P_{bat}$ (Electrochemical Buffering)**: Acts as a state transition constraint actuator, not merely storage scheduling. It is limited by instantaneous SOC, SOH, and thermal states.
-*   **$P_{reactive}$ (Grid-Forming Stability)**: Represents electromagnetic field support for voltage stability ($Q(t) \neq 0$). It is used to damp oscillations and regulate transient responses.
-*   **$P_{harmonic}$ (Unwanted Spectral Energy)**: Inverter switching distortion and nonlinear load coupling. This is treated as a penalty state to be minimized.
-*   **$P_{dump}$ (Safety Dissipation Sink)**: A controlled failure absorption channel (e.g., resistive dump loads) activated when the battery or load is saturated and reactive control is insufficient.
-*   **$P_{loss}$ (Physical Inefficiency)**: Unavoidable conduction and switching losses.
+#### 3. Source-Feeder Coupling & Anomaly Detection
+The feeders are coupled via shared source capacity, inverter limits, and battery constraints. Disturbances on one feeder ($\Delta P_{Fi}$) propagate through the shared source, altering the network realization state:
+$X_R = [\Delta \theta_{F1}, \Delta \theta_{F2}, \dots, \Delta \theta_{Fn}]$
+representing feeder-level phase behavior. Anomalies are detected when feeder phase dynamics exceed the expected stability envelope:
+$\Delta \theta_{Fi} \notin \text{expected envelope}$
+This allows for high-sensitivity detection of fault signatures propagating through the shared microgrid source.
 
-**2.2 Optimization Framework**
-The system optimizes a flow partition policy $\pi: P_{solar}(t) \rightarrow \{P_{load}, P_{bat}, P_{reactive}, P_{dump}\}$ subject to stability, electrochemical, and availability constraints.
-
-**Optimal Energy Dispatch Objectives:**
-The central goal is to **Maximize Plant Utilization** ($U(t)$):
-$\max U(t) = P_{load}(t) + P_{battery\_use}(t) + P_{dump\_equivalent}(t)$
-
-**Subject to:**
-1.  **Economic Viability (Sustainability Constraint)**: $U(t) \ge MST(t)$
-2.  **System Availability**: $\mathbb{P}(\text{instability}) \le \epsilon$ (enforcing a "no collapse" manifold constraint).
-3.  **Degradation Constraint**: $\Delta SOH(t) \le \epsilon_{SOH}$ (minimizing battery and PCU wear).
-4.  **Energy Utilization Efficiency**: $\eta = \frac{\int P_{load}(t) dt}{\int P_{solar}(t) dt}$
-
-**2.3 Minimum Sustainable Throughput (MST) & Stability Manifold**
-Sustainability and economic viability are enforced via a hard lower bound on system utilization. Let $R(t)$ be the revenue from useful energy and $C_{opex}(t)$ be the operating expenditure (maintenance, inverter losses, degradation, and auxiliary systems). The sustainability condition is defined as:
-$R(t) \ge C_{opex}(t) \Rightarrow p(t) \cdot U(t) \ge C_{opex}(t)$
-where $p(t)$ is the energy price.
-
-The system identifies the **Minimum Sustainable Throughput (MST)**:
-$MST(t) = \frac{C_{opex}(t)}{p(t)}$
-
-This value represents the minimum energy throughput rate across the plant required to avoid economic collapse. If plant usage is too low, the system becomes non-viable; if usage is too high, it faces accelerated degradation and instability risk. The dispatch policy enforces this bound while maintaining the stability reserve (reactive compensation margin, battery headroom, and transient absorption capacity). If $P_{solar}(t) > MST(t)$, the system activates controlled dissipation or storage pathways to maintain the stability manifold.
-
-**2.4 System Stability Dimensions**
-Stability is evaluated across four dimensions:
-1.  **Energy Stability**: Maintaining $P_{in} \approx P_{out}$ balance.
-2.  **Electrical Stability**: Active voltage regulation and frequency damping.
-3.  **Dynamic Stability**: Transient response timing and ramp rate control.
-4.  **Spectral Stability**: Harmonic suppression and switching noise containment.
 
 3. RESEARCH SCOPE DECOMPOSITION
 This research maintains a clean separation between the physical plant and the partitioning algorithms:
 *   **Fixed Power Plant Model**: The NFPP Cell (DFN-informed electro-thermal proxy) and Utility-Scale Power Conditioning architecture are treated as the static environment.
-*   **Variable Energy Dispatch Layer**: The core contribution lies in the real-time partitioning of stochastic power into physically constrained sinks while maintaining a stability manifold and minimizing degradation.
+*   **Distribution network realization and anomaly detection layer**: The core contribution lies in realizing distribution network state through phase-aware feeder modeling and detecting anomalies using phase-differential and state-estimation techniques.

@@ -1,51 +1,35 @@
+
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mhizterpaul/sodium-ion-ess/blob/main/src/report.ipynb)
 
-This repository implements a high-fidelity digital twin and optimization framework for Sodium Iron Pyrophosphate (NFPP) battery systems integrated with hybrid solar energy dispatch. The research follows a **Clean Decomposition** strategy, separating a fixed physical plant from a variable, high-performance algorithmic control layer.
+This repository implements a high-fidelity digital twin and optimization framework for Sodium Iron Pyrophosphate (NFPP) battery systems within an integrated plant–network digital twin framework for solar–BESS microgrids.
 
 ## Research Scope
 
-### 1. Fixed Power Plant Model (Digital Twin)
-The plant environment represents the physical microgrid hardware and electrochemical dynamics:
-*   **Microgrid Assets**:
-    *   **Solar PV**: 100kWp mono-crystalline silicon array.
-    *   **Primary Generation Array**: 50kW dispatchable power asset.
-    *   **BESS**: 100kWh / 50kW AC-coupled sodium-ion storage system (208 modules).
-*   **Electrochemical Core**: 16S1P NFPP pouch-cell pack modules modeled via the Doyle-Fuller-Newman (DFN) framework.
-*   **Thermal Dynamics**: Distributed core-casing thermal nodes with natural convection and aging kinetics.
-*   **Power Conditioning**: Utility-scale PCUs with step-up transformers and MV switchgear for grid interconnection.
-
-### 2. Model-Informed Energy Dispatch (Core Contribution)
-The primary research focus is the real-time partitioning of stochastic solar power into physically constrained sinks while maintaining a stability manifold.
-
-#### Fundamental Energy Decomposition
-Controlling the partition:
-$P_{solar}(t) = P_{load}(t) + P_{bat}(t) + P_{reactive}(t) + P_{harmonic}(t) + P_{dump}(t) + P_{loss}(t)$
-
-*   **$P_{load}$ (Useful Real Power)**: Maximize energy consumed by the system load.
-*   **$P_{bat}$ (Electrochemical Buffering)**: State transition constraint actuator limited by SOC, SOH, and thermal states.
-*   **$P_{reactive}$ (Grid-Forming Stability)**: Electromagnetic field support for voltage stability ($Q(t) \neq 0$).
-*   **$P_{harmonic}$ (Unwanted Spectral Energy)**: Penalty state representing inverter switching distortion and nonlinear coupling.
-*   **$P_{dump}$ (Safety Dissipation)**: Controlled failure absorption channel (resistive dump loads) when sinks are saturated.
-*   **$P_{loss}$ (Physical Inefficiency)**: Unavoidable conduction and switching losses.
-
-#### Optimization Objectives
-The primary goal is to **Maximize Plant Utilization**:
-$U(t) = P_{load}(t) + P_{battery\_use}(t) + P_{dump\_equivalent}(t)$
-
-*   **Sustainability Constraint (MST)**: $U(t) \ge MST(t) = \frac{C_{opex}(t)}{p(t)}$
-*   **System Availability**: $\mathbb{P}(\text{instability}) \le \epsilon$
-*   **Degradation Control**: $\min \Delta SOH(t) + \Delta R_{PCU}(t)$
-*   **Energy Utilization Efficiency**: $\eta = \frac{\int P_{load}(t) dt}{\int P_{solar}(t) dt}$
-
-### 3. Hierarchical Optimization
-A multi-stage framework for cell design enhancement:
+### 1. DFN-Based NFPP Cell Optimization
+A hierarchical multi-stage framework for cell design enhancement:
 *   **Layered Material Mapping**: Decoupled architecture for eco-friendly salts (NaTCP, NaBOB), cathode dopants (Cr, Mn, Ni), and MTMS functionalization.
 *   **Parameter Optimization**: Hierarchical search for structural ($\theta_s$) and material ($\theta_m$) parameters using sensitivity-based Jacobian screening and Genetic Algorithms.
+
+### 2. Multi-feeder solar–BESS network state realization and anomaly detection using phase dynamics (Core Contribution)
+The primary research focus is the realization of network states and anomaly detection in a multi-feeder microgrid coupled by shared solar and BESS sources.
+
+#### Phase-Based Diagnostics
+*   **Shared Source Coupling**: Modeling $P_{source} = P_{solar} + P_{BESS} = \sum P_{F_i} + P_{loss}$.
+*   **Network Realization State**: Tracking $X_R = [\Delta \theta_{F1}, \dots, \Delta \theta_{Fn}]$ for phase-based anomaly detection.
+*   **Propagation Analysis**: Analyzing how disturbances in one feeder propagate through the shared source to affect the wider network.
+*   **Anomaly Localization**: Identifying feeder-level faults when $\Delta \theta_{Fi}$ deviates from the expected stability envelope.
+
+### 3. Physical Power Plant Model (Digital Twin)
+The plant environment represents the physical microgrid hardware:
+*   **Microgrid Assets**: 100kWp Solar PV, 50kW Primary Generation, and 100kWh BESS (208 modules).
+*   **Multi-Feeder Topology**: Feeders coupled to a shared solar-BESS source via utility-scale power conditioning.
+*   **Architecture**: Multi-string Central Inverter → LV/MV Step-up Transformer → MV Switchgear → Utility Grid.
 
 ## Repository Structure
 
 - `src/cell_optimization/`: Material discovery engines and structural optimization scripts.
 - `src/power_plant/`: Utility-scale power plant control logic, digital twin components, and energy dispatch validation.
+- `src/simulation/`: Multi-feeder network simulator, cell simulation utilities and phase dynamics analysis.
 - `nfpp_sodium_ion/`: Registered PyBaMM parameter set for NFPP/Hard-Carbon chemistry.
 - `src/report.ipynb`: Orchestration notebook for the complete research pipeline.
 
@@ -68,6 +52,6 @@ jupyter notebook src/report.ipynb
 
 ## References
 
-- **Paper Title**: DFN-Based Co-Optimization of NFPP Sodium-Ion Cells and Model-Informed Energy Dispatch in Hybrid Solar–Battery Energy Storage Systems.
+- **Paper Title**: DFN-Based Optimization of NFPP Sodium-Ion Cells within an Integrated Plant–Network Digital Twin Framework for Solar–BESS Microgrids
 - **Core Chemistry**: Sodium Iron Pyrophosphate (NFPP) vs. Hard Carbon
-- **Modeling Framework**: PyBaMM (Electrochemical), FEniCSx (Mechanical), Simulink (Control)
+- **Modeling Framework**: PyBaMM (Electrochemical), FEniCSx (Mechanical), Simscape, Matlab (Power Systems)
