@@ -1,6 +1,6 @@
 %% Physical Power Plant Builder
 % Ref: docs/paper.md
-% Updates: Multi-Feeder Shared Source Digital Twin
+% Updates: Multi-Feeder Shared Source Digital Twin with 2 Feeders
 
 function plant = build_physical_plant(params)
     % 0. Import Data from Pipeline (Mandatory Dependency)
@@ -30,14 +30,17 @@ function plant = build_physical_plant(params)
     % 2. Shared Power Conditioning Unit (PCU)
     plant.pccs.pcu.type = 'central_inverter_pcu.ssc';
     plant.pccs.pcu.rating_kva = 150;
-    plant.pccs.pcu.coupling = 'Shared Source Coupling';
     plant.pccs.transformer.type = 'step_up_transformer.ssc';
     plant.pccs.switchgear.type = 'mv_switchgear.ssc';
 
-    % 3. Multi-Feeder Distribution Network
-    plant.network.num_feeders = 3;
+    % 3. Multi-Feeder Distribution Network (2 Feeders)
+    plant.network.feeders = cell(2, 1);
+    for i = 1:2
+        plant.network.feeders{i}.id = ['Feeder_', num2str(i)];
+        plant.network.feeders{i}.model = 'feeder.ssc';
+        plant.network.feeders{i}.monitoring = 'Phase Dynamics (XR)';
+    end
     plant.network.topology = 'Radial Feeders from Shared PCC';
-    plant.network.monitoring.state_realization = 'Phase Dynamics (XR)';
 
     % 4. Modular AC-Coupled BESS Assembly (208 Modules)
     num_modules = 208;
@@ -63,7 +66,7 @@ function plant = build_physical_plant(params)
 
     disp('--- Multi-Feeder Plant-Network Digital Twin Initialization ---');
     disp(['  Source: ', data_file]);
-    disp(['  Architecture: Shared Solar-BESS (', num2str(plant.network.num_feeders), ' coupled feeders)']);
+    disp('  Architecture: Shared Solar-BESS (2 coupled feeders: feeder.ssc)');
     disp(['  BESS: ', num2str(num_modules), ' Modular Units (100kWh Class)']);
     disp('  Diagnostic Target: Multi-Feeder State Realization (Phase Dynamics).');
 end
