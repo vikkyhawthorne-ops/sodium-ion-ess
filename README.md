@@ -28,8 +28,8 @@ The plant environment represents the physical microgrid hardware:
 ## Repository Structure
 
 - `src/cell_optimization/`: Material discovery engines and structural optimization scripts.
-- `src/power_plant/`: Utility-scale power plant digital twin components.
-- `src/simulation/`: Multi-feeder network simulators and phase dynamics analysis.
+- `src/power_plant/`: Utility-scale power plant control logic, digital twin components, and energy dispatch validation.
+- `src/simulation/`: Multi-feeder network simulator, cell simulation utilities and phase dynamics analysis.
 - `nfpp_sodium_ion/`: Registered PyBaMM parameter set for NFPP/Hard-Carbon chemistry.
 - `src/report.ipynb`: Orchestration notebook for the complete research pipeline.
 
@@ -49,3 +49,9 @@ Run the complete research pipeline via the Jupyter notebook:
 ```bash
 jupyter notebook src/report.ipynb
 ```
+
+## References
+
+- **Paper Title**: DFN-Based Optimization of NFPP Sodium-Ion Cells within an Integrated Plant–Network Digital Twin Framework for Solar–BESS Microgrids
+- **Core Chemistry**: Sodium Iron Pyrophosphate (NFPP) vs. Hard Carbon
+- **Modeling Framework**: PyBaMM (Electrochemical), FEniCSx (Mechanical), Simscape, Matlab (Power Systems)
