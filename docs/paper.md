@@ -143,7 +143,7 @@ The interface layer regulates high-power bidirectional energy flow and Point of 
 *   **Architecture**: Multi-string Central Inverter → LV/MV Step-up Transformer → MV Switchgear → Utility Grid.
 
 *   **Interconnection**: 11kV/415V three-phase delta-wye transformer for galvanic isolation and grid impedance matching.
-*   **BESS Data Interface**: Aggregated data link to internal battery management units providing real-time state estimates (SOC, SOH, and internal resistance).
+  
 *   **Power Quality Analyzers**: PCC-mounted analyzers for total harmonic distortion (THD) monitoring and phase-angle tracking.
 *   **Fault Management**: Utility-scale protective relaying (ANSI 50/51, 27/59) for overcurrent and voltage-out-of-bounds containment.
 
