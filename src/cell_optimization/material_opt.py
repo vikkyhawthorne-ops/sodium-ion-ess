@@ -228,23 +228,34 @@ class MaterialMappingEngine:
 
         if props is None and self.session and (source_override == "OQMD" or source_override is None):
             try:
-                params = {"composition": canonical_formula, "limit": 10, "fields": "composition,delta_e,stability,band_gap,volume,natoms"}
-                r = self.session.get(OQMD_URL, params=params, timeout=10)
+                query_composition = chemsys if chemsys else canonical_formula
+                params = {
+                    "composition": query_composition,
+                    "limit": 10,
+                    "format": "json",
+                    "fields": "name,delta_e,stability,band_gap,volume,natoms"
+                }
+                r = self.session.get(OQMD_URL, params=params, timeout=20)
                 if r.status_code == 200:
                     data = r.json().get("data", [])
                     if data:
                         class Doc:
                             def __init__(self, d):
-                                self.energy_above_hull = d.get("stability", 0.1)
-                                self.formation_energy_per_atom = d.get("delta_e", 0.0)
-                                self.band_gap = d.get("band_gap", 0.0)
-                                self.volume = d.get("volume", 1.0)
-                                self.nsites = d.get("natoms", 1.0)
-                                self.formula_pretty = d.get("composition", canonical_formula)
+                                self.energy_above_hull = d.get("stability") if d.get("stability") is not None else 0.1
+                                self.formation_energy_per_atom = d.get("delta_e") if d.get("delta_e") is not None else 0.0
+                                self.band_gap = d.get("band_gap") if d.get("band_gap") is not None else 0.0
+                                self.volume = d.get("volume") if d.get("volume") is not None else 1.0
+                                self.nsites = d.get("natoms") if d.get("natoms") is not None else 1.0
+                                self.formula_pretty = d.get("name", canonical_formula)
                         docs = [Doc(d) for d in data]
                         props, source, resolved_formula = process_docs(docs)
                         source = "OQMD"
-            except Exception as e: logging.exception(f"OQMD resolution failed: {e}")
+                    else:
+                        logging.info(f"OQMD returned no data for {query_composition}")
+                else:
+                    logging.error(f"OQMD request failed for {query_composition} with status {r.status_code}: {r.text[:200]}")
+            except Exception as e:
+                logging.exception(f"OQMD resolution failed for {canonical_formula}: {e}")
 
         if props:
             self.cache[cache_key] = {"props": props, "source": source, "formula": resolved_formula}
