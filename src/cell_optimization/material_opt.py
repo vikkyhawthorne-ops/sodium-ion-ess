@@ -280,7 +280,12 @@ class MaterialMappingEngine:
         for src_name in SOURCES:
             p, src, rf = self._resolve_material(BASE_INTERFACE_FORMULA, source_override=src_name)
             if p: bases["interface"] = {"formula": rf, "properties": p, "source": src}; break
-        if not all(k in bases for k in ["cathode", "salt", "interface"]): return system, {}
+        if not all(k in bases for k in ["cathode", "salt", "interface"]):
+            missing = [k for k in ["cathode", "salt", "interface"] if k not in bases]
+            logging.error(f"Failed to resolve base materials: {missing}")
+            return system, {}
+
+        logging.info(f"Resolved base materials: {list(bases.keys())}")
         for d in DOPANTS:
             for x in [0.05, 0.1, 0.15]:
                 formula = generate_doped_formula(d, x)
@@ -302,5 +307,8 @@ class MaterialMappingEngine:
                 if p and rf not in seen:
                     system[MaterialCategory.FUNCTIONALIZATION].append(MaterialCandidate(name=name, category=MaterialCategory.FUNCTIONALIZATION, composition=rf, properties=p, provenance=src))
                     seen.add(rf); break
+        for cat in MaterialCategory:
+            logging.info(f"Resolved {len(system[cat])} candidates for {cat.name}")
+
         self._run_result = (system, bases)
         return self._run_result
