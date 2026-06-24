@@ -4,6 +4,7 @@ import re
 import math
 import numpy as np
 import hashlib
+import traceback
 from typing import List, Dict, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -238,7 +239,8 @@ class MaterialMappingEngine:
                     else:
                         docs = mpr.materials.summary.search(formula=canonical_formula, fields=['formula_pretty', 'formation_energy_per_atom', 'energy_above_hull', 'band_gap', 'volume', 'nsites', 'structure'])
                     if docs: props, source, resolved_formula = process_docs(docs)
-            except Exception as e: print(f"ERROR: MP resolution failed: {e}")
+            except Exception as e:
+                print(f"ERROR: MP resolution failed: {e}\n{traceback.format_exc()}")
 
         if props is None and self.session and (source_override == "OQMD" or source_override is None):
             try:
@@ -271,7 +273,7 @@ class MaterialMappingEngine:
                 else:
                     print(f"ERROR: OQMD request failed for {query_composition} with status {r.status_code}: {r.text[:200]}")
             except Exception as e:
-                print(f"ERROR: OQMD resolution failed for {canonical_formula}: {e}")
+                print(f"ERROR: OQMD resolution failed for {canonical_formula}: {e}\n{traceback.format_exc()}")
 
         if props:
             self.cache[cache_key] = {"props": props, "source": source, "formula": resolved_formula}

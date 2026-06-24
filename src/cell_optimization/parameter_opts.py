@@ -2,6 +2,7 @@ import numpy as np
 import pybamm
 import json
 import os
+import traceback
 from typing import Dict, Any, List, Tuple, Optional
 from pymoo.core.problem import Problem
 from pymoo.algorithms.soo.nonconvex.ga import GA
@@ -246,7 +247,7 @@ class HierarchicalOptimizer:
 
             return True, float(stability)
         except Exception as e:
-            print(f"ERROR: FEM solve failed: {e}")
+            print(f"ERROR: FEM solve failed: {e}\n{traceback.format_exc()}")
             return False, -1e9
 
     def compute_jacobian(self, x: np.ndarray, deltas: Dict[str, Any]) -> np.ndarray:
