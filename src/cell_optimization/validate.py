@@ -63,8 +63,8 @@ class OptimizationValidator:
                 "max_stress_pa": float(max_strain * E_eff),
                 "mechanical_integrity_factor": float(eta)
             }
-        except Exception:
-            traceback.print_exc()
+        except Exception as e:
+            print(f"ERROR: Mechanical integrity solver failed: {e}\n{traceback.format_exc()}")
             return {"max_strain": 0.0, "max_stress_pa": 0.0, "mechanical_integrity_factor": 0.0}
 
     def run_validation(self):
