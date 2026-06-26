@@ -25,8 +25,13 @@ except ImportError:
     MPRester = None
 
 from nfpp_sodium_ion.src.cell_parameters.cell_alpha import get_parameter_values
-
-KT = 0.0259 # eV at 300K
+from src.cell_optimization.chem_regularization import (
+    KT,
+    generate_doped_formula,
+    get_oxidation_states,
+    ionic_radius_proxy,
+    compute_surrogate_properties
+)
 
 class MaterialCategory(Enum):
     CATHODE_DOPANT = auto()
@@ -60,96 +65,6 @@ class MaterialCandidate:
     composition: str
     properties: Dict[str, Any]
     provenance: str = "OQMD"
-
-def generate_doped_formula(dopant, x):
-    # Charge neutrality via Na vacancy compensation (Issue 2 fix)
-    try:
-        dopant_charge = DOPANT_CHARGES[dopant]
-        delta_q = (dopant_charge - FE_CHARGE)
-        # charge compensation via Na vacancies: each Fe site substituted by a higher valence dopant
-        # requires removing (dopant_charge - FE_CHARGE) Na+ ions.
-        # Total sites substituted = 3.0 * x
-        na_deficit = 3.0 * x * delta_q
-
-        comp = Composition({
-            "Na": 4.0 - na_deficit,
-            "Fe": 3.0 * (1.0 - x),
-            dopant: 3.0 * x,
-            "P": 4,
-            "O": 15
-        })
-        return comp.reduced_formula
-    except Exception:
-        return f"Na{4.0-x*(DOPANT_CHARGES.get(dopant,2)-2):.2f}Fe{3.0*(1.0-x):.2f}{dopant}{3.0*x:.2f}P4O15"
-
-def get_oxidation_states(comp: Composition, structure=None):
-    # fallback deterministic oxidation map (battery-relevant prior)
-    prior = {
-        "Na": 1, "O": -2, "P": 5,
-        "Fe": 2, "Mn": 2, "Cr": 3, "Ni": 2,
-        "C": 0, "Si": 4, "F": -1
-    }
-    states = {}
-    try:
-        # Always prioritize deterministic prior table first (Key constraint)
-        for el in comp.elements:
-            symbol = el.symbol
-            if symbol in prior:
-                states[symbol] = prior[symbol]
-
-        # If any elements missing from prior, use structure-based BVAnalyzer or guesses
-        missing_symbols = [el.symbol for el in comp.elements if el.symbol not in states]
-        if missing_symbols:
-            if structure:
-                try:
-                    analyzer = BVAnalyzer()
-                    decorated = analyzer.get_oxi_state_decorated_structure(structure)
-                    for s in missing_symbols:
-                        amt_dict = decorated.composition.get_el_amt_dict()
-                        if s in amt_dict:
-                            # Summing amounts might be wrong if there are multiple sites with same element but different oxi states
-                            # But Specie(symbol, oxi) needs a single oxi. We take the most common one.
-                            # Decorated structure elements are usually Specie.
-                            for sp in decorated.composition.elements:
-                                if hasattr(sp, "symbol") and sp.symbol == s:
-                                    states[s] = getattr(sp, "oxi_state", states.get(s))
-                except Exception:
-                    pass
-
-            # Secondary fallback: guesses
-            if any(s not in states for s in missing_symbols):
-                guesses = comp.oxi_state_guesses()
-                if guesses:
-                    best_guess = guesses[0]
-                    for s in missing_symbols:
-                        if s not in states and s in best_guess:
-                            states[s] = best_guess[s]
-        return states
-    except Exception:
-        return prior
-
-def ionic_radius_proxy(formula: str, structure=None) -> float:
-    """Computes a weighted average ionic radius for the composition using Specie data."""
-    try:
-        comp = Composition(formula)
-        states = get_oxidation_states(comp, structure=structure)
-
-        total_atoms = sum(comp.values())
-        avg_radius = 0.0
-        for el, count in comp.items():
-             symbol = el.symbol
-             oxi = states.get(symbol, 0)
-             try:
-                 # Deterministic radius selection logic (Issue 2.3)
-                 radius = el.average_ionic_radius if oxi == 0 else Specie(symbol, oxi).ionic_radius
-                 if radius is None:
-                     radius = el.atomic_radius
-             except Exception:
-                 radius = el.atomic_radius or 1.0
-             avg_radius += (count / total_atoms) * (radius if radius else 1.0)
-        return float(avg_radius)
-    except Exception:
-        return 1.0
 
 class MaterialMappingEngine:
     def __init__(self):
@@ -198,6 +113,7 @@ class MaterialMappingEngine:
             print(f"WARNING: Failed to save cache: {e}")
 
     def _resolve_material(self, formula: str, source_override: Optional[str] = None, chemsys: Optional[str] = None) -> Tuple[Optional[Dict[str, float]], str, str]:
+        """Hierarchical material resolution (Level 1-4)."""
         try:
              canonical_formula = Composition(formula).reduced_formula
         except Exception:
@@ -231,29 +147,21 @@ class MaterialMappingEngine:
             }
             return p, "MATERIALS_PROJECT", p["resolved_formula"]
 
-        if MPRester and self.mp_key and (source_override == "MP" or source_override is None):
+        # Level 1: MP Exact Formula Search
+        if props is None and MPRester and self.mp_key and (source_override == "MP" or source_override is None):
             try:
                 with MPRester(api_key=self.mp_key) as mpr:
-                    if chemsys:
-                        docs = mpr.materials.summary.search(chemsys=chemsys, fields=['formula_pretty', 'formation_energy_per_atom', 'energy_above_hull', 'band_gap', 'volume', 'nsites', 'structure'])
-                    else:
-                        docs = mpr.materials.summary.search(formula=canonical_formula, fields=['formula_pretty', 'formation_energy_per_atom', 'energy_above_hull', 'band_gap', 'volume', 'nsites', 'structure'])
-                    if docs: props, source, resolved_formula = process_docs(docs)
+                    docs = mpr.materials.summary.search(formula=canonical_formula, fields=['formula_pretty', 'formation_energy_per_atom', 'energy_above_hull', 'band_gap', 'volume', 'nsites', 'structure'])
+                    if docs:
+                        props, source, resolved_formula = process_docs(docs)
             except Exception as e:
-                print(f"ERROR: MP resolution failed: {e}\n{traceback.format_exc()}")
+                print(f"ERROR: Level 1 (MP Exact) failed for {canonical_formula}: {e}\n{traceback.format_exc()}")
 
+        # Level 2: OQMD Exact Formula Search
         if props is None and self.session and (source_override == "OQMD" or source_override is None):
             try:
-                query_composition = chemsys if chemsys else canonical_formula
-                params = {
-                    "composition": query_composition,
-                    "limit": 10,
-                    "format": "json",
-                    "fields": "name,delta_e,stability,band_gap,volume,natoms"
-                }
-                # Increased timeout to handle slow OQMD phase-space queries (Issue 12.2)
-                # Using tuple (connect, read) for granular control
-                r = self.session.get(OQMD_URL, params=params, timeout=(15, 120))
+                params = {"composition": canonical_formula, "limit": 5, "format": "json", "fields": "name,delta_e,stability,band_gap,volume,natoms"}
+                r = self.session.get(OQMD_URL, params=params, timeout=(15, 60))
                 if r.status_code == 200:
                     data = r.json().get("data", [])
                     if data:
@@ -268,12 +176,48 @@ class MaterialMappingEngine:
                         docs = [Doc(d) for d in data]
                         props, source, resolved_formula = process_docs(docs)
                         source = "OQMD"
-                    else:
-                        print(f"INFO: OQMD returned no data for {query_composition}")
-                else:
-                    print(f"ERROR: OQMD request failed for {query_composition} with status {r.status_code}: {r.text[:200]}")
             except Exception as e:
-                print(f"ERROR: OQMD resolution failed for {canonical_formula}: {e}\n{traceback.format_exc()}")
+                print(f"ERROR: Level 2 (OQMD Exact) failed for {canonical_formula}: {e}\n{traceback.format_exc()}")
+
+        # Level 3: Materials-System Search (Na-C-H-O etc.)
+        if props is None and source_override is None:
+            try:
+                if not chemsys:
+                    chemsys = "-".join(sorted([el.symbol for el in Composition(canonical_formula).elements]))
+
+                # Try MP System
+                if MPRester and self.mp_key:
+                    with MPRester(api_key=self.mp_key) as mpr:
+                        docs = mpr.materials.summary.search(chemsys=chemsys, fields=['formula_pretty', 'formation_energy_per_atom', 'energy_above_hull', 'band_gap', 'volume', 'nsites', 'structure'])
+                        if docs:
+                            props, source, resolved_formula = process_docs(docs)
+
+                # Try OQMD System
+                if props is None and self.session:
+                    params = {"composition": chemsys, "limit": 10, "format": "json", "fields": "name,delta_e,stability,band_gap,volume,natoms"}
+                    r = self.session.get(OQMD_URL, params=params, timeout=(15, 120))
+                    if r.status_code == 200:
+                        data = r.json().get("data", [])
+                        if data:
+                            class Doc:
+                                def __init__(self, d):
+                                    self.energy_above_hull = d.get("stability") if d.get("stability") is not None else 0.1
+                                    self.formation_energy_per_atom = d.get("delta_e") if d.get("delta_e") is not None else 0.0
+                                    self.band_gap = d.get("band_gap") if d.get("band_gap") is not None else 0.0
+                                    self.volume = d.get("volume") if d.get("volume") is not None else 1.0
+                                    self.nsites = d.get("natoms") if d.get("natoms") is not None else 1.0
+                                    self.formula_pretty = d.get("name", canonical_formula)
+                            docs = [Doc(d) for d in data]
+                            props, source, resolved_formula = process_docs(docs)
+                            source = "OQMD_SYSTEM"
+            except Exception as e:
+                print(f"ERROR: Level 3 (System Search) failed for {chemsys}: {e}\n{traceback.format_exc()}")
+
+        # Level 4 Fallback: Physics-based property estimation
+        if props is None and source_override is None:
+            props = compute_surrogate_properties(canonical_formula)
+            source = "COMPUTED"
+            resolved_formula = canonical_formula
 
         if props:
             self.cache[cache_key] = {"props": props, "source": source, "formula": resolved_formula}
@@ -283,21 +227,23 @@ class MaterialMappingEngine:
 
     def run(self) -> Tuple[Dict[MaterialCategory, List[MaterialCandidate]], Dict[str, Any]]:
         if self._run_result is not None: return self._run_result
-        print(f"Executing API-Based Material Resolution (Layer 1)...")
+        print(f"Executing Hierarchical Material Resolution (Level 1-4)...")
         system = {cat: [] for cat in MaterialCategory}
         bases, seen = {}, set()
-        SOURCES = ["MP", "OQMD"]
+
+        # Resolve Base Materials
         for f in BASE_CATHODE_PRIORITIES:
-            for src_name in SOURCES:
-                p, src, rf = self._resolve_material(f, source_override=src_name)
-                if p: bases["cathode"] = {"formula": rf, "properties": p, "source": src}; break
-            if "cathode" in bases: break
-        for src_name in SOURCES:
-            p, src, rf = self._resolve_material(BASE_SALT_FORMULA, source_override=src_name)
-            if p: bases["salt"] = {"formula": rf, "properties": p, "source": src}; break
-        for src_name in SOURCES:
-            p, src, rf = self._resolve_material(BASE_INTERFACE_FORMULA, source_override=src_name)
-            if p: bases["interface"] = {"formula": rf, "properties": p, "source": src}; break
+            p, src, rf = self._resolve_material(f)
+            if p:
+                bases["cathode"] = {"formula": rf, "properties": p, "source": src}
+                break
+
+        p, src, rf = self._resolve_material(BASE_SALT_FORMULA)
+        if p: bases["salt"] = {"formula": rf, "properties": p, "source": src}
+
+        p, src, rf = self._resolve_material(BASE_INTERFACE_FORMULA)
+        if p: bases["interface"] = {"formula": rf, "properties": p, "source": src}
+
         if not all(k in bases for k in ["cathode", "salt", "interface"]):
             missing = [k for k in ["cathode", "salt", "interface"] if k not in bases]
             err_msg = f"Critical Failure: Failed to resolve base materials: {missing}. Aborting pipeline."
@@ -305,27 +251,28 @@ class MaterialMappingEngine:
             raise RuntimeError(err_msg)
 
         print(f"INFO: Resolved base materials: {list(bases.keys())}")
+
+        # Resolve Candidates
         for d in DOPANTS:
             for x in [0.05, 0.1, 0.15]:
                 formula = generate_doped_formula(d, x)
                 chemsys = f"Na-Fe-{d}-P-O"
-                for src_name in SOURCES:
-                    p, src, rf = self._resolve_material(formula=formula, chemsys=chemsys, source_override=src_name)
-                    if p and rf not in seen:
-                        system[MaterialCategory.CATHODE_DOPANT].append(MaterialCandidate(name=f"{d}-doped-x{x}", category=MaterialCategory.CATHODE_DOPANT, composition=rf, properties=p, provenance=src))
-                        seen.add(rf); break
+                p, src, rf = self._resolve_material(formula=formula, chemsys=chemsys)
+                if p and rf not in seen:
+                    system[MaterialCategory.CATHODE_DOPANT].append(MaterialCandidate(name=f"{d}-doped-x{x}", category=MaterialCategory.CATHODE_DOPANT, composition=rf, properties=p, provenance=src))
+                    seen.add(rf)
+
         for name, formula in SALTS.items():
-            for src_name in SOURCES:
-                p, src, rf = self._resolve_material(formula, source_override=src_name)
-                if p and rf not in seen:
-                    system[MaterialCategory.SALT].append(MaterialCandidate(name=name, category=MaterialCategory.SALT, composition=rf, properties=p, provenance=src))
-                    seen.add(rf); break
+            p, src, rf = self._resolve_material(formula)
+            if p and rf not in seen:
+                system[MaterialCategory.SALT].append(MaterialCandidate(name=name, category=MaterialCategory.SALT, composition=rf, properties=p, provenance=src))
+                seen.add(rf)
+
         for name, formula in FUNCTIONALIZATION.items():
-            for src_name in SOURCES:
-                p, src, rf = self._resolve_material(formula, source_override=src_name)
-                if p and rf not in seen:
-                    system[MaterialCategory.FUNCTIONALIZATION].append(MaterialCandidate(name=name, category=MaterialCategory.FUNCTIONALIZATION, composition=rf, properties=p, provenance=src))
-                    seen.add(rf); break
+            p, src, rf = self._resolve_material(formula)
+            if p and rf not in seen:
+                system[MaterialCategory.FUNCTIONALIZATION].append(MaterialCandidate(name=name, category=MaterialCategory.FUNCTIONALIZATION, composition=rf, properties=p, provenance=src))
+                seen.add(rf)
         for cat in MaterialCategory:
             print(f"INFO: Resolved {len(system[cat])} candidates for {cat.name}")
 
