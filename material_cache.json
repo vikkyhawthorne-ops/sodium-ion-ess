@@ -1,0 +1,29 @@
+{
+  "5521e341114fe26bc06490cb943c55fb": {
+    "props": {
+      "stability": 0.0014943030391375025,
+      "formation_energy": -2.0494325026962477,
+      "band_gap": 5.223808239714611,
+      "volume_per_atom": 22.30931777775666,
+      "uncertainty_formation_energy": 0.0006850199999999251,
+      "ionic_radius": 1.415,
+      "resolved_formula": "NaCl"
+    },
+    "source": "OQMD",
+    "formula": "NaCl"
+  },
+  "143686b809bb750ccd3bb28cff35058b": {
+    "props": {
+      "stability": 0.1,
+      "formation_energy": -1.0,
+      "band_gap": 3.0,
+      "volume_per_atom": 10.0,
+      "uncertainty_formation_energy": 0.5,
+      "ionic_radius": 1.0,
+      "resolved_formula": "FakeMaterial123",
+      "computed": true
+    },
+    "source": "COMPUTED",
+    "formula": "FakeMaterial123"
+  }
+}
