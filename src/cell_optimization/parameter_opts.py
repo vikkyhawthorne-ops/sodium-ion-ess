@@ -289,11 +289,13 @@ class HierarchicalOptimizer:
             return False, -1e9
 
     def compute_jacobian(self, x: np.ndarray, deltas: Dict[str, Any]) -> np.ndarray:
+        """Computes scaled sensitivities (Layer 3) with robust failure handling."""
         eps = 1e-4
         pt = ParamTransform(self.base_params)
         pt.apply_physics_deltas(deltas); pt.apply_design_vector(x, DESIGN_SPACE)
         base_res = self.simulate(pt.get_parameter_values())
-        if not base_res["success"]: return np.zeros((3, len(DESIGN_SPACE)))
+        if not base_res["success"]:
+            raise RuntimeError(f"Baseline DFN simulation failed: {base_res.get('reason')}")
 
         from src.cell_optimization.chem_regularization import mechanical_stability_metric
         j_base = np.array([
@@ -320,6 +322,14 @@ class HierarchicalOptimizer:
                 ])
                 # Log-space differentiation for Jacobian stability (Issue 4.3)
                 G[:, j] = (np.log(np.abs(j_pert) + 1e-12) - np.log(np.abs(j_base) + 1e-12)) / eps
+            else:
+                print(f"WARNING: Perturbation for {DESIGN_SPACE[j]} failed: {res.get('reason')}")
+
+        # Sanitize Jacobian (handle NaN/Inf from degenerate logs)
+        G = np.nan_to_num(G, nan=0.0, posinf=0.0, neginf=0.0)
+
+        if not np.isfinite(G).all():
+             raise RuntimeError("Degenerate Jacobian detected: non-finite values persistent after sanitization.")
 
         # Adaptive SVD conditioning for FIM (Issue 4.4)
         U, S, Vt = np.linalg.svd(G, full_matrices=False)
@@ -365,6 +375,10 @@ def run_workflow(engine: Optional[Any] = None):
         for i, mode in enumerate(["energy", "power", "stability"]):
             max_s = np.max(np.abs(G[i, :])) + 1e-12
             active_indices = [j for j in range(len(DESIGN_SPACE)) if np.abs(G[i, j]) / max_s > 0.5]
+
+            # Ensure at least one decision variable to avoid GA crash (ValueError: cannot reshape array of size 0)
+            if not active_indices:
+                 active_indices = [int(np.argmax(np.abs(G[i, :])))]
 
             # Use constant baseline metric as reference scale to preserve optimization gradient
             ref_val = 1.0
