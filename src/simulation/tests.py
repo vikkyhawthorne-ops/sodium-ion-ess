@@ -151,46 +151,68 @@ class StabilityValidator:
     def validate_optimized_design(self):
         print("Validating optimized twin with full physics (using BESS dispatch trace)...")
 
+        # Extract dynamic voltage limits for physically consistent Experiment definition (Issue 1)
+        v_min = self.optimized_params["Lower voltage cut-off [V]"]
+        v_max = self.optimized_params["Upper voltage cut-off [V]"]
+
         # 1. Base Validation using Realistic BESS Dispatch Experiment
         # (Issue 1, 3, 9, 10, 11)
         dispatch_experiment = pybamm.Experiment([
             "Discharge at 0.5C for 30 minutes",
             "Rest for 10 minutes",
-            "Discharge at 1.5C until 2.5V",
+            f"Discharge at 1.5C until {v_min}V",
             "Rest for 30 minutes",
-            "Charge at 0.5C until 4.0V"
+            f"Charge at 0.5C until {v_max}V"
         ])
 
         res_dispatch = self.run_full_simulation(self.optimized_params, experiment=dispatch_experiment)
 
-        # 2. Robustness Check: Blackout Scenario (Issue 11)
-        print("  Running Robustness Check: Blackout during high-load (+10% thickness)...")
+        # 2. Robustness Check: Grid Outage during Charge (Issue 11, 13)
+        print("  Running Robustness Check: Grid Outage during high-rate charge (+10% thickness)...")
         robust_updates = self.optimized_params.copy()
         robust_updates["Positive electrode thickness [m]"] *= 1.1
 
         blackout_experiment = pybamm.Experiment([
-            "Discharge at 2C for 15 minutes",
-            "Rest for 60 minutes" # Blackout / Open Circuit recovery
+            "Charge at 1C for 20 minutes",
+            "Rest for 60 minutes" # Abrupt grid loss / relaxation
         ])
 
         res_robust = self.run_full_simulation(robust_updates, experiment=blackout_experiment)
 
-        # 3. Correct Energy and Efficiency metrics (Issue 4, 17)
-        def compute_energy_wh(sol):
+        # 3. Correct Energy and Efficiency metrics (Issue 4, 12, 17)
+        def compute_energy_io_wh(sol):
              v = sol["Terminal voltage [V]"].entries
              i = sol["Current [A]"].entries
              t = sol["Time [s]"].entries
-             # Integration of V*I (Issue 4)
+             p = v * i
              trapz_func = getattr(np, "trapezoid", getattr(np, "trapz", None))
-             return abs(trapz_func(v * i, t)) / 3600.0
 
-        energy_dispatch = compute_energy_wh(res_dispatch["electro"]["solution"])
-        energy_robust = compute_energy_wh(res_robust["electro"]["solution"])
+             # Separate Charge (in) and Discharge (out) - Issue 12
+             e_out = trapz_func(np.maximum(p, 0), t) / 3600.0
+             e_in = abs(trapz_func(np.minimum(p, 0), t)) / 3600.0
+             return e_in, e_out
 
-        # Robustness based on max strain and temperature excursion instead of just capacity (Issue 12)
-        max_strain_base = res_dispatch["mechanical"]["max_strain"]
-        max_strain_robust = res_robust["mechanical"]["max_strain"]
-        robustness_passed = max_strain_robust < self.mech_model.critical_thresholds["NFPP"]
+        e_in, e_out = compute_energy_io_wh(res_dispatch["electro"]["solution"])
+        efficiency = e_out / e_in if e_in > 0 else 0.0
+
+        # 4. Weighted Robustness Index (Issue 14)
+        def compute_robustness_index(res):
+             # R = w1*T + w2*strain + w3*SOH + w4*dV + w5*eta
+             w = [0.2, 0.4, 0.1, 0.2, 0.1]
+             T_max = np.max(res["electro"]["temperature"])
+             strain_max = res["mechanical"]["max_strain"]
+             soh_final = res["electro"]["soh_trajectory"][-1] / 100.0
+
+             # Normalized components
+             c1 = min(1.0, (T_max - 298.15) / 50.0)
+             c2 = min(1.0, strain_max / self.mech_model.critical_thresholds["NFPP"])
+             c3 = 1.0 - soh_final
+
+             score = 1.0 - (w[0]*c1 + w[1]*c2 + w[2]*c3)
+             return max(0.0, score)
+
+        robustness_score = compute_robustness_index(res_robust)
+        robustness_passed = robustness_score > 0.7
 
         # Compile final report
         clean_params = {}
@@ -200,10 +222,13 @@ class StabilityValidator:
                 clean_params[clean_k] = v
 
         results = {
-            "energy_capacity_kwh": float(energy_dispatch / 1000.0), # Removed hardcoded 3.1V (Issue 5)
+            "energy_discharge_kwh": float(e_out / 1000.0),
+            "energy_charge_kwh": float(e_in / 1000.0),
+            "round_trip_efficiency": float(efficiency),
             "nominal_voltage_v": float(np.mean(res_dispatch["electro"]["terminal_voltage"])),
             "max_strain": float(res_dispatch["mechanical"]["max_strain"]),
             "cycle_life": float(min(res_dispatch["endurance"]["n_crit"], 1e12)),
+            "robustness_score": float(robustness_score),
             "robustness_passed": bool(robustness_passed),
             "merged_params": clean_params,
             # Simscape-Mapped Parameters (Derived from high-fidelity DFN transient)

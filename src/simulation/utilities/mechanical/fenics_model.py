@@ -31,28 +31,33 @@ class ThermoelasticStrainModel:
 
     def solve_strain(self, pybamm_sol: Any, params: Any, c_rate: float = 1.0) -> Dict[str, Any]:
         """Solves for the displacement and strain field."""
-        # Rate-dependent scaling for strain (Power-law scaling reflecting internal concentration gradients)
-        rate_scaling = (max(c_rate, 1e-3) / 1.0) ** 0.25
+        # Note: Rate-dependent scaling removed (Issue 9) as DFN concentration fields
+        # (c_s) already account for rate-induced internal gradients.
 
         if dolfinx is None:
             # Physics-based proxy for fallback (intercalation strain)
-            # Use Volume-averaged values if available for better field representation (Issue 6, 8)
+            # Use Volume-averaged values for better representation (Issue 6, 8, 21)
             try:
                 T_all = pybamm_sol["Volume-averaged cell temperature [K]"].entries
-            except:
+            except (KeyError, AttributeError):
                 T_all = pybamm_sol["Cell temperature [K]"].entries
 
             T_max = np.max(T_all)
 
-            # Intercalation strain depends on local concentration, here proxied by SOC (Issue 7)
-            # We use max SOC change to proxy max local strain gradients
-            cap_ah = pybamm_sol["Discharge capacity [A.h]"].entries
-            nom_cap = params["Nominal cell capacity [A.h]"]
-            soc_all = 1.0 - (cap_ah / nom_cap)
-            soc_max_change = np.max(soc_all) - np.min(soc_all)
+            # Intercalation strain is proportional to local solid concentration change (Issue 6, 7)
+            # Proxying using stoichiometric change at the particle surface
+            try:
+                sto_p = pybamm_sol["X-averaged positive electrode surface stoichiometry"].entries
+                sto_n = pybamm_sol["X-averaged negative electrode surface stoichiometry"].entries
+                delta_sto = max(np.max(sto_p) - np.min(sto_p), np.max(sto_n) - np.min(sto_n))
+            except (KeyError, AttributeError):
+                # Fallback to battery-level SOC change
+                cap_ah = pybamm_sol["Discharge capacity [A.h]"].entries
+                nom_cap = params["Nominal cell capacity [A.h]"]
+                soc_all = 1.0 - (cap_ah / nom_cap)
+                delta_sto = np.max(soc_all) - np.min(soc_all)
 
-            # Incorporate rate scaling into proxy to account for internal gradients (Issue 2)
-            strain = (1e-5 * (T_max - 298.15) + 0.02 * soc_max_change) * rate_scaling
+            strain = (1e-5 * (T_max - 298.15) + 0.02 * delta_sto)
             return {"max_strain": float(strain)}
 
         # Electrode dimensions (Pouch section) from paper.md and cell_alpha.py
@@ -81,9 +86,8 @@ class ThermoelasticStrainModel:
         # Material parameters
         E = fem.Constant(domain, default_scalar_type(params.get("Negative electrode Young's modulus [Pa]", 10e9)))
         nu = fem.Constant(domain, default_scalar_type(0.3))
-        # Rate-dependent expansion coefficients
-        alpha = fem.Constant(domain, default_scalar_type(1e-5 * rate_scaling)) # Thermal expansion
-        beta = fem.Constant(domain, default_scalar_type(0.02 * rate_scaling)) # SOC expansion
+        alpha = fem.Constant(domain, default_scalar_type(1e-5)) # Thermal expansion
+        beta = fem.Constant(domain, default_scalar_type(0.02)) # SOC expansion
         T_ref = fem.Constant(domain, default_scalar_type(298.15))
 
         mu = E / (2 * (1 + nu))

@@ -11,16 +11,17 @@ except ImportError:  # pragma: no cover
 
 from nfpp_sodium_ion.src.cell_parameters.parameter_builder import get_parameter_values
 
-@dataclass
 class ElectrochemicalThermalDriverModel:
-    """DFN Electrochemical-Thermal Driver."""
+    """DFN Electrochemical-Thermal Driver with component caching."""
 
-    name: str = "DFN Electrochemical-Thermal Driver"
-    model_type: str = "DFN"
+    def __init__(self, name: str = "DFN Electrochemical-Thermal Driver"):
+        self.name = name
+        self.model_type = "DFN"
+        self._cache = {}
 
-    def build_model(self, parameter_updates: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        if pybamm is None:
-            raise ImportError("pybamm is required for the electrochemical-thermal driver model")
+    def _get_model(self):
+        if "model" in self._cache:
+            return self._cache["model"]
 
         options = {
             "thermal": "x-full",
@@ -28,13 +29,28 @@ class ElectrochemicalThermalDriverModel:
             "SEI porosity change": "true",
             "loss of active material": "stress-driven"
         }
-
         try:
             model = pybamm.sodium_ion.DFN(options=options)
         except AttributeError:
             model = pybamm.lithium_ion.DFN(options=options)
 
+        self._cache["model"] = model
+        return model
+
+    def build_model(self, parameter_updates: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        if pybamm is None:
+            raise ImportError("pybamm is required for the electrochemical-thermal driver model")
+
+        model = self._get_model()
         param = get_parameter_values(updates=parameter_updates)
+
+        # Inject essential topology parameters for Experiment/Event handling if missing
+        param.update({
+            "Number of cells connected in series to make a battery": 1,
+            "Number of strings connected in parallel to make a battery": 1,
+            "Number of electrodes connected in parallel to make a cell": 1,
+        }, check_already_exists=False)
+
         return {"model": model, "parameter_values": param}
 
     def get_varying_c_rate_profile(self, base_c_rate: float, duration: float, n_points: int = 100) -> np.ndarray:
