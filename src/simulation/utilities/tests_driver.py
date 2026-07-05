@@ -18,6 +18,7 @@ class ElectrochemicalThermalDriverModel:
         self.name = name
         self.model_type = "DFN"
         self._cache = {}
+        self.solver = pybamm.CasadiSolver(mode="safe")
 
     def _get_processed_components(self, param: pybamm.ParameterValues):
         # Cache key based on geometry-affecting parameters and options (Issue 1, 14)
@@ -76,17 +77,15 @@ class ElectrochemicalThermalDriverModel:
         param = model_dict["parameter_values"].copy()
         components = model_dict.get("components")
 
-        solver = pybamm.CasadiSolver(mode="safe")
-
         if experiment is not None:
             # Reusing pre-processed components if available (Issue 2)
             if components:
                 sim = pybamm.Simulation(
-                    model, parameter_values=param, experiment=experiment, solver=solver,
+                    model, parameter_values=param, experiment=experiment, solver=self.solver,
                     mesh=components["mesh"], discretisation=components["disc"]
                 )
             else:
-                sim = pybamm.Simulation(model, parameter_values=param, experiment=experiment, solver=solver)
+                sim = pybamm.Simulation(model, parameter_values=param, experiment=experiment, solver=self.solver)
             solution = sim.solve()
         else:
             if current_function is not None:
@@ -104,11 +103,11 @@ class ElectrochemicalThermalDriverModel:
 
             if components:
                  sim = pybamm.Simulation(
-                      model, parameter_values=param, solver=solver,
+                      model, parameter_values=param, solver=self.solver,
                       mesh=components["mesh"], discretisation=components["disc"]
                  )
             else:
-                 sim = pybamm.Simulation(model, parameter_values=param, solver=solver)
+                 sim = pybamm.Simulation(model, parameter_values=param, solver=self.solver)
             solution = sim.solve(times)
 
         cap_ah = solution["Discharge capacity [A.h]"].entries

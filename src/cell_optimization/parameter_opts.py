@@ -232,16 +232,17 @@ class SingleObjectiveProblem(Problem):
             pt.apply_physics_deltas(self.deltas); pt.apply_design_vector(x_eval, DESIGN_SPACE)
             pv = pt.get_parameter_values()
 
-            f_val = 1.0 # Default un-optimized state
+            # Heavy penalty for invalid regions (Issue 3)
+            f_val = 100.0
             g2 = 1.0    # Default thermal violation
             g3 = 1.0    # Default physics violation
 
             if validate_params(pv):
-                g3 = -1.0 # Physics OK
+                g3 = 0.0 # Physics OK (Issue 1)
                 res = self.optimizer.simulate(pv)
                 if res["success"]:
-                    # Constraint 2: T_max <= 333.15K (Normalized)
-                    g2 = (res["T_max"] - 333.15) / 333.15
+                    # Constraint 2: T_max <= 333.15K (Physical margin) - Issue 2
+                    g2 = res["T_max"] - 333.15
 
                     if self.mode == "energy": f_val = -res["energy"]
                     elif self.mode == "power": f_val = -res["power"]
@@ -249,7 +250,9 @@ class SingleObjectiveProblem(Problem):
                         f_val = -mechanical_stability_metric(stresses=res["stresses"])
 
             # Objective scaling using constant reference (Major Nitpick Fix)
-            F.append(f_val / self.ref_scale)
+            # Clamp ref_scale to prevent explosion (Issue 6)
+            sc = max(abs(self.ref_scale), 0.1)
+            F.append(f_val / sc)
             G_all.append([g1, g2, g3])
 
         out["F"] = np.array(F); out["G"] = np.array(G_all)
@@ -375,7 +378,7 @@ class HierarchicalOptimizer:
 
         try:
             sol = res["sol"]
-            v, curr, t = sol["Terminal voltage [V]"].data, sol["Current [A]"].data, sol["Time [s]"].data
+            v, curr, t = sol["Terminal voltage [V]"].entries, sol["Current [A]"].entries, sol["Time [s]"].entries
 
             # Energy calculation (Issue 4) - Integration of V*I
             trapz_func = getattr(np, "trapezoid", getattr(np, "trapz", None))
@@ -386,13 +389,13 @@ class HierarchicalOptimizer:
             power = np.max(power_vals)
 
             # Cheap thermal check (Stage 1)
-            T_max = np.max(sol["Cell temperature [K]"].data)
+            T_max = np.max(sol["Cell temperature [K]"].entries)
 
             # Post-processing proxy (deprecated by FEM solve, but used for fast ranking)
             stresses = []
             for sv in ["Positive particle surface tangential stress [Pa]", "Negative particle surface tangential stress [Pa]"]:
-                 try: stresses.append(np.max(np.abs(sol[sv].data)))
-                 except: pass
+                 try: stresses.append(np.max(np.abs(sol[sv].entries)))
+                 except (KeyError, pybamm.ModelError, AttributeError): pass
 
             final_res = {
                 "energy": float(energy),
@@ -408,7 +411,7 @@ class HierarchicalOptimizer:
             return {"success": False, "reason": f"Post-simulation processing failed: {e}"}
 
     def evaluate_stability_pde(self, params: pybamm.ParameterValues, mode: str, c_rate: float = 1.0) -> Tuple[bool, float]:
-        """Stage 2: Expensive FEM thermo-mechanical solve (Constraint-based)."""
+        """Stage 2: Expensive FEM thermo-mechanical solve with feasibility check (Issue 4)."""
         res = self.simulate(params, c_rate=c_rate, return_sol=True)
         if not res["success"]: return False, -1e9
 
@@ -418,6 +421,11 @@ class HierarchicalOptimizer:
             max_strain = mech_res["max_strain"]
             critical_strain = self.mech_model.critical_thresholds.get("NFPP", 2e-3)
             eta = max_strain / critical_strain
+
+            # Structural Feasibility check (Issue 4)
+            #eta <= 1.0 is the boundary
+            if eta > 1.0:
+                 return False, -float(eta) # Mark as failed/infeasible
 
             # Use raw -eta as stability objective (Issue 6 refinement)
             # Quadratic penalties removed to allow exploration near the limit eta=1

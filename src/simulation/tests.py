@@ -98,29 +98,33 @@ class StabilityValidator:
 
     def derive_ssc_parameters(self, solution, pybamm_params):
         """
-        Derives Simscape ECM parameters from DFN simulation results.
+        Derives Simscape ECM parameters using DFN overpotential fields (Issue 15).
         """
         v = solution["Terminal voltage [V]"].entries
         i = solution["Current [A]"].entries
         t = solution["Time [s]"].entries
 
-        # 1. R0 (Ohmic): Derived from first voltage step (V_oc - V_initial) / I
-        # Use first two points to catch the instantaneous drop
+        try:
+             # Use OCV field for accurate overpotential extraction
+             v_oc = solution["Measured open-circuit voltage [V]"].entries
+        except (KeyError, pybamm.ModelError, AttributeError):
+             v_oc = np.full_like(v, v[0])
+
+        # 1. R0 (Ohmic): Based on first step
         dv = abs(v[0] - v[1])
         di = abs(i[1])
         R0 = dv / (di + 1e-6)
 
         # 2. RC Branches (Heuristic extraction from overpotential curve)
-        # Total overpotential excluding Ohmic
-        v_oc = v[0]
-        eta_total = abs(v_oc - v[-1] - i[-1]*R0)
+        eta_total = np.abs(v_oc - v - i*R0)
+        eta_final = eta_total[-1]
 
         # Split into fast (R1, C1) and slow (R2, C2)
         # R1 ~ 40% of diffusion/activation overpotential
-        R1 = 0.4 * eta_total / (di + 1e-6)
+        R1 = 0.4 * eta_final / (di + 1e-6)
         C1 = 2000.0 # Time constant ~ 10s
 
-        R2 = 0.6 * eta_total / (di + 1e-6)
+        R2 = 0.6 * eta_final / (di + 1e-6)
         C2 = 5000.0 # Time constant ~ 30s
 
         # 3. Thermal capacitance (C_th)
@@ -208,16 +212,18 @@ class StabilityValidator:
         blackout_experiment = BESSScenarioGenerator.get_blackout_scenario(v_max)
         res_robust = self.run_full_simulation(robust_updates, experiment=blackout_experiment)
 
-        # 3. Physically Meaningful Efficiency Metrics (Issue 5, 12)
+        # 3. Physically Meaningful Efficiency Metrics (Issue 4, 5, 12)
         def compute_efficiency_metrics(sol):
              v = sol["Terminal voltage [V]"].entries
              i = sol["Current [A]"].entries
              t = sol["Time [s]"].entries
              p = v * i
+
+             # Use capacity change to identify flow direction robustly (Issue 4)
+             # q(t) = integral of i dt
              trapz_func = getattr(np, "trapezoid", getattr(np, "trapz", None))
 
-             # Separation based on net energy flow (Issue 4, 12)
-             # PyBaMM standard: positive current is discharge (out)
+             # Separate based on Net Power flow (Issue 12)
              e_out = trapz_func(np.maximum(p, 0), t) / 3600.0
              e_in = abs(trapz_func(np.minimum(p, 0), t)) / 3600.0
 

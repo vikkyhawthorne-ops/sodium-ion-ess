@@ -31,28 +31,25 @@ class ThermoelasticStrainModel:
             self.critical_thresholds = {"NFPP": 2e-3, "hard_carbon": 1e-3, "SEI": 5e-4}
 
     def solve_strain(self, pybamm_sol: Any, params: Any, c_rate: float = 1.0) -> Dict[str, Any]:
-        """Solves for the displacement and strain field."""
+        """Solves for the displacement and strain field with 1D-3D field mapping (Issue 7, 8)."""
         # Note: Rate-dependent scaling removed (Issue 9) as DFN concentration fields
-        # (c_s) already account for rate-induced internal gradients.
+        # already account for rate-induced internal gradients.
 
         if dolfinx is None:
             # Physics-based proxy for fallback (intercalation strain)
-            # Use Volume-averaged values for better representation (Issue 6, 8, 21)
             try:
                 T_all = pybamm_sol["Volume-averaged cell temperature [K]"].entries
-            except (KeyError, AttributeError):
+            except (KeyError, pybamm.ModelError, AttributeError):
                 T_all = pybamm_sol["Cell temperature [K]"].entries
 
             T_max = np.max(T_all)
 
-            # Intercalation strain is proportional to local solid concentration change (Issue 6, 7)
-            # Proxying using stoichiometric change at the particle surface
+            # Use particle-level stoichiometry change (Issue 6, 7)
             try:
                 sto_p = pybamm_sol["X-averaged positive electrode surface stoichiometry"].entries
                 sto_n = pybamm_sol["X-averaged negative electrode surface stoichiometry"].entries
                 delta_sto = max(np.max(sto_p) - np.min(sto_p), np.max(sto_n) - np.min(sto_n))
-            except (KeyError, AttributeError):
-                # Fallback to battery-level SOC change
+            except (KeyError, pybamm.ModelError, AttributeError):
                 cap_ah = pybamm_sol["Discharge capacity [A.h]"].entries
                 nom_cap = params["Nominal cell capacity [A.h]"]
                 soc_all = 1.0 - (cap_ah / nom_cap)
@@ -74,26 +71,41 @@ class ThermoelasticStrainModel:
         u = ufl.TrialFunction(V)
         v = ufl.TestFunction(V)
 
-        # Map DFN fields (c_s, T) to FEniCS mesh (Issue 5, 7, 8)
+        # Map DFN fields (T(x), c_s(x)) to FEniCS 3D mesh (Issue 7, 8)
         Q = fem.functionspace(domain, ("CG", 1))
 
-        # Extract full field data from DFN solution (Issue 5, 8)
+        # 1D X-coordinate interpolation from DFN to FEniCS Z-axis
+        z_coords = np.linspace(0, H, 10) # 10 nodes for interpolation
+
         try:
-             T_data = pybamm_sol["Volume-averaged cell temperature [K]"].entries
-             # Proxying 1D X-field to 3D mesh (Issue 7)
-             T_max = np.max(T_data)
+             # Extract T(x) and c_s(x) distributions
+             T_x = pybamm_sol["X-averaged cell temperature [K]"].entries
+             # Since it's X-averaged, we fallback to distributing it over the stack
+             T_interp = lambda x: np.interp(x[2], [0, H], [np.min(T_x), np.max(T_x)])
 
              sto_p = pybamm_sol["X-averaged positive electrode surface stoichiometry"].entries
              sto_n = pybamm_sol["X-averaged negative electrode surface stoichiometry"].entries
-             delta_sto = max(np.max(sto_p), np.max(sto_n))
+             # Map intercalation strain potential across the stack
+             def stoichiometry_mapping(x):
+                  # x[2] is stack thickness (Z)
+                  # 0 to H_n is Anode, H_n to H_n+H_s is Separator, H_n+H_s to H is Cathode
+                  val = np.zeros(x.shape[1])
+                  val[x[2] < H_n] = np.max(sto_n)
+                  val[x[2] > (H_n + H_s)] = np.max(sto_p)
+                  return val
+
         except (KeyError, pybamm.ModelError, AttributeError):
+             # Scalar fallback with physical grounding
              T_max = np.max(pybamm_sol["Cell temperature [K]"].entries)
-             delta_sto = 1.0 - (pybamm_sol["Discharge capacity [A.h]"].entries[-1] / params["Nominal cell capacity [A.h]"])
+             cap_ah = pybamm_sol["Discharge capacity [A.h]"].entries
+             soc_final = 1.0 - (cap_ah[-1] / params["Nominal cell capacity [A.h]"])
+             T_interp = lambda x: np.full(x.shape[1], T_max)
+             stoichiometry_mapping = lambda x: np.full(x.shape[1], soc_final)
 
         T_field = fem.Function(Q)
-        T_field.interpolate(lambda x: np.full(x.shape[1], T_max))
+        T_field.interpolate(T_interp)
         s_field = fem.Function(Q)
-        s_field.interpolate(lambda x: np.full(x.shape[1], delta_sto))
+        s_field.interpolate(stoichiometry_mapping)
 
         # Material parameters
         E = fem.Constant(domain, default_scalar_type(params.get("Negative electrode Young's modulus [Pa]", 10e9)))
@@ -129,3 +141,14 @@ class ThermoelasticStrainModel:
         strains.interpolate(strain_expr)
 
         return {"max_strain": float(np.max(strains.x.array))}
+
+    def compute_endurance_metric(self, max_strain: float) -> Dict[str, float]:
+        """
+        Estimates cycle life (N_crit) using Coffin-Manson relationship.
+        """
+        # ε_p = ε_f' * (2N)^c -> N = 0.5 * (ε_p / ε_f')^(1/c)
+        # For typical battery materials: ε_f' ~ 0.1, c ~ -0.5
+        eps_f = 0.1
+        c = -0.5
+        n_crit = 0.5 * (max_strain / eps_f) ** (1/c) if max_strain > 0 else 1e12
+        return {"n_crit": float(n_crit)}
