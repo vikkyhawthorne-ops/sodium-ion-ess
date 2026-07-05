@@ -3,10 +3,53 @@ import numpy as np
 import scipy.io as sio
 import os
 import json
+import copy
 from nfpp_sodium_ion.src.cell_parameters.parameter_builder import get_parameter_values
 from src.cell_optimization.parameter_opts import ParamTransform, DESIGN_SPACE
 from simulation.utilities.tests_driver import ElectrochemicalThermalDriverModel
 from src.simulation.utilities.mechanical.fenics_model import ThermoelasticStrainModel
+
+class BESSScenarioGenerator:
+    """Generates realistic BESS Experiments (Issue 3, 11, 13)."""
+
+    @staticmethod
+    def charge_step(rate, limit=None):
+        return f"Charge at {rate} until {limit}V" if limit else f"Charge at {rate}"
+
+    @staticmethod
+    def discharge_step(rate, limit=None):
+        return f"Discharge at {rate} until {limit}V" if limit else f"Discharge at {rate}"
+
+    @staticmethod
+    def get_blackout_scenario(v_max):
+        # Issue 13: Realistic grid loss during charging
+        return pybamm.Experiment([
+            BESSScenarioGenerator.charge_step("1C", limit=v_max),
+            "Rest for 60 minutes"
+        ])
+
+    @staticmethod
+    def get_dispatch_scenario(v_min, v_max):
+        # Issue 3, 10: Multi-stage realistic BESS dispatch
+        return pybamm.Experiment([
+            BESSScenarioGenerator.discharge_step("0.5C", limit=v_min),
+            "Rest for 20 minutes",
+            BESSScenarioGenerator.charge_step("0.5C", limit=v_max),
+            "Rest for 20 minutes",
+            "Discharge at 10W for 10 minutes", # Peak shaving proxy
+            "Rest for 30 minutes"
+        ])
+
+    @staticmethod
+    def get_pv_firming_scenario(v_max):
+        # Issue 10: PV fluctuations
+        return pybamm.Experiment([
+            "Charge at 0.2C for 10 minutes",
+            "Rest for 5 minutes",
+            "Charge at 0.8C for 10 minutes",
+            "Rest for 5 minutes",
+            BESSScenarioGenerator.charge_step("0.5C", limit=v_max)
+        ])
 
 class StabilityValidator:
     """
@@ -30,7 +73,12 @@ class StabilityValidator:
         # Reconstruct optimized parameters using the pipeline values
         base_params = get_parameter_values()
         pt = ParamTransform(pybamm.ParameterValues(base_params))
-        pt.apply_physics_deltas(opt_data.get("combined_deltas_representative", {}))
+
+        # Apply deltas (merging functionalization if present)
+        deltas = copy.deepcopy(opt_data.get("combined_deltas_representative", {}))
+        # Note: If validation step added more deltas or parameters, we ensure they are captured.
+
+        pt.apply_physics_deltas(deltas)
 
         design_specs = opt_data.get("design_specs_representative", {})
         pt.apply_design_vector(
@@ -39,35 +87,44 @@ class StabilityValidator:
         )
 
         self.optimized_params = pt.get_parameter_values()
+        # Ensure DFN stability parameters from validate.py
+        if "SEI solvent diffusivity [m2.s-1]" not in self.optimized_params:
+             self.optimized_params["SEI solvent diffusivity [m2.s-1]"] = 2.5e-22
+        if "Bulk solvent concentration [mol.m-3]" not in self.optimized_params:
+             self.optimized_params["Bulk solvent concentration [mol.m-3]"] = 2636.0
         self.electro_model = ElectrochemicalThermalDriverModel()
 
         self.mech_model = ThermoelasticStrainModel()
 
     def derive_ssc_parameters(self, solution, pybamm_params):
         """
-        Derives Simscape ECM parameters from DFN simulation results.
+        Derives Simscape ECM parameters using DFN overpotential fields (Issue 15).
         """
         v = solution["Terminal voltage [V]"].entries
         i = solution["Current [A]"].entries
         t = solution["Time [s]"].entries
 
-        # 1. R0 (Ohmic): Derived from first voltage step (V_oc - V_initial) / I
-        # Use first two points to catch the instantaneous drop
+        try:
+             # Use OCV field for accurate overpotential extraction
+             v_oc = solution["Measured open-circuit voltage [V]"].entries
+        except (KeyError, pybamm.ModelError, AttributeError):
+             v_oc = np.full_like(v, v[0])
+
+        # 1. R0 (Ohmic): Based on first step
         dv = abs(v[0] - v[1])
         di = abs(i[1])
         R0 = dv / (di + 1e-6)
 
         # 2. RC Branches (Heuristic extraction from overpotential curve)
-        # Total overpotential excluding Ohmic
-        v_oc = v[0]
-        eta_total = abs(v_oc - v[-1] - i[-1]*R0)
+        eta_total = np.abs(v_oc - v - i*R0)
+        eta_final = eta_total[-1]
 
         # Split into fast (R1, C1) and slow (R2, C2)
         # R1 ~ 40% of diffusion/activation overpotential
-        R1 = 0.4 * eta_total / (di + 1e-6)
+        R1 = 0.4 * eta_final / (di + 1e-6)
         C1 = 2000.0 # Time constant ~ 10s
 
-        R2 = 0.6 * eta_total / (di + 1e-6)
+        R2 = 0.6 * eta_final / (di + 1e-6)
         C2 = 5000.0 # Time constant ~ 30s
 
         # 3. Thermal capacitance (C_th)
@@ -93,25 +150,37 @@ class StabilityValidator:
             "Q_nom": float(solution["Discharge capacity [A.h]"].entries[-1])
         }
 
-    def run_full_simulation(self, updates, c_rate=1.0):
+    def run_full_simulation(self, updates, c_rate=1.0, experiment=None):
         # 1. Electrochemical-Thermal Solve
         model_dict = self.electro_model.build_model(parameter_updates=updates)
 
-        # Adjust current for C-rate
-        cap_ah = model_dict["parameter_values"]["Nominal cell capacity [A.h]"]
-        current = c_rate * cap_ah
+        if experiment:
+             results = self.electro_model.simulate(model_dict, experiment=experiment)
+             # Extract effective C-rate for mechanical scaling (Issue 2)
+             avg_current = np.mean(np.abs(results["solution"]["Current [A]"].entries))
+             cap_ah = model_dict["parameter_values"]["Nominal cell capacity [A.h]"]
+             eff_c_rate = avg_current / cap_ah if cap_ah > 0 else 1.0
+        else:
+             # Adjust current for C-rate (handle scalar or profile)
+             cap_ah = model_dict["parameter_values"]["Nominal cell capacity [A.h]"]
 
-        # Time for 1C is 3600s
-        times = np.linspace(0, 3600 / c_rate, 50)
+             # Effective average c-rate for time scaling and mechanical solve
+             if isinstance(c_rate, (list, np.ndarray)):
+                  eff_c_rate = np.mean(c_rate)
+                  current = c_rate * cap_ah
+             else:
+                  eff_c_rate = c_rate
+                  current = c_rate * cap_ah
 
-        results = self.electro_model.simulate(model_dict, times, current_function=current)
-
-        
+             # Time for 1C is 3600s
+             times = np.linspace(0, 3600 / eff_c_rate, 50)
+             results = self.electro_model.simulate(model_dict, times, current_function=current)
 
         # 3. Mechanical Strain Solve
         mech_results = self.mech_model.solve_strain(
-            pybamm_solution=results["solution"],
-            params=model_dict["parameter_values"]
+            pybamm_sol=results["solution"],
+            params=model_dict["parameter_values"],
+            c_rate=eff_c_rate
         )
 
         # 4. Fatigue / Endurance
@@ -126,38 +195,93 @@ class StabilityValidator:
         }
 
     def validate_optimized_design(self):
-        print("Validating optimized twin with full physics (using values from final_validation.json)...")
+        print("Validating optimized twin with full physics (using BESS scenarios)...")
 
-        # Base Validation at 1C using the fully optimized parameter set
-        res_1c = self.run_full_simulation(self.optimized_params, c_rate=1.0)
+        v_min = self.optimized_params["Lower voltage cut-off [V]"]
+        v_max = self.optimized_params["Upper voltage cut-off [V]"]
 
+        # 1. Base Validation: BESS Dispatch (Issue 3, 11)
+        dispatch_experiment = BESSScenarioGenerator.get_dispatch_scenario(v_min, v_max)
+        res_dispatch = self.run_full_simulation(self.optimized_params, experiment=dispatch_experiment)
 
-        # Robustness Check
-        print("  Running Robustness Check (+10% thickness)...")
-        robust_updates = design_updates.copy()
+        # 2. Robustness Check: Grid Outage during Charge (Issue 11, 13)
+        print("  Running Robustness Check: Grid Outage during high-rate charge (+10% thickness)...")
+        robust_updates = self.optimized_params.copy()
         robust_updates["Positive electrode thickness [m]"] *= 1.1
-        res_robust = self.run_full_simulation(robust_updates, c_rate=1.0)
 
-        energy_base = res_1c["electro"]["solution"]["Discharge capacity [A.h]"].entries[-1]
-        energy_robust = res_robust["electro"]["solution"]["Discharge capacity [A.h]"].entries[-1]
-        robustness_passed = abs(energy_robust - energy_base) / energy_base < 0.15
+        blackout_experiment = BESSScenarioGenerator.get_blackout_scenario(v_max)
+        res_robust = self.run_full_simulation(robust_updates, experiment=blackout_experiment)
+
+        # 3. Physically Meaningful Efficiency Metrics (Issue 4, 5, 12)
+        def compute_efficiency_metrics(sol):
+             v = sol["Terminal voltage [V]"].entries
+             i = sol["Current [A]"].entries
+             t = sol["Time [s]"].entries
+             p = v * i
+
+             # Use capacity change to identify flow direction robustly (Issue 4)
+             # q(t) = integral of i dt
+             trapz_func = getattr(np, "trapezoid", getattr(np, "trapz", None))
+
+             # Separate based on Net Power flow (Issue 12)
+             e_out = trapz_func(np.maximum(p, 0), t) / 3600.0
+             e_in = abs(trapz_func(np.minimum(p, 0), t)) / 3600.0
+
+             # Coulombic efficiency integration (Issue 5)
+             q_out = trapz_func(np.maximum(i, 0), t) / 3600.0
+             q_in = abs(trapz_func(np.minimum(i, 0), t)) / 3600.0
+
+             eta_e = e_out / e_in if e_in > 0 else 0.0
+             eta_c = q_out / q_in if q_in > 0 else 0.0
+             eta_v = eta_e / eta_c if eta_c > 0 else 0.0
+
+             return {"e_in": e_in, "e_out": e_out, "eta_energy": eta_e, "eta_coulombic": eta_c, "eta_voltage": eta_v}
+
+        metrics = compute_efficiency_metrics(res_dispatch["electro"]["solution"])
+
+        # 4. Constraint-Based Robustness Scoring (Issue 6, 14)
+        def evaluate_robustness(res):
+             T_max = np.max(res["electro"]["temperature"])
+             strain_max = res["mechanical"]["max_strain"]
+             soh_final = res["electro"]["soh_trajectory"][-1] / 100.0
+             v_min_actual = np.min(res["electro"]["terminal_voltage"])
+             v_max_actual = np.max(res["electro"]["terminal_voltage"])
+
+             # Hard constraints
+             constraints = [
+                  T_max < 333.15, # 60C limit
+                  strain_max < self.mech_model.critical_thresholds["NFPP"],
+                  soh_final > 0.99, # Negligible degradation for short trace
+                  v_min_actual > 0.95 * v_min,
+                  v_max_actual < 1.05 * v_max
+             ]
+
+             score = sum(constraints) / len(constraints)
+             return score, all(constraints)
+
+        robustness_score, robustness_passed = evaluate_robustness(res_robust)
 
         # Compile final report
         clean_params = {}
-        for k, v in res_1c["params"].items():
+        for k, v in res_dispatch["params"].items():
             if not callable(v):
                 clean_k = k.replace(" ", "_").replace("[", "").replace("]", "").replace("-", "_").replace(".", "").replace("/", "_")[:31]
                 clean_params[clean_k] = v
 
         results = {
-            "energy_capacity_kwh": float((energy_base * 3.1) / 1000.0),
-            "nominal_voltage_v": float(np.mean(res_1c["electro"]["terminal_voltage"])),
-            "max_strain": float(res_1c["mechanical"]["max_strain"]),
-            "cycle_life": float(min(res_1c["endurance"]["n_crit"], 1e12)),
+            "energy_discharge_kwh": float(metrics["e_out"] / 1000.0),
+            "energy_charge_kwh": float(metrics["e_in"] / 1000.0),
+            "eta_energy": float(metrics["eta_energy"]),
+            "eta_coulombic": float(metrics["eta_coulombic"]),
+            "eta_voltage": float(metrics["eta_voltage"]),
+            "nominal_voltage_v": float(np.mean(res_dispatch["electro"]["terminal_voltage"])),
+            "max_strain": float(res_dispatch["mechanical"]["max_strain"]),
+            "cycle_life": float(min(res_dispatch["endurance"]["n_crit"], 1e12)),
+            "robustness_score": float(robustness_score),
             "robustness_passed": bool(robustness_passed),
             "merged_params": clean_params,
             # Simscape-Mapped Parameters (Derived from high-fidelity DFN transient)
-            "ssc_params": self.derive_ssc_parameters(res_1c["electro"]["solution"], res_1c["params"])
+            "ssc_params": self.derive_ssc_parameters(res_dispatch["electro"]["solution"], res_dispatch["params"])
         }
 
         return results

@@ -49,7 +49,12 @@ class OptimizationValidator:
         High-fidelity Thermo-Mechanical Solver using consolidated fenics_model.
         """
         try:
-            mech_res = self.mech_model.solve_strain(sol, params)
+            # Extract C-rate for mechanical scaling
+            current = np.abs(np.mean(sol["Current [A]"].entries))
+            cap = float(params["Nominal cell capacity [A.h]"])
+            c_rate = current / cap if cap > 0 else 1.0
+
+            mech_res = self.mech_model.solve_strain(sol, params, c_rate=c_rate)
             max_strain = mech_res["max_strain"]
 
             # Extract E_eff for stress estimation proxy
@@ -85,28 +90,28 @@ class OptimizationValidator:
 
         try:
             sol = sim.solve([0, 3600], inputs={"Current [A]": params["Nominal cell capacity [A.h]"]})
-            v = sol["Terminal voltage [V]"].data
-            cap = sol["Discharge capacity [A.h]"].data[-1]
+            v = sol["Terminal voltage [V]"].entries
+            cap = sol["Discharge capacity [A.h]"].entries[-1]
 
             temp_key = "Volume-averaged cell temperature [K]"
             try:
-                 temp = sol[temp_key].data
+                 temp = sol[temp_key].entries
             except Exception:
                  temp_key = "Cell temperature [K]"
-                 temp = sol[temp_key].data
+                 temp = sol[temp_key].entries
 
-            cs_n = sol["X-averaged negative particle concentration [mol.m-3]"].data
+            cs_n = sol["X-averaged negative particle concentration [mol.m-3]"].entries
 
             # Pass full solution to mechanical solver
             mech = self.solve_mechanical_integrity(sol, params)
 
             trapz_func = getattr(np, "trapezoid", getattr(np, "trapz", None))
-            # Energy calculation (Issue 5.1) - Discharge E is always positive
-            energy = trapz_func(np.abs(v * sol["Current [A]"].data), sol["Time [s]"].data) / 3600
+            # Energy calculation (Issue 4) - Integration of V*I
+            energy = abs(trapz_func(v * sol["Current [A]"].entries, sol["Time [s]"].entries)) / 3600
 
             sei_growth = 0.0
             try:
-                 sei_t = sol["X-averaged negative SEI thickness [m]"].data
+                 sei_t = sol["X-averaged negative SEI thickness [m]"].entries
                  sei_growth = sei_t[-1] - sei_t[0]
             except:
                  pass
