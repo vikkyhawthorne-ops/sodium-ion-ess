@@ -239,7 +239,7 @@ class SingleObjectiveProblem(Problem):
             g3 = 1.0    # Default physics violation
 
             if validate_params(pv):
-                g3 = 0.0 # Physics OK (Issue 1)
+                g3 = -1e-6 # Physics OK (Issue 1)
                 res = self.optimizer.simulate(pv)
                 if res["success"]:
                     # Constraint 2: T_max <= 333.15K (Physical margin) - Issue 2
