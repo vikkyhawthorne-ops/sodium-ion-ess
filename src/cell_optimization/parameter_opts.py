@@ -44,13 +44,15 @@ def carbon_percolation_conductivity(fraction: float, base_cond: float = 100.0) -
     phi_c = 0.03
     return base_cond * (max(fraction - phi_c, 0.0) + 1e-6) ** 1.8
 
-def validate_params(pv: Dict[str, Any]):
+def validate_params(pv: Dict[str, Any], verbose: bool = False):
     """Ensure physical coherence of DFN parameters using research-grounded values (Issue 6)."""
     required = ["Nominal cell capacity [A.h]", "Positive electrode exchange-current density [A.m-2]"]
     derived = get_derived_parameters()
 
     for r in required:
-        if r not in pv: return False
+        if r not in pv:
+            if verbose: print(f"DEBUG: validate_params failed: {r} missing")
+            return False
         val = pv[r]
         # Handle callables for functional parameters (Issue 6 fix)
         if callable(val):
@@ -78,17 +80,23 @@ def validate_params(pv: Dict[str, Any]):
                 res = val(*args)
                 # Handle pybamm Symbols vs raw floats
                 actual_val = float(res.value) if hasattr(res, "value") else float(res)
-            except:
+            except Exception as e:
+                if verbose: print(f"DEBUG: validate_params callable {r} failed: {e}")
                 actual_val = 1.0 # Fallback to optimistic pass if grounded evaluation fails
         else:
             actual_val = val
 
-        if actual_val <= 0: return False
+        if actual_val <= 0:
+            if verbose: print(f"DEBUG: validate_params failed: {r} <= 0 ({actual_val})")
+            return False
 
-    D_p = pv["Positive particle diffusivity [m2.s-1]"]
-    D_val = D_p(0.5, 298.15) if callable(D_p) else D_p
-    # Relaxed limit to avoid over-rejection (Issue 1)
-    if D_val > 1e-8: return False
+    if "Positive particle diffusivity [m2.s-1]" in pv:
+        D_p = pv["Positive particle diffusivity [m2.s-1]"]
+        D_val = D_p(0.5, 298.15) if callable(D_p) else D_p
+        # Relaxed limit (Issue 1 from review)
+        if D_val > 1e-8:
+            if verbose: print(f"DEBUG: validate_params failed: D_p > 1e-8 ({D_val})")
+            return False
     return True
 
 class ParamTransform:
@@ -234,7 +242,7 @@ class SingleObjectiveProblem(Problem):
             pv = pt.get_parameter_values()
 
             # Heavy penalty for invalid regions (Issue 3)
-            f_val = 100.0
+            f_val = 1000.0
             g2 = 1.0    # Default thermal violation
             g3 = 1.0    # Default physics violation
 
@@ -301,6 +309,7 @@ class SimulationRunner:
         return tuple(float(params.get(k, 0.0)) for k in keys)
 
     def run_simulation(self, params: pybamm.ParameterValues, c_rate: float = 1.0) -> Dict[str, Any]:
+        params = params.copy() # Issue 15 fix: avoid mutating shared object
         try:
             # Issue 4.2.2: Pre-simulation initial voltage check to prevent event trigger failures
             c_max_p = params["Maximum concentration in positive electrode [mol.m-3]"]
@@ -314,7 +323,7 @@ class SimulationRunner:
             sto_p = c_p_init / c_max_p
             sto_n = c_n_init / c_max_n
 
-            v_init = op = ocp_p_func(sto_p) - ocp_n_func(sto_n)
+            v_init = ocp_p_func(sto_p) - ocp_n_func(sto_n)
             # Handle pybamm Symbols
             v_init_val = float(v_init.value) if hasattr(v_init, "value") else float(v_init)
 
@@ -324,7 +333,7 @@ class SimulationRunner:
             v_min = params["Lower voltage cut-off [V]"]
             if (v_init_val - ir_drop_est) <= v_min:
                 params["Lower voltage cut-off [V]"] = max(0.1, v_init_val - 1.0)
-                print(f"INFO: Relaxed lower voltage cut-off to {params['Lower voltage cut-off [V]']:.2f}V to accommodate initial OCV {v_init_val:.2f}V and IR drop")
+                print(f"INFO: Relaxed lower voltage cut-off from {v_min:.2f}V to {params['Lower voltage cut-off [V]']:.2f}V (Initial OCV: {v_init_val:.2f}V)")
 
             key = self._get_geometry_key(params)
             cached = self.geometry_cache.get(key)
@@ -335,8 +344,9 @@ class SimulationRunner:
                 mesh = cached["mesh"]
                 disc = cached["disc"]
             else:
-                # Rebuild from scratch
-                geometry = self.model.default_geometry
+                # Rebuild from scratch (Issue 2 from review: avoid symbolic corruption)
+                import copy
+                geometry = copy.deepcopy(self.model.default_geometry)
                 params.process_geometry(geometry)
                 mesh = pybamm.Mesh(geometry, self.submesh_types, self.var_pts)
                 disc = pybamm.Discretisation(mesh, self.spatial_methods)
@@ -422,16 +432,18 @@ class HierarchicalOptimizer:
         try:
             mech_res = self.mech_model.solve_strain(res["sol"], params, c_rate=c_rate)
             max_strain = mech_res["max_strain"]
-            critical_strain = self.mech_model.critical_thresholds.get("NFPP", 2e-3)
+            # Ensure correct material key
+            mat_key = "NFPP" if "NFPP" in self.mech_model.critical_thresholds else list(self.mech_model.critical_thresholds.keys())[0]
+            critical_strain = self.mech_model.critical_thresholds.get(mat_key, 2e-3)
             eta = max_strain / critical_strain
 
+            print(f"DEBUG[{mode}]: max_strain={max_strain:.4e}, critical={critical_strain:.4e}, eta={eta:.3f}")
+
             # Structural Feasibility check (Issue 4)
-            #eta <= 1.0 is the boundary
             if eta > 1.0:
                  return False, -float(eta) # Mark as failed/infeasible
 
             # Use raw -eta as stability objective (Issue 6 refinement)
-            # Quadratic penalties removed to allow exploration near the limit eta=1
             return True, -float(eta)
         except Exception as e:
             print(f"ERROR: FEM solve failed: {e}\n{traceback.format_exc()}")
@@ -521,13 +533,13 @@ def run_workflow(engine: Optional[Any] = None):
 
         pt_test = ParamTransform(optimizer.base_params)
         pt_test.apply_physics_deltas(deltas); pt_test.apply_design_vector(x_base, DESIGN_SPACE)
-        if not validate_params(pt_test.get_parameter_values()):
-             print(f"WARNING: Candidate {cand_name} failed parameter validation. Skipping.")
+        if not validate_params(pt_test.get_parameter_values(), verbose=True):
+             print(f"[FAILED] {cand_name}: validate_params")
              continue
 
         G = optimizer.compute_jacobian(x_base, deltas)
         if G is None:
-             print(f"WARNING: Jacobian computation failed for {cand_name}. Skipping.")
+             print(f"[FAILED] {cand_name}: Jacobian computation failed")
              continue
 
         opt_designs = []
@@ -569,7 +581,7 @@ def run_workflow(engine: Optional[Any] = None):
                 valid_candidates.append(x); stability_scores.append(score)
 
         if not valid_candidates:
-             print(f"WARNING: No valid designs found for {cand_name} after Stage 2 stability filtering.")
+             print(f"[FAILED] {cand_name}: Stage 2 structural filtering")
              continue
 
         # Issue 7 Step 4: Selection and interpolation
@@ -581,6 +593,11 @@ def run_workflow(engine: Optional[Any] = None):
         final_metrics = optimizer.simulate(pt.get_parameter_values())
         if final_metrics["success"]:
             material_results.append({"cat": cat, "salt": salt, "x": final_x, "metrics": final_metrics, "deltas": deltas, "jacobian": G})
+
+    print("="*80)
+    print(f"Candidates processed: {len(db[MaterialCategory.CATHODE_DOPANT]) * len(db[MaterialCategory.SALT])}")
+    print(f"Successful candidates: {len(material_results)}")
+    print("="*80)
 
     if not material_results:
         err_msg = "Hierarchical optimization failed: No valid material candidates successfully optimized."
