@@ -223,17 +223,20 @@ class StabilityValidator:
              t = sol["Time [s]"].entries
              p = v * i
 
-             # Use capacity change to identify flow direction robustly (Issue 4)
-             # q(t) = integral of i dt
+             # Identify flow direction via Discharge capacity change (Issue 4, 12)
+             q_ah = sol["Discharge capacity [A.h]"].entries
+             # Positive diff in discharge capacity = discharge process
+             is_discharge = np.concatenate([[True], np.diff(q_ah) >= 0])
+
              trapz_func = getattr(np, "trapezoid", getattr(np, "trapz", None))
 
-             # Separate based on Net Power flow (Issue 12)
-             e_out = trapz_func(np.maximum(p, 0), t) / 3600.0
-             e_in = abs(trapz_func(np.minimum(p, 0), t)) / 3600.0
+             # Separate Charge (in) and Discharge (out) using robust sign detection
+             e_out = trapz_func(np.where(is_discharge, p, 0), t) / 3600.0
+             e_in = abs(trapz_func(np.where(~is_discharge, p, 0), t)) / 3600.0
 
              # Coulombic efficiency integration (Issue 5)
-             q_out = trapz_func(np.maximum(i, 0), t) / 3600.0
-             q_in = abs(trapz_func(np.minimum(i, 0), t)) / 3600.0
+             q_out = trapz_func(np.where(is_discharge, i, 0), t) / 3600.0
+             q_in = abs(trapz_func(np.where(~is_discharge, i, 0), t)) / 3600.0
 
              eta_e = e_out / e_in if e_in > 0 else 0.0
              eta_c = q_out / q_in if q_in > 0 else 0.0
