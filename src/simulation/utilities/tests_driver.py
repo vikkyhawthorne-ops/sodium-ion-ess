@@ -1,13 +1,11 @@
 """Electrochemical-Thermal Driver"""
 
-from dataclasses import dataclass
-from typing import Any, Dict, Optional
 import numpy as np
+import traceback
+import copy
+import pybamm
+from typing import Any, Dict, Optional
 
-try:
-    import pybamm
-except ImportError:  # pragma: no cover
-    pybamm = None
 
 from nfpp_sodium_ion.src.cell_parameters.parameter_builder import get_parameter_values
 
@@ -21,7 +19,7 @@ class ElectrochemicalThermalDriverModel:
         self.solver = pybamm.CasadiSolver(mode="safe")
 
     def _get_processed_components(self, param: pybamm.ParameterValues):
-        # Cache key based on geometry-affecting parameters and options (Issue 1, 14)
+        # Cache key based on geometry-affecting parameters and options
         geometry_keys = [
             "Positive electrode thickness [m]",
             "Negative electrode thickness [m]",
@@ -45,7 +43,7 @@ class ElectrochemicalThermalDriverModel:
         except AttributeError:
             model = pybamm.lithium_ion.DFN(options=options)
 
-        geometry = model.default_geometry
+        geometry = copy.deepcopy(model.default_geometry)
         param.process_geometry(geometry)
         mesh = pybamm.Mesh(geometry, model.default_submesh_types, model.default_var_pts)
         disc = pybamm.Discretisation(mesh, model.default_spatial_methods)
