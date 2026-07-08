@@ -29,6 +29,7 @@ class OptimizationValidator:
         if MaterialCategory.FUNCTIONALIZATION in db and db[MaterialCategory.FUNCTIONALIZATION]:
             mtms = db[MaterialCategory.FUNCTIONALIZATION][0]
             print(f"Applying fixed functionalization: {mtms.name}")
+            from src.cell_optimization.chem_regularization import regularize_functionalization
             f_deltas = regularize_functionalization(bases["interface"]["formula"], mtms.composition, bases["interface"]["properties"], mtms.properties)
             # Merge functionalization deltas into combined deltas
             for cat, props in f_deltas.items():

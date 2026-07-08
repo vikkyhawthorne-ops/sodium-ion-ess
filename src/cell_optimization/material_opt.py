@@ -65,6 +65,7 @@ class MaterialCandidate:
     composition: str
     properties: Dict[str, Any]
     provenance: str = "OQMD"
+    deltas: Dict[str, Any] = None
 
 class MaterialMappingEngine:
     def __init__(self):
