@@ -74,9 +74,6 @@ class ThermoelasticStrainModel:
         # Map DFN fields (T(x), c_s(x)) to FEniCS 3D mesh (Issue 7, 8)
         Q = fem.functionspace(domain, ("CG", 1))
 
-        # 1D X-coordinate interpolation from DFN to FEniCS Z-axis
-        z_coords = np.linspace(0, H, 10) # 10 nodes for interpolation
-
         try:
              # Extract spatial distribution at final time step (Issue 7, 8)
              # Use variables that provide spatial resolution across the stack
