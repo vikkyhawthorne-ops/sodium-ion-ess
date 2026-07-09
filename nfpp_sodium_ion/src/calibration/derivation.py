@@ -41,6 +41,20 @@ BULK_SOLVENT_CONCENTRATION = 2636.0 # mol/m3 (Ref: Safari et al. 2009 for SEI mo
 # SEI solvent diffusivity: Safari et al. 2009, J. Electrochem. Soc., 156, A145.
 SEI_SOLVENT_DIFFUSIVITY = 2.5e-22 # [m2/s]
 
+# --- 4. Kinetics & Transport (Grounded literature values) ---
+# Activation energy for NFPP (30-35 kJ/mol typical for polyanionic)
+# Ref: J. Phys. Chem. C 2018, 121, 26, 14041-14051
+E_A_DIFF_NFPP = 30000.0 # [J/mol]
+E_A_RXN_NFPP = 35000.0  # [J/mol]
+
+# Hard Carbon: 40-45 kJ/mol
+# Ref: Carbon 2019, 139, 1038-1048
+E_A_DIFF_HC = 40000.0   # [J/mol]
+
+# Electrolyte (NaPF6 in EC/PC)
+# Ref: J. Electrochem. Soc. 2017 164(1) A6356
+E_A_COND_E = 15000.0    # [J/mol]
+
 def compute_volume_fractions(wt_am, wt_c, wt_b, rho_am, rho_c, rho_b, porosity):
     v_am = wt_am / rho_am
     v_c = wt_c / rho_c
@@ -86,5 +100,9 @@ def get_derived_parameters():
         "cu_density": CU_DENSITY,
         "cu_cp": CU_SPECIFIC_HEAT,
         "cu_tc": CU_THERMAL_COND,
-        "total_htc": 10.0 # Ref: lumped thermal convection for pouch cells
+        "total_htc": 10.0, # Ref: lumped thermal convection for pouch cells
+        "e_a_diff_p": E_A_DIFF_NFPP,
+        "e_a_rxn": E_A_RXN_NFPP,
+        "e_a_diff_n": E_A_DIFF_HC,
+        "e_a_cond_e": E_A_COND_E
     }
