@@ -4,6 +4,7 @@ import numpy as np
 import traceback
 import copy
 import pybamm
+import hashlib
 from typing import Any, Dict, Optional
 
 
@@ -16,6 +17,7 @@ class ElectrochemicalThermalDriverModel:
         self.name = name
         self.model_type = "DFN"
         self._cache = {}
+        self._interp_cache = {}
         self.solver = pybamm.CasadiSolver(mode="safe")
 
     def _get_processed_components(self, param: pybamm.ParameterValues):
@@ -82,12 +84,18 @@ class ElectrochemicalThermalDriverModel:
         else:
             if current_function is not None:
                 if isinstance(current_function, (list, np.ndarray)):
-                    # Use interpolation for varying current profile
+                    # Use high-fidelity interpolation for varying current profile (Issue 3, 4)
                     t_eval = np.array(times)
-                    if len(current_function) != len(t_eval):
-                         current_profile = np.interp(t_eval, np.linspace(t_eval[0], t_eval[-1], len(current_function)), current_function)
-                    else:
-                         current_profile = current_function
+                    from scipy.interpolate import PchipInterpolator
+
+                    # Cache interpolator if the profile is reusable
+                    profile_key = hashlib.md5(np.array(current_function).tobytes()).hexdigest()
+                    if profile_key not in self._interp_cache:
+                         t_orig = np.linspace(t_eval[0], t_eval[-1], len(current_function))
+                         self._interp_cache[profile_key] = PchipInterpolator(t_orig, current_function)
+
+                    interp_obj = self._interp_cache[profile_key]
+                    current_profile = interp_obj(t_eval)
 
                     param["Current function [A]"] = pybamm.Interpolant(t_eval, current_profile, pybamm.t)
                 else:

@@ -13,6 +13,7 @@ import pybamm
 import traceback
 from typing import Any, Dict, Optional
 from dataclasses import dataclass
+from scipy.interpolate import PchipInterpolator
 
 try:
     import dolfinx
@@ -32,7 +33,7 @@ class ThermoelasticStrainModel:
             self.critical_thresholds = {"NFPP": 2e-3, "hard_carbon": 1e-3, "SEI": 5e-4}
 
     def solve_strain(self, pybamm_sol: Any, params: Any, **kwargs) -> Dict[str, Any]:
-        """Solves for the displacement and strain field with 1D-3D field mapping (Issue 7, 8)."""
+        """Solves for the displacement and strain field with high-fidelity DFN->FEM mapping."""
         # Note: Rate-dependent scaling removed (Issue 9) as DFN concentration fields
         # already account for rate-induced internal gradients.
 
@@ -65,38 +66,44 @@ class ThermoelasticStrainModel:
         H_p = params.get("Positive electrode thickness [m]", 100e-6)
         H_n = params.get("Negative electrode thickness [m]", 120e-6)
         H_s = params.get("Separator thickness [m]", 25e-6)
-        H = H_p + H_n + H_s # Total stack height for mechanical PDE
+        H = H_n + H_s + H_p # Total stack height for mechanical PDE
 
-        domain = mesh.create_box(MPI.COMM_WORLD, [[0, 0, 0], [L, W, H]], [10, 10, 3])
+        domain = mesh.create_box(MPI.COMM_WORLD, [[0, 0, 0], [L, W, H]], [10, 10, 5])
         V = fem.functionspace(domain, ("CG", 1, (3,)))
         u = ufl.TrialFunction(V)
         v = ufl.TestFunction(V)
 
-        # Map DFN fields (T(x), c_s(x)) to FEniCS 3D mesh (Issue 7, 8)
+        # Map DFN fields (T(x), c_s(x)) to FEniCS 3D mesh
         Q = fem.functionspace(domain, ("CG", 1))
 
         try:
-             # Extract spatial distribution at final time step (Issue 7, 8)
-             # Use variables that provide spatial resolution across the stack
+             # Use actual PyBaMM spatial nodes (Issue 1, 2)
+             x_dfn = pybamm_sol["x [m]"].entries[:, 0]
              T_spatial = pybamm_sol["Cell temperature [K]"].entries[:, -1]
-             T_interp = lambda x: np.interp(x[2], np.linspace(0, H, len(T_spatial)), T_spatial)
+             # PchipInterpolator for smoothness and monotonicity (Issue 3, 4)
+             T_interp_obj = PchipInterpolator(x_dfn, T_spatial)
+             T_interp = lambda x: T_interp_obj(x[2])
 
-             sto_p_spatial = pybamm_sol["Positive electrode surface stoichiometry"].entries[:, -1]
+             # Stoichiometry nodes
+             x_n = pybamm_sol["x_n [m]"].entries[:, 0]
+             x_p = pybamm_sol["x_p [m]"].entries[:, 0]
              sto_n_spatial = pybamm_sol["Negative electrode surface stoichiometry"].entries[:, -1]
+             sto_p_spatial = pybamm_sol["Positive electrode surface stoichiometry"].entries[:, -1]
+
+             sto_n_interp = PchipInterpolator(x_n, sto_n_spatial)
+             sto_p_interp = PchipInterpolator(x_p, sto_p_spatial)
 
              def stoichiometry_mapping(x):
-                  # Map 1D electrode stoichiometric fields to 3D mesh zones (Issue 8)
                   val = np.zeros(x.shape[1])
-                  # Anode zone (0 to H_n)
+                  # Domain-aware mapping (Issue 6)
                   mask_n = x[2] <= H_n
-                  val[mask_n] = np.interp(x[2, mask_n], np.linspace(0, H_n, len(sto_n_spatial)), sto_n_spatial)
-                  # Cathode zone (H_n + H_s to H)
                   mask_p = x[2] >= (H_n + H_s)
-                  val[mask_p] = np.interp(x[2, mask_p], np.linspace(H_n + H_s, H, len(sto_p_spatial)), sto_p_spatial)
+                  val[mask_n] = sto_n_interp(x[2, mask_n])
+                  val[mask_p] = sto_p_interp(x[2, mask_p])
                   return val
 
         except (KeyError, pybamm.ModelError, AttributeError):
-             # Scalar fallback with physical grounding
+             # Robust fallback
              T_max = np.max(pybamm_sol["Cell temperature [K]"].entries)
              cap_ah = pybamm_sol["Discharge capacity [A.h]"].entries
              soc_final = 1.0 - (cap_ah[-1] / params["Nominal cell capacity [A.h]"])
@@ -108,13 +115,23 @@ class ThermoelasticStrainModel:
         s_field = fem.Function(Q)
         s_field.interpolate(stoichiometry_mapping)
 
-        # Material parameters
-        E = fem.Constant(domain, default_scalar_type(params.get("Negative electrode Young's modulus [Pa]", 10e9)))
-        nu = fem.Constant(domain, default_scalar_type(0.3))
-        alpha = fem.Constant(domain, default_scalar_type(1e-5)) # Thermal expansion
-        beta = fem.Constant(domain, default_scalar_type(0.02)) # SOC expansion
-        T_ref = fem.Constant(domain, default_scalar_type(298.15))
+        # Piecewise Material Properties (Issue 6, 7)
+        # 0: Anode, 1: Separator, 2: Cathode
+        x3 = ufl.SpatialCoordinate(domain)[2]
+        domain_cond = ufl.conditional(x3 <= H_n, 0, ufl.conditional(x3 <= H_n + H_s, 1, 2))
 
+        E_n = params.get("Negative electrode Young's modulus [Pa]", 10e9)
+        E_p = params.get("Positive electrode Young's modulus [Pa]", 10e9)
+        E_s = 0.5e9 # Typical polymer separator
+        E = ufl.conditional(ufl.eq(domain_cond, 0), E_n, ufl.conditional(ufl.eq(domain_cond, 1), E_s, E_p))
+
+        nu = ufl.conditional(ufl.eq(domain_cond, 1), 0.4, 0.3)
+        alpha = ufl.conditional(ufl.eq(domain_cond, 1), 1e-4, 1e-5) # Separator expands more
+        beta_n = 0.02
+        beta_p = 0.01
+        beta = ufl.conditional(ufl.eq(domain_cond, 0), beta_n, ufl.conditional(ufl.eq(domain_cond, 2), beta_p, 0.0))
+
+        T_ref = fem.Constant(domain, default_scalar_type(298.15))
         mu = E / (2 * (1 + nu))
         lmbda = E * nu / ((1 + nu) * (1 - 2 * nu))
 
@@ -136,12 +153,26 @@ class ThermoelasticStrainModel:
         problem = LinearProblem(a, L_form, bcs=[bc])
         uh = problem.solve()
 
-        # Extract strain
-        strain_expr = fem.Expression(ufl.sqrt(ufl.inner(epsilon(uh), epsilon(uh))), Q.element.interpolation_points())
-        strains = fem.Function(Q)
-        strains.interpolate(strain_expr)
+        # Extract Von Mises metrics (Issue 9)
+        eps_val = epsilon(uh)
+        # Deviatoric strain
+        eps_dev = eps_val - (1/3) * ufl.tr(eps_val) * ufl.Identity(3)
+        eps_vm_expr = ufl.sqrt(ufl.inner(eps_dev, eps_dev) * (2/3))
 
-        return {"max_strain": float(np.max(strains.x.array))}
+        sig_val = sigma(uh, T_field, s_field)
+        sig_dev = sig_val - (1/3) * ufl.tr(sig_val) * ufl.Identity(3)
+        sig_vm_expr = ufl.sqrt(ufl.inner(sig_dev, sig_dev) * (3/2))
+
+        eps_vm = fem.Function(Q)
+        eps_vm.interpolate(fem.Expression(eps_vm_expr, Q.element.interpolation_points()))
+
+        sig_vm = fem.Function(Q)
+        sig_vm.interpolate(fem.Expression(sig_vm_expr, Q.element.interpolation_points()))
+
+        return {
+            "max_strain": float(np.max(eps_vm.x.array)),
+            "max_stress": float(np.max(sig_vm.x.array))
+        }
 
     def compute_endurance_metric(self, max_strain: float) -> Dict[str, float]:
         """

@@ -80,11 +80,15 @@ class OptimizationValidator:
         print("Calculating baseline performance (nominal design, original materials)...")
         base_pv = pybamm.ParameterValues(get_parameter_values())
         # Use same high-fidelity configuration for baseline
-        base_model = pybamm.lithium_ion.DFN({
+        options = {
             "SEI": "solvent-diffusion limited",
             "loss of active material": "stress-driven",
             "thermal": "lumped"
-        })
+        }
+        try:
+             base_model = pybamm.sodium_ion.DFN(options=options)
+        except AttributeError:
+             base_model = pybamm.lithium_ion.DFN(options=options)
         # Add missing parameters for baseline DFN stability
         if "SEI solvent diffusivity [m2.s-1]" not in base_pv:
              base_pv["SEI solvent diffusivity [m2.s-1]"] = 2.5e-22
@@ -121,11 +125,15 @@ class OptimizationValidator:
         if "Bulk solvent concentration [mol.m-3]" not in params:
              params["Bulk solvent concentration [mol.m-3]"] = 2636.0
 
-        model = pybamm.lithium_ion.DFN({
+        options = {
             "SEI": "solvent-diffusion limited",
             "loss of active material": "stress-driven",
             "thermal": "lumped"
-        })
+        }
+        try:
+             model = pybamm.sodium_ion.DFN(options=options)
+        except AttributeError:
+             model = pybamm.lithium_ion.DFN(options=options)
         sim = pybamm.Simulation(model, parameter_values=params)
 
         try:
