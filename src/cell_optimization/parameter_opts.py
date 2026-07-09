@@ -155,17 +155,24 @@ class ParamTransform:
                 self.values_dict[name] = val
 
     def get_parameter_values(self) -> pybamm.ParameterValues:
+        derived = get_derived_parameters()
+
+        # 1. Mandatory Mechanical & Topology
         self.values_dict.setdefault("Negative electrode volume change", lambda sto: 0.1 * sto)
         self.values_dict.setdefault("Positive electrode volume change", lambda sto: 0.1 * sto)
         self.values_dict.setdefault("Cell thermal expansion coefficient [m.K-1]", 1e-6)
         self.values_dict.setdefault("Number of cells connected in series to make a battery", 1)
         self.values_dict.setdefault("Number of strings connected in parallel to make a battery", 1)
-        c_max_p = self.values_dict.get("Maximum concentration in positive electrode [mol.m-3]", 25000.0)
-        c_max_n = self.values_dict.get("Maximum concentration in negative electrode [mol.m-3]", 25000.0)
+
+        # 2. Physics-Grounded Initialization
+        c_max_p = self.values_dict.get("Maximum concentration in positive electrode [mol.m-3]", derived["c_max_p"])
+        c_max_n = self.values_dict.get("Maximum concentration in negative electrode [mol.m-3]", derived["c_max_n"])
         self.values_dict["Initial concentration in positive electrode [mol.m-3]"] = 0.5 * c_max_p
         self.values_dict["Initial concentration in negative electrode [mol.m-3]"] = 0.5 * c_max_n
         self.values_dict["Lower voltage cut-off [V]"] = 0.5
         self.values_dict["Upper voltage cut-off [V]"] = 4.5
+
+        # 3. Apply Multiplicative Scalings from deltas
         for key, factor in self.scaling_factors.items():
             original = self.values_dict.get(key)
             if original is None: continue
@@ -173,17 +180,22 @@ class ParamTransform:
                 self.values_dict[key] = lambda *args, f=factor, orig=original, **kwargs: orig(*args, **kwargs) * f
             else:
                 self.values_dict[key] *= factor
-        self.values_dict.setdefault("Cell volume [m3]", 0.13 * 0.07 * 0.01)
-        self.values_dict.setdefault("Cell cooling surface area [m2]", 0.02)
-        self.values_dict.setdefault("Total heat transfer coefficient [W.m-2.K-1]", 10.0)
-        self.values_dict.setdefault("SEI solvent diffusivity [m2.s-1]", 2.5e-22)
-        self.values_dict.setdefault("Bulk solvent concentration [mol.m-3]", 2636.0)
-        self.values_dict.setdefault("Negative current collector density [kg.m-3]", 8960.0)
-        self.values_dict.setdefault("Positive current collector density [kg.m-3]", 2700.0)
-        self.values_dict.setdefault("Negative current collector specific heat capacity [J.kg-1.K-1]", 385.0)
-        self.values_dict.setdefault("Positive current collector specific heat capacity [J.kg-1.K-1]", 897.0)
-        self.values_dict.setdefault("Negative current collector thermal conductivity [W.m-1.K-1]", 401.0)
-        self.values_dict.setdefault("Positive current collector thermal conductivity [W.m-1.K-1]", 237.0)
+
+        # 4. Mathematically Derived Constants (Issue 14 final audit)
+        self.values_dict.setdefault("Cell volume [m3]", derived["cell_volume"])
+        self.values_dict.setdefault("Cell cooling surface area [m2]", derived["surface_area"])
+        self.values_dict.setdefault("Total heat transfer coefficient [W.m-2.K-1]", derived["total_htc"])
+        self.values_dict.setdefault("SEI solvent diffusivity [m2.s-1]", derived["sei_solvent_diffusivity"])
+        self.values_dict.setdefault("Bulk solvent concentration [mol.m-3]", derived["bulk_solvent_concentration"])
+
+        # Collector Properties (Reference: CRC Handbook)
+        self.values_dict.setdefault("Negative current collector density [kg.m-3]", derived["cu_density"])
+        self.values_dict.setdefault("Positive current collector density [kg.m-3]", derived["al_density"])
+        self.values_dict.setdefault("Negative current collector specific heat capacity [J.kg-1.K-1]", derived["cu_cp"])
+        self.values_dict.setdefault("Positive current collector specific heat capacity [J.kg-1.K-1]", derived["al_cp"])
+        self.values_dict.setdefault("Negative current collector thermal conductivity [W.m-1.K-1]", derived["cu_tc"])
+        self.values_dict.setdefault("Positive current collector thermal conductivity [W.m-1.K-1]", derived["al_tc"])
+
         return pybamm.ParameterValues(self.values_dict)
 
 class SingleObjectiveProblem(Problem):
