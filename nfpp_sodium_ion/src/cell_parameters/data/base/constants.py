@@ -1,14 +1,31 @@
 from dataclasses import dataclass
-
+from nfpp_sodium_ion.src.calibration.derivation import get_derived_parameters
 
 @dataclass
 class Constants:
-    R: float = 8.3145
-    F: float = 96485.3329
-    T_ref: float = 298.15
-    sigma_al: float = 3.5e7
-    sigma_cu: float = 5.96e7
-    epsilon_0: float = 8.854e-12
+    @property
+    def R(self) -> float:
+        return get_derived_parameters()["r_gas"]
+
+    @property
+    def F(self) -> float:
+        return get_derived_parameters()["faraday"]
+
+    @property
+    def T_ref(self) -> float:
+        return get_derived_parameters()["t_ref"]
+
+    @property
+    def sigma_al(self) -> float:
+        return get_derived_parameters()["al_sigma"]
+
+    @property
+    def sigma_cu(self) -> float:
+        return get_derived_parameters()["cu_sigma"]
+
+    @property
+    def epsilon_0(self) -> float:
+        return get_derived_parameters()["epsilon_0"]
 
     def as_dict(self) -> dict:
         return {

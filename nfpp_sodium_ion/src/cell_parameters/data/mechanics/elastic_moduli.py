@@ -3,10 +3,13 @@ from nfpp_sodium_ion.src.calibration.derivation import get_derived_parameters
 
 @dataclass
 class ElasticModuliModel:
-    # NFPP typically has higher modulus than layered oxides.
-    # Ref: Materials Project (mp-752506), average polyanionic response
-    youngs_modulus_pa: float = 60.0e9
-    poisson_ratio: float = 0.25
+    @property
+    def youngs_modulus_pa(self) -> float:
+        return get_derived_parameters()["youngs_modulus_p"]
+
+    @property
+    def poisson_ratio(self) -> float:
+        return get_derived_parameters()["poisson_ratio_p"]
 
     def as_dict(self) -> dict:
         return {

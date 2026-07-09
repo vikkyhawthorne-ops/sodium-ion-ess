@@ -1,9 +1,11 @@
 from dataclasses import dataclass
-
+from nfpp_sodium_ion.src.calibration.derivation import get_derived_parameters
 
 @dataclass
 class LossOfSodiumEquivalentModel:
-    loss_rate_fraction_per_cycle: float = 1e-4
+    @property
+    def loss_rate_fraction_per_cycle(self) -> float:
+        return get_derived_parameters()["loss_rate_cycle"]
 
     def loss_per_cycle(self, cycles: int) -> float:
         return self.loss_rate_fraction_per_cycle * cycles

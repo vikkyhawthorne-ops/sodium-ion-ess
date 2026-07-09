@@ -1,17 +1,43 @@
 from dataclasses import dataclass
+from nfpp_sodium_ion.src.calibration.derivation import get_derived_parameters
 
 @dataclass
 class CellParameters:
-    # Ref: paper.md
-    name: str = "NFPP Sodium-ion Pouch Cell"
-    nominal_voltage: float = 3.1
-    capacity_ah: float = 10.0
-    form_factor: str = "stacked pouch"
-    cathode_collector_thickness_um: float = 15.0
-    anode_collector_thickness_um: float = 10.0
-    separator_thickness_um: float = 20.0
-    casing_thickness_um: float = 40.0
-    number_of_layers: int = 42
+    @property
+    def name(self) -> str:
+        return "NFPP Sodium-ion Pouch Cell"
+
+    @property
+    def nominal_voltage(self) -> float:
+        return get_derived_parameters()["nominal_voltage"]
+
+    @property
+    def capacity_ah(self) -> float:
+        return get_derived_parameters()["capacity_ah"]
+
+    @property
+    def form_factor(self) -> str:
+        return "stacked pouch"
+
+    @property
+    def cathode_collector_thickness_um(self) -> float:
+        return get_derived_parameters()["cathode_collector_thickness"] * 1e6
+
+    @property
+    def anode_collector_thickness_um(self) -> float:
+        return get_derived_parameters()["anode_collector_thickness"] * 1e6
+
+    @property
+    def separator_thickness_um(self) -> float:
+        return get_derived_parameters()["sep_thickness"] * 1e6
+
+    @property
+    def casing_thickness_um(self) -> float:
+        return get_derived_parameters()["casing_thickness"] * 1e6
+
+    @property
+    def number_of_layers(self) -> int:
+        return get_derived_parameters()["n_layers_10ah"]
 
     def as_dict(self) -> dict:
         return {
