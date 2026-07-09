@@ -29,6 +29,7 @@ class OptimizationValidator:
         if MaterialCategory.FUNCTIONALIZATION in db and db[MaterialCategory.FUNCTIONALIZATION]:
             mtms = db[MaterialCategory.FUNCTIONALIZATION][0]
             print(f"Applying fixed functionalization: {mtms.name}")
+            from src.cell_optimization.chem_regularization import regularize_functionalization
             f_deltas = regularize_functionalization(bases["interface"]["formula"], mtms.composition, bases["interface"]["properties"], mtms.properties)
             # Merge functionalization deltas into combined deltas
             for cat, props in f_deltas.items():
@@ -74,21 +75,29 @@ class OptimizationValidator:
 
     def run_validation(self):
         print("Running high-fidelity DFN validation with degradation (Layer 4)...")
+        derived = get_derived_parameters()
 
         # 1. Baseline Performance Calculation
         print("Calculating baseline performance (nominal design, original materials)...")
         base_pv = pybamm.ParameterValues(get_parameter_values())
         # Use same high-fidelity configuration for baseline
-        base_model = pybamm.lithium_ion.DFN({
+        options = {
             "SEI": "solvent-diffusion limited",
             "loss of active material": "stress-driven",
             "thermal": "lumped"
-        })
-        # Add missing parameters for baseline DFN stability
-        if "SEI solvent diffusivity [m2.s-1]" not in base_pv:
-             base_pv["SEI solvent diffusivity [m2.s-1]"] = 2.5e-22
-        if "Bulk solvent concentration [mol.m-3]" not in base_pv:
-             base_pv["Bulk solvent concentration [mol.m-3]"] = 2636.0
+        }
+        try:
+             base_model = pybamm.sodium_ion.DFN(options=options)
+        except AttributeError:
+             base_model = pybamm.lithium_ion.DFN(options=options)
+        # Add missing parameters for baseline DFN stability using audit-validated defaults
+        base_pv.update({
+            "SEI solvent diffusivity [m2.s-1]": derived["sei_solvent_diffusivity"],
+            "Bulk solvent concentration [mol.m-3]": derived["bulk_solvent_concentration"],
+            "Cell volume [m3]": derived["cell_volume"],
+            "Cell cooling surface area [m2]": derived["surface_area"],
+            "Total heat transfer coefficient [W.m-2.K-1]": derived["total_htc"]
+        }, check_already_exists=False)
 
         base_sim = pybamm.Simulation(base_model, parameter_values=base_pv)
         try:
@@ -114,17 +123,21 @@ class OptimizationValidator:
 
         # 2. Optimized Validation
         params = self.get_final_parameters()
-        # Add missing parameters for DFN stability
-        if "SEI solvent diffusivity [m2.s-1]" not in params:
-             params["SEI solvent diffusivity [m2.s-1]"] = 2.5e-22
-        if "Bulk solvent concentration [mol.m-3]" not in params:
-             params["Bulk solvent concentration [mol.m-3]"] = 2636.0
+        # Ensure parity with audited parameters
+        params.update({
+            "SEI solvent diffusivity [m2.s-1]": derived["sei_solvent_diffusivity"],
+            "Bulk solvent concentration [mol.m-3]": derived["bulk_solvent_concentration"]
+        }, check_already_exists=False)
 
-        model = pybamm.lithium_ion.DFN({
+        options = {
             "SEI": "solvent-diffusion limited",
             "loss of active material": "stress-driven",
             "thermal": "lumped"
-        })
+        }
+        try:
+             model = pybamm.sodium_ion.DFN(options=options)
+        except AttributeError:
+             model = pybamm.lithium_ion.DFN(options=options)
         sim = pybamm.Simulation(model, parameter_values=params)
 
         try:

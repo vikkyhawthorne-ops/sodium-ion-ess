@@ -37,7 +37,7 @@ class BESSScenarioGenerator:
             "Rest for 20 minutes",
             BESSScenarioGenerator.charge_step("0.5C", limit=v_max),
             "Rest for 20 minutes",
-            "Discharge at 10W for 10 minutes", # Peak shaving proxy
+            "Discharge at 10 W for 10 minutes", # Peak shaving proxy
             "Rest for 30 minutes"
         ])
 

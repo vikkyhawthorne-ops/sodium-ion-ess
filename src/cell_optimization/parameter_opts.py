@@ -4,6 +4,7 @@ import json
 import os
 import traceback
 import inspect
+import copy
 from collections import OrderedDict
 from typing import Dict, Any, List, Tuple, Optional
 from pymoo.core.problem import Problem
@@ -154,17 +155,24 @@ class ParamTransform:
                 self.values_dict[name] = val
 
     def get_parameter_values(self) -> pybamm.ParameterValues:
+        derived = get_derived_parameters()
+
+        # 1. Mandatory Mechanical & Topology
         self.values_dict.setdefault("Negative electrode volume change", lambda sto: 0.1 * sto)
         self.values_dict.setdefault("Positive electrode volume change", lambda sto: 0.1 * sto)
         self.values_dict.setdefault("Cell thermal expansion coefficient [m.K-1]", 1e-6)
         self.values_dict.setdefault("Number of cells connected in series to make a battery", 1)
         self.values_dict.setdefault("Number of strings connected in parallel to make a battery", 1)
-        c_max_p = self.values_dict.get("Maximum concentration in positive electrode [mol.m-3]", 25000.0)
-        c_max_n = self.values_dict.get("Maximum concentration in negative electrode [mol.m-3]", 25000.0)
+
+        # 2. Physics-Grounded Initialization
+        c_max_p = self.values_dict.get("Maximum concentration in positive electrode [mol.m-3]", derived["c_max_p"])
+        c_max_n = self.values_dict.get("Maximum concentration in negative electrode [mol.m-3]", derived["c_max_n"])
         self.values_dict["Initial concentration in positive electrode [mol.m-3]"] = 0.5 * c_max_p
         self.values_dict["Initial concentration in negative electrode [mol.m-3]"] = 0.5 * c_max_n
         self.values_dict["Lower voltage cut-off [V]"] = 0.5
         self.values_dict["Upper voltage cut-off [V]"] = 4.5
+
+        # 3. Apply Multiplicative Scalings from deltas
         for key, factor in self.scaling_factors.items():
             original = self.values_dict.get(key)
             if original is None: continue
@@ -172,17 +180,22 @@ class ParamTransform:
                 self.values_dict[key] = lambda *args, f=factor, orig=original, **kwargs: orig(*args, **kwargs) * f
             else:
                 self.values_dict[key] *= factor
-        self.values_dict.setdefault("Cell volume [m3]", 0.13 * 0.07 * 0.01)
-        self.values_dict.setdefault("Cell cooling surface area [m2]", 0.02)
-        self.values_dict.setdefault("Total heat transfer coefficient [W.m-2.K-1]", 10.0)
-        self.values_dict.setdefault("SEI solvent diffusivity [m2.s-1]", 2.5e-22)
-        self.values_dict.setdefault("Bulk solvent concentration [mol.m-3]", 2636.0)
-        self.values_dict.setdefault("Negative current collector density [kg.m-3]", 8960.0)
-        self.values_dict.setdefault("Positive current collector density [kg.m-3]", 2700.0)
-        self.values_dict.setdefault("Negative current collector specific heat capacity [J.kg-1.K-1]", 385.0)
-        self.values_dict.setdefault("Positive current collector specific heat capacity [J.kg-1.K-1]", 897.0)
-        self.values_dict.setdefault("Negative current collector thermal conductivity [W.m-1.K-1]", 401.0)
-        self.values_dict.setdefault("Positive current collector thermal conductivity [W.m-1.K-1]", 237.0)
+
+        # 4. Mathematically Derived Constants (Issue 14 final audit)
+        self.values_dict.setdefault("Cell volume [m3]", derived["cell_volume"])
+        self.values_dict.setdefault("Cell cooling surface area [m2]", derived["surface_area"])
+        self.values_dict.setdefault("Total heat transfer coefficient [W.m-2.K-1]", derived["total_htc"])
+        self.values_dict.setdefault("SEI solvent diffusivity [m2.s-1]", derived["sei_solvent_diffusivity"])
+        self.values_dict.setdefault("Bulk solvent concentration [mol.m-3]", derived["bulk_solvent_concentration"])
+
+        # Collector Properties (Reference: CRC Handbook)
+        self.values_dict.setdefault("Negative current collector density [kg.m-3]", derived["cu_density"])
+        self.values_dict.setdefault("Positive current collector density [kg.m-3]", derived["al_density"])
+        self.values_dict.setdefault("Negative current collector specific heat capacity [J.kg-1.K-1]", derived["cu_cp"])
+        self.values_dict.setdefault("Positive current collector specific heat capacity [J.kg-1.K-1]", derived["al_cp"])
+        self.values_dict.setdefault("Negative current collector thermal conductivity [W.m-1.K-1]", derived["cu_tc"])
+        self.values_dict.setdefault("Positive current collector thermal conductivity [W.m-1.K-1]", derived["al_tc"])
+
         return pybamm.ParameterValues(self.values_dict)
 
 class SingleObjectiveProblem(Problem):
@@ -276,7 +289,6 @@ class SimulationRunner:
             if cached:
                 geometry, mesh, disc = cached["geometry"], cached["mesh"], cached["disc"]
             else:
-                import copy
                 geometry = copy.deepcopy(self.model.default_geometry)
                 params.process_geometry(geometry)
                 mesh = pybamm.Mesh(geometry, self.submesh_types, self.var_pts)
@@ -381,24 +393,55 @@ class HierarchicalOptimizer:
 
 def run_workflow(engine: Optional[Any] = None):
     from src.cell_optimization.material_opt import MaterialMappingEngine, MaterialCategory
-    from src.cell_optimization.chem_regularization import derive_coupled_deltas, regularize_salt_props
     if engine is None: engine = MaterialMappingEngine()
     db, bases = engine.run()
     if not bases:
         print("ERROR: Hierarchical optimization aborted: Base material resolution failed.")
         raise RuntimeError("Base material resolution failed.")
+    from src.cell_optimization.chem_regularization import derive_coupled_deltas, regularize_salt_props
+
+    # Derivation and Juxtaposition (at beginning of Layer 3)
+    print("\n" + "="*120)
+    print(f"{'MATERIAL JUXTAPOSITION: QM/PHYSICS DATA VS. DERIVED CELL PARAMETER DELTAS':^120s}")
+    print("="*120)
+
+    # 1. Cathode Dopants
+    print(f"\nCATEGORY: CATHODE_DOPANT")
+    print(f"{'Candidate':25s} | {'QM: Form E':12s} | {'QM: Volume':12s} | {'Derived Delta Key':40s} | {'Value':12s}")
+    print("-" * 120)
+    for cand in db[MaterialCategory.CATHODE_DOPANT]:
+        cand.deltas = derive_coupled_deltas(bases["cathode"]["properties"], cand.properties, bases["cathode"]["formula"], cand.composition)
+        p, d = cand.properties, cand.deltas
+        flat = [(k, v) for gn, gv in d.items() for k, v in gv.items()]
+        for i, (k, v) in enumerate(flat):
+            if i == 0: print(f"{cand.name:25s} | {p.get('formation_energy', 0.0):12.4f} | {p.get('volume_per_atom', 0.0):12.4f} | {k:40s} | {v:+.4e}")
+            else: print(f"{'':25s} | {'':12s} | {'':12s} | {k:40s} | {v:+.4e}")
+
+    # 2. Salts
+    print(f"\nCATEGORY: SALT")
+    print(f"{'Candidate':25s} | {'QM: Form E':12s} | {'QM: Volume':12s} | {'Derived Delta Key':40s} | {'Value':12s}")
+    print("-" * 120)
+    for cand in db[MaterialCategory.SALT]:
+        cand.deltas = regularize_salt_props(bases["salt"]["formula"], cand.composition, bases["salt"]["properties"], cand.properties)
+        p, d = cand.properties, cand.deltas
+        flat = [(k, v) for gn, gv in d.items() for k, v in gv.items()]
+        for i, (k, v) in enumerate(flat):
+            if i == 0: print(f"{cand.name:25s} | {p.get('formation_energy', 0.0):12.4f} | {p.get('volume_per_atom', 0.0):12.4f} | {k:40s} | {v:+.4e}")
+            else: print(f"{'':25s} | {'':12s} | {'':12s} | {k:40s} | {v:+.4e}")
+    print("="*120 + "\n")
+
     optimizer = HierarchicalOptimizer(engine=engine)
     print("Executing Sensitivity-Driven DFN Hierarchical Optimization (Layer 3)...")
 
     material_results = []
     for cat, salt in [(c, s) for c in db[MaterialCategory.CATHODE_DOPANT] for s in db[MaterialCategory.SALT]]:
         deltas = {}
-        if cat:
-            d = derive_coupled_deltas(bases["cathode"]["properties"], cat.properties, bases["cathode"]["formula"], cat.composition)
-            for k, v in d.items(): deltas.setdefault(k, {}).update(v)
-        if salt:
-            d = regularize_salt_props(bases["salt"]["formula"], salt.composition, bases["salt"]["properties"], salt.properties)
-            for k, v in d.items(): deltas.setdefault(k, {}).update(v)
+        if cat and cat.deltas:
+            for g_name, props in cat.deltas.items():
+                deltas.setdefault(g_name, {}).update(props)
+        if salt and salt.deltas:
+            for g_name, props in salt.deltas.items():
+                deltas.setdefault(g_name, {}).update(props)
         x_base = np.array([np.mean(b) for b in DESIGN_BOUNDS])
         cand_name = f"{cat.name if cat else 'None'} + {salt.name if salt else 'None'}"
         print(f"INFO: Evaluating candidate: {cand_name}")

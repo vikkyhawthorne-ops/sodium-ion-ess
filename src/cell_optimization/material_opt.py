@@ -65,6 +65,7 @@ class MaterialCandidate:
     composition: str
     properties: Dict[str, Any]
     provenance: str = "OQMD"
+    deltas: Dict[str, Any] = None
 
 class MaterialMappingEngine:
     def __init__(self):
@@ -273,6 +274,7 @@ class MaterialMappingEngine:
             if p and rf not in seen:
                 system[MaterialCategory.FUNCTIONALIZATION].append(MaterialCandidate(name=name, category=MaterialCategory.FUNCTIONALIZATION, composition=rf, properties=p, provenance=src))
                 seen.add(rf)
+
         for cat in MaterialCategory:
             print(f"INFO: Resolved {len(system[cat])} candidates for {cat.name}")
 
