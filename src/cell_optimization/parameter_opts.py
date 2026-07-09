@@ -4,6 +4,7 @@ import json
 import os
 import traceback
 import inspect
+import copy
 from collections import OrderedDict
 from typing import Dict, Any, List, Tuple, Optional
 from pymoo.core.problem import Problem
@@ -276,7 +277,6 @@ class SimulationRunner:
             if cached:
                 geometry, mesh, disc = cached["geometry"], cached["mesh"], cached["disc"]
             else:
-                import copy
                 geometry = copy.deepcopy(self.model.default_geometry)
                 params.process_geometry(geometry)
                 mesh = pybamm.Mesh(geometry, self.submesh_types, self.var_pts)
