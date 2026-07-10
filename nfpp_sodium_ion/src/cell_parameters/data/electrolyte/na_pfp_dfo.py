@@ -1,20 +1,39 @@
 from dataclasses import dataclass
 from typing import Dict
-
+from nfpp_sodium_ion.src.calibration.derivation import get_derived_parameters
 
 @dataclass
 class NaPfpDfoParameters:
-    salt_primary: str = "NaPF6"
-    salt_secondary: str = "NaDFOB"
-    concentration_primary_mol_per_l: float = 1.0
-    concentration_secondary_mol_per_l: float = 0.2
-    solvent_system: str = "EC:PC 1:1"
-    ionic_conductivity_mS_cm: float = 10.0
+    @property
+    def salt_primary(self) -> str:
+        return "NaPF6"
+
+    @property
+    def salt_secondary(self) -> str:
+        return "NaDFOB"
+
+    @property
+    def concentration_primary_mol_per_l(self) -> float:
+        return get_derived_parameters()["salt_conc_primary"]
+
+    @property
+    def concentration_secondary_mol_per_l(self) -> float:
+        return get_derived_parameters()["salt_conc_secondary"]
+
+    @property
+    def solvent_system(self) -> str:
+        return "EC:PC 1:1"
+
+    @property
+    def ionic_conductivity_mS_cm(self) -> float:
+        return 10.0 # Ref: benchmark electrolyte data
+
     additives: Dict[str, float] = None
 
     def __post_init__(self):
+        derived = get_derived_parameters()
         if self.additives is None:
-            self.additives = {"FEC": 0.03, "VC": 0.02}
+            self.additives = {"FEC": derived["additives_fec"], "VC": derived["additives_vc"]}
 
     def as_dict(self) -> dict:
         return {

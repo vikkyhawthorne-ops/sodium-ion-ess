@@ -1,15 +1,27 @@
 from dataclasses import dataclass
+from nfpp_sodium_ion.src.calibration.derivation import get_derived_parameters
 
 @dataclass
 class HardCarbonAnodeParameters:
-    # Ref: paper.md
-    active_material_fraction: float = 0.88
-    conductive_carbon_fraction: float = 0.06
-    binder_fraction: float = 0.06
-    # Ref: MTI, Kuraray
-    practical_capacity_mAh_g: float = 300.0
-    density_kg_m3: float = 1500.0
-    current_collector: str = "Copper"
+    @property
+    def active_material_fraction(self) -> float:
+        return 0.88 # Ref: paper.md benchmark design
+
+    @property
+    def conductive_carbon_fraction(self) -> float:
+        return 0.06 # Ref: paper.md benchmark design
+
+    @property
+    def binder_fraction(self) -> float:
+        return 0.06 # Ref: paper.md benchmark design
+
+    @property
+    def practical_capacity_mAh_g(self) -> float:
+        return 300.0 # Ref: MTI, Kuraray benchmark
+
+    @property
+    def density_kg_m3(self) -> float:
+        return 1500.0 # Ref: MTI, Kuraray benchmark
 
     def as_dict(self) -> dict:
         return {

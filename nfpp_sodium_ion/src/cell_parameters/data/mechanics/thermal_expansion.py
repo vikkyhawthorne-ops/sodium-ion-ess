@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from nfpp_sodium_ion.src.calibration.derivation import get_derived_parameters
 
 @dataclass
 class ThermalExpansionModel:
-    # Typical values for polyanionic cathodes
-    thermal_expansion_coefficient: float = 1.5e-5
+    @property
+    def thermal_expansion_coefficient(self) -> float:
+        return get_derived_parameters()["alpha_thermal"]
 
     def as_dict(self) -> dict:
         return {

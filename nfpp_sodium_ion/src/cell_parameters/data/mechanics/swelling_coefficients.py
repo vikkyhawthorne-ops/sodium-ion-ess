@@ -1,9 +1,15 @@
 from dataclasses import dataclass
+from nfpp_sodium_ion.src.calibration.derivation import get_derived_parameters
 
 @dataclass
 class SwellingCoefficientModel:
-    negative_electrode_swelling_coefficient: float = 0.1
-    positive_electrode_swelling_coefficient: float = 0.05
+    @property
+    def negative_electrode_swelling_coefficient(self) -> float:
+        return get_derived_parameters()["beta_n"]
+
+    @property
+    def positive_electrode_swelling_coefficient(self) -> float:
+        return get_derived_parameters()["beta_p"]
 
     def as_dict(self) -> dict:
         return {
