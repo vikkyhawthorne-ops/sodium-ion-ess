@@ -1,5 +1,5 @@
 
-This repository implements a high-fidelity digital twin and optimization framework for Sodium Iron Pyrophosphate (NFPP) battery systems within an integrated plant–network digital twin framework for solar–BESS microgrids.
+This repository implements a high-fidelity digital twin and optimization framework for Sodium Iron Pyrophosphate (NFPP) battery systems within an integrated plant–network digital twin framework for solar–BESS microgrids. Note that the PyBaMM cell parameter package developed in this work will be published as an open-source package.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mhizterpaul/sodium-ion-ess/blob/main/src/report.ipynb)
 
@@ -52,6 +52,6 @@ jupyter notebook src/report.ipynb
 
 ## References
 
-- **Paper Title**: DFN-Based Optimization of NFPP Sodium-Ion Cells within an Integrated Plant–Network Digital Twin Framework for Solar–BESS Microgrids
+- **Paper Title**: NFPP Sodium-Ion BESS Performance Benchmarking and Latent Distribution Network State Estimation Using Network Realization Signatures
 - **Core Chemistry**: Sodium Iron Pyrophosphate (NFPP) vs. Hard Carbon
 - **Modeling Framework**: PyBaMM (Electrochemical), FEniCSx (Mechanical), Simscape, Matlab (Power Systems)

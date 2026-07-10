@@ -1,4 +1,4 @@
-# DFN-Based Optimization of NFPP Sodium-Ion Cells within an Integrated Plant–Network Digital Twin Framework for Solar–BESS Microgrids
+# NFPP Sodium-Ion BESS Performance Benchmarking and Latent Distribution Network State Estimation Using Network Realization Signatures
 
 ## Methodology
 
@@ -52,6 +52,12 @@ Base Model Validation Framework
 The cell behavior is first resolved using a DFN-based electrochemical framework implemented in PyBaMM.
 This model captures the coupled evolution of:  state of charge (SOC) trajectory, state of health (SOH) degradation trajectory, heat generation rate Q(t)arising from reaction, ohmic, and polarization losses 
 These quantities define the internal energetic state of the system under charge–discharge operation.
+
+2. BESS Evaluation and Performance Benchmarking
+The optimized NFPP Sodium-Ion cell design is integrated and scaled to a utility-class Battery Energy Storage System (BESS). The BESS is simulated and evaluated across multiple operational scenarios to benchmark performance under high-rate and fluctuating profiles. The evaluation includes:
+* **Grid Outage Scenario:** Simulating a grid loss event during high-rate (1C) charging, analyzing the resulting cell relaxation, temperature escalation, and electrode stress transients to verify structural margin.
+* **Varying C-rate Stress Testing:** Stress-testing the cell design using an oscillating current profile to characterize dynamic impedance, local thermal hotspots, and peak degradation acceleration.
+* **Energy, Coulombic, and Voltage Efficiency:** Quantifying physically grounded round-trip efficiency metrics of the optimized cell under BESS dispatch profiles. Efficiency is derived via integration of input and output active powers and tracking capacity changes robustly.
 2. Thermal Field Model (Heat Transport)
 The generated heat Q(t)is propagated through the cell using a thermal partial differential equation formulation implemented in PyBaMM thermal modules.
 This produces the spatial–temporal temperature field:  T(x,t)for spatially resolved thermal analysis or T(t) in lumped approximation for reduced-order cases 
@@ -150,25 +156,35 @@ The interface layer regulates high-power bidirectional energy flow and Point of 
 
 
 ### Multi-Feeder Solar–BESS Network State Realization & Anomaly Detection (Core Contribution)
-This research presents a framework for multi-feeder network state realization and anomaly detection using phase dynamics in coupled microgrid systems.
+This research presents a framework for multi-feeder network state realization and latent state estimation using OpenDSS-based physics simulations of hidden downstream distribution networks.
 
-#### 1. Multi-Feeder Network Structure
-The architecture consists of a multi-feeder distribution network with shared generation and storage sources.
-$P_{source}(t) = P_{solar}(t) + P_{BESS}(t)$
-This total source power is distributed across $n$ feeders:
-$P_{source}(t) = \sum_{i=1}^{n} P_{F_i}(t) + P_{loss}(t)$
+#### 1. Physical Assumptions and System Constraints
+The network model is formulated under a specific set of observability constraints:
+* **Known/Fixed Parameters:** The plant location and its feeder interface parameters are fixed. The feeder branch impedances $Z_{feeders}$ are fully characterized and known. The types of consumer loads (e.g., constant power, constant impedance, constant current) and the distribution/interface transformers are known.
+* **Hidden/Unknown Downstream Parameters:** The downstream distribution network buses are completely unknown. The exact topological connections among these downstream buses are unknown. The consumer load magnitudes and switching events are continuously changing and unobserved.
 
-#### 2. Nodal State Realization
-Each feeder $i$ is characterized by its nodal voltage and phase angles:
-$x_i = [V_{i1}, \theta_{i1}, \dots, V_{im}, \theta_{im}]$
-The global network state is $X = [x_1, \dots, x_n]$.
+The core challenge is therefore to infer downstream structural complexity and operational conditions from boundary measurements at the known plant feeder interface.
 
-#### 3. Source-Feeder Coupling & Anomaly Detection
-The feeders are coupled via shared source capacity, inverter limits, and battery constraints. Disturbances on one feeder ($\Delta P_{Fi}$) propagate through the shared source, altering the network realization state:
-$X_R = [\Delta \theta_{F1}, \Delta \theta_{F2}, \dots, \Delta \theta_{Fn}]$
-representing feeder-level phase behavior. Anomalies are detected when feeder phase dynamics exceed the expected stability envelope:
-$\Delta \theta_{Fi} \notin \text{expected envelope}$
-This allows for high-sensitivity detection of fault signatures propagating through the shared microgrid source.
+#### 2. Network Signature Atlas and realization mapping
+Instead of mapping raw boundary quantities to a fixed lookup table, the model constructs a **Network Signature Atlas** consisting of derived, noise-robust features that capture the system's physics:
+* Feeder-to-feeder phase angle relationships ($\Delta \theta_{F_i - F_j}$)
+* Active/reactive power balance ($P_{total}, Q_{total}$)
+* Local voltage sensitivity to load step changes ($\partial V / \partial P$)
+* Aggregate network equivalent impedance ($Z_{eq}$)
+* Voltage regulation stiffness indices
+
+The latent state mapping is defined as:
+$$X_R = \Phi(M)$$
+where $M$ is the vector of boundary measurements and derived features, and $X_R$ represents the discovered latent state vector containing:
+* Effective electrical distance to active loads
+* Aggregate network loading factor
+* Feeder phase coupling indices
+
+#### 3. Experimental Validation Suite
+The realization framework is validated through three key physically-based experiments:
+* **Experiment 1: Hidden Bus Discovery (Baseline and Complexity Characterization):** Keeping the plant parameters fixed, the downstream complexity is varied (10, 20, 40, and 80 hidden buses). This experiment investigates how many electrically distinguishable states exist at the plant boundary, determining whether the measurements contain sufficient information to infer network complexity.
+* **Experiment 2: Topology Connectivity Experiment:** Keeping the number of downstream buses fixed, the structural connections are randomly permuted (e.g., Topology A: Radial branching vs. Topology B: Direct multi-drop) under identical total downstream demand. This test determines if the realization algorithm can distinguish hidden structures from boundary measurements alone.
+* **Experiment 3: Dynamic Load Switching:** Keeping the topology fixed, downstream loads are dynamically switched (plugging in/out consumer loads, motor starting, and feeder disconnecting events). The objective is to characterize how boundary measurements evolve and how transient disturbances excite the hidden network to make it observable.
 
 
 3. RESEARCH SCOPE DECOMPOSITION

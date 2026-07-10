@@ -1,0 +1,322 @@
+[
+  {
+    "sig_id": "S0001",
+    "boundary": {
+      "f1_voltage": 141.71287477834287,
+      "f2_voltage": 141.3975068810693,
+      "f1_phase": 56.25602051917195,
+      "f2_phase": 55.99522306893257,
+      "f1_kw": 32.60102026018674,
+      "f1_kvar": 15.698400796868764,
+      "f2_kw": 35.43593531221396,
+      "f2_kvar": 14.686840389124068,
+      "delta_theta": 0.26079745023938017,
+      "p_total": 68.0369555724007,
+      "q_total": 30.385241185992832,
+      "v_pcc": 148.7777816362915
+    },
+    "features": {
+      "feeder_phase_coupling": 0.26079745023938017,
+      "power_balance_pf": 0.9130799103420626,
+      "aggregate_impedance_proxy": 2.1867201169995227,
+      "voltage_sensitivity_stiffness": 0.006019224096065722
+    },
+    "hidden_state": {
+      "avg_electrical_distance": 0.5,
+      "loading_factor": 0.680369555724007
+    },
+    "realization": {
+      "num_buses": 10,
+      "topology_type": "Radial"
+    },
+    "event": "Baseline-Complexity"
+  },
+  {
+    "sig_id": "S0002",
+    "boundary": {
+      "f1_voltage": 136.53117484958307,
+      "f2_voltage": 138.27986481457677,
+      "f1_phase": 53.19285268232873,
+      "f2_phase": 54.19777959865936,
+      "f1_kw": 50.23946327097585,
+      "f1_kvar": 25.305593482522333,
+      "f2_kw": 42.06302700861134,
+      "f2_kvar": 21.625810516230178,
+      "delta_theta": -1.004926916330632,
+      "p_total": 92.30249027958719,
+      "q_total": 46.931403998752515,
+      "v_pcc": 147.62629548902802
+    },
+    "features": {
+      "feeder_phase_coupling": -1.004926916330632,
+      "power_balance_pf": 0.8913931809829817,
+      "aggregate_impedance_proxy": 1.5993749837354148,
+      "voltage_sensitivity_stiffness": 0.00467073097179498
+    },
+    "hidden_state": {
+      "avg_electrical_distance": 1.0,
+      "loading_factor": 0.9230249027958719
+    },
+    "realization": {
+      "num_buses": 20,
+      "topology_type": "Radial"
+    },
+    "event": "Baseline-Complexity"
+  },
+  {
+    "sig_id": "S0003",
+    "boundary": {
+      "f1_voltage": 132.39642686622133,
+      "f2_voltage": 133.3957596126702,
+      "f1_phase": 50.85886300167048,
+      "f2_phase": 51.40263284999758,
+      "f1_kw": 59.98975407817533,
+      "f1_kvar": 34.498302383475874,
+      "f2_kw": 55.87733799061563,
+      "f2_kvar": 31.76423762934771,
+      "delta_theta": -0.5437698483271021,
+      "p_total": 115.86709206879095,
+      "q_total": 66.26254001282359,
+      "v_pcc": 146.29341803534803
+    },
+    "features": {
+      "feeder_phase_coupling": -0.5437698483271021,
+      "power_balance_pf": 0.8680727692491886,
+      "aggregate_impedance_proxy": 1.2625967749833233,
+      "voltage_sensitivity_stiffness": 0.0038695043563797497
+    },
+    "hidden_state": {
+      "avg_electrical_distance": 2.0,
+      "loading_factor": 1.1586709206879096
+    },
+    "realization": {
+      "num_buses": 40,
+      "topology_type": "Radial"
+    },
+    "event": "Baseline-Complexity"
+  },
+  {
+    "sig_id": "S0004",
+    "boundary": {
+      "f1_voltage": 130.74905070141435,
+      "f2_voltage": 130.44128424724838,
+      "f1_phase": 49.79820093021984,
+      "f2_phase": 49.83050408433174,
+      "f1_kw": 64.86114354210217,
+      "f1_kvar": 35.60138898212806,
+      "f2_kw": 63.04483487903486,
+      "f2_kvar": 40.26844638702006,
+      "delta_theta": -0.03230315411190077,
+      "p_total": 127.90597842113704,
+      "q_total": 75.86983536914812,
+      "v_pcc": 145.61624185482106
+    },
+    "features": {
+      "feeder_phase_coupling": -0.03230315411190077,
+      "power_balance_pf": 0.8600740994452011,
+      "aggregate_impedance_proxy": 1.1384631313863136,
+      "voltage_sensitivity_stiffness": 0.0035589601893848684
+    },
+    "hidden_state": {
+      "avg_electrical_distance": 4.0,
+      "loading_factor": 1.2790597842113705
+    },
+    "realization": {
+      "num_buses": 80,
+      "topology_type": "Radial"
+    },
+    "event": "Baseline-Complexity"
+  },
+  {
+    "sig_id": "S0005",
+    "boundary": {
+      "f1_voltage": 134.93839767564074,
+      "f2_voltage": 134.22403012280023,
+      "f1_phase": 52.362625991218444,
+      "f2_phase": 51.8894542063747,
+      "f1_kw": 50.87767797550073,
+      "f1_kvar": 29.77204945408832,
+      "f2_kw": 55.176676889123044,
+      "f2_kvar": 30.050003993667502,
+      "delta_theta": 0.47317178484374267,
+      "p_total": 106.05435486462378,
+      "q_total": 59.82205344775582,
+      "v_pcc": 146.75895543802844
+    },
+    "features": {
+      "feeder_phase_coupling": 0.47317178484374267,
+      "power_balance_pf": 0.8709906908520778,
+      "aggregate_impedance_proxy": 1.3838088425652526,
+      "voltage_sensitivity_stiffness": 0.00412766333624509
+    },
+    "hidden_state": {
+      "avg_electrical_distance": 0.8,
+      "loading_factor": 1.0605435486462378
+    },
+    "realization": {
+      "num_buses": 20,
+      "topology_type": "Radial"
+    },
+    "event": "Topology-Radial"
+  },
+  {
+    "sig_id": "S0006",
+    "boundary": {
+      "f1_voltage": 134.24150437047086,
+      "f2_voltage": 135.08307577835322,
+      "f1_phase": 51.61928106694043,
+      "f2_phase": 52.00974745028069,
+      "f1_kw": 59.2309086654047,
+      "f1_kvar": 27.92413178644516,
+      "f2_kw": 56.844117100644475,
+      "f2_kvar": 24.264794573297728,
+      "delta_theta": -0.39046638334026085,
+      "p_total": 116.07502576604918,
+      "q_total": 52.18892635974289,
+      "v_pcc": 147.10704732301215
+    },
+    "features": {
+      "feeder_phase_coupling": -0.39046638334026085,
+      "power_balance_pf": 0.9120532852155611,
+      "aggregate_impedance_proxy": 1.2673445048564016,
+      "voltage_sensitivity_stiffness": 0.0037963411315383843
+    },
+    "hidden_state": {
+      "avg_electrical_distance": 0.4,
+      "loading_factor": 1.1607502576604918
+    },
+    "realization": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop"
+    },
+    "event": "Topology-Multi-drop"
+  },
+  {
+    "sig_id": "S0007",
+    "boundary": {
+      "f1_voltage": 137.35888115455,
+      "f2_voltage": 136.31841569841262,
+      "f1_phase": 53.70833689514609,
+      "f2_phase": 53.05216416913576,
+      "f1_kw": 44.64257501840479,
+      "f1_kvar": 24.252402039629754,
+      "f2_kw": 50.440851135831394,
+      "f2_kvar": 25.273761592688665,
+      "delta_theta": 0.6561727260103325,
+      "p_total": 95.08342615423618,
+      "q_total": 49.526163632318415,
+      "v_pcc": 147.45256838743805
+    },
+    "features": {
+      "feeder_phase_coupling": 0.6561727260103325,
+      "power_balance_pf": 0.8869005251303633,
+      "aggregate_impedance_proxy": 1.5507704423427349,
+      "voltage_sensitivity_stiffness": 0.004497853530552454
+    },
+    "hidden_state": {
+      "avg_electrical_distance": 1.0,
+      "loading_factor": 0.9508342615423618
+    },
+    "realization": {
+      "num_buses": 20,
+      "topology_type": "Radial"
+    },
+    "event": "Normal"
+  },
+  {
+    "sig_id": "S0008",
+    "boundary": {
+      "f1_voltage": 139.09893375344748,
+      "f2_voltage": 136.84590439608542,
+      "f1_phase": 54.69617212547644,
+      "f2_phase": 53.38734829985319,
+      "f1_kw": 38.89756448474201,
+      "f1_kvar": 20.274817025196867,
+      "f2_kw": 49.68567713840646,
+      "f2_kvar": 24.7133774552451,
+      "delta_theta": 1.30882382562325,
+      "p_total": 88.58324162314847,
+      "q_total": 44.98819448044197,
+      "v_pcc": 147.7704865883327
+    },
+    "features": {
+      "feeder_phase_coupling": 1.30882382562325,
+      "power_balance_pf": 0.8916051430632703,
+      "aggregate_impedance_proxy": 1.668153955675105,
+      "voltage_sensitivity_stiffness": 0.004746056894182507
+    },
+    "hidden_state": {
+      "avg_electrical_distance": 1.0,
+      "loading_factor": 0.8858324162314847
+    },
+    "realization": {
+      "num_buses": 20,
+      "topology_type": "Radial"
+    },
+    "event": "Load Connected"
+  },
+  {
+    "sig_id": "S0009",
+    "boundary": {
+      "f1_voltage": 139.02054230573597,
+      "f2_voltage": 137.78864632501177,
+      "f1_phase": 54.54036305214081,
+      "f2_phase": 53.96013301401987,
+      "f1_kw": 41.865690014826285,
+      "f1_kvar": 18.56935788971748,
+      "f2_kw": 45.54953151886562,
+      "f2_kvar": 23.75472527426052,
+      "delta_theta": 0.5802300381209449,
+      "p_total": 87.4152215336919,
+      "q_total": 42.324083163978,
+      "v_pcc": 147.93313561346739
+    },
+    "features": {
+      "feeder_phase_coupling": 0.5802300381209449,
+      "power_balance_pf": 0.9000526596455483,
+      "aggregate_impedance_proxy": 1.692304055583116,
+      "voltage_sensitivity_stiffness": 0.004813209052125911
+    },
+    "hidden_state": {
+      "avg_electrical_distance": 1.0,
+      "loading_factor": 0.874152215336919
+    },
+    "realization": {
+      "num_buses": 20,
+      "topology_type": "Radial"
+    },
+    "event": "Motor Start"
+  },
+  {
+    "sig_id": "S0010",
+    "boundary": {
+      "f1_voltage": 135.73566266217685,
+      "f2_voltage": 143.20629908935697,
+      "f1_phase": 53.04036637781621,
+      "f2_phase": 57.12355785198872,
+      "f1_kw": 53.34515161297766,
+      "f1_kvar": 31.1184913990174,
+      "f2_kw": 21.571775204947045,
+      "f2_kvar": 11.394615453004004,
+      "delta_theta": -4.083191474172509,
+      "p_total": 74.9169268179247,
+      "q_total": 42.51310685202141,
+      "v_pcc": 148.03023303181502
+    },
+    "features": {
+      "feeder_phase_coupling": -4.083191474172509,
+      "power_balance_pf": 0.8697223382221038,
+      "aggregate_impedance_proxy": 1.9759250324784028,
+      "voltage_sensitivity_stiffness": 0.00579888620050505
+    },
+    "hidden_state": {
+      "avg_electrical_distance": 1.0,
+      "loading_factor": 0.749169268179247
+    },
+    "realization": {
+      "num_buses": 20,
+      "topology_type": "Radial"
+    },
+    "event": "Feeder Disconnected"
+  }
+]
