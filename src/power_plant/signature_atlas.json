@@ -2,321 +2,3241 @@
   {
     "sig_id": "S0001",
     "boundary": {
-      "f1_voltage": 141.71287477834287,
-      "f2_voltage": 141.3975068810693,
-      "f1_phase": 56.25602051917195,
-      "f2_phase": 55.99522306893257,
-      "f1_kw": 32.60102026018674,
-      "f1_kvar": 15.698400796868764,
-      "f2_kw": 35.43593531221396,
-      "f2_kvar": 14.686840389124068,
-      "delta_theta": 0.26079745023938017,
-      "p_total": 68.0369555724007,
-      "q_total": 30.385241185992832,
-      "v_pcc": 148.7777816362915
+      "pcc_voltage_v": 238.5134514947712,
+      "pcc_current_a": -1.0362081563168128e-15,
+      "pcc_active_power_kw": 40.69144002705234,
+      "pcc_reactive_power_kvar": 146.0384743887622,
+      "frequency_hz": 50.03714353792457,
+      "pcc_phase_angle_deg": -30.68438006898322,
+      "f1_voltage_v": 180.29987503990557,
+      "f2_voltage_v": 228.1321855504119,
+      "delta_theta_deg": -2.0559988617158886
     },
     "features": {
-      "feeder_phase_coupling": 0.26079745023938017,
-      "power_balance_pf": 0.9130799103420626,
-      "aggregate_impedance_proxy": 2.1867201169995227,
-      "voltage_sensitivity_stiffness": 0.006019224096065722
+      "feeder_phase_coupling": -2.0559988617158886,
+      "power_balance_pf": 0.2684104506252683,
+      "aggregate_impedance_proxy": 5.861514005763609,
+      "voltage_sensitivity_stiffness": 0.006113091952228646
     },
-    "hidden_state": {
-      "avg_electrical_distance": 0.5,
-      "loading_factor": 0.680369555724007
-    },
-    "realization": {
-      "num_buses": 10,
-      "topology_type": "Radial"
-    },
-    "event": "Baseline-Complexity"
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 16,
+      "total_hidden_demand_kw": 289.96165294438845,
+      "avg_electrical_distance_km": 0.7953636363636364
+    }
   },
   {
     "sig_id": "S0002",
     "boundary": {
-      "f1_voltage": 136.53117484958307,
-      "f2_voltage": 138.27986481457677,
-      "f1_phase": 53.19285268232873,
-      "f2_phase": 54.19777959865936,
-      "f1_kw": 50.23946327097585,
-      "f1_kvar": 25.305593482522333,
-      "f2_kw": 42.06302700861134,
-      "f2_kvar": 21.625810516230178,
-      "delta_theta": -1.004926916330632,
-      "p_total": 92.30249027958719,
-      "q_total": 46.931403998752515,
-      "v_pcc": 147.62629548902802
+      "pcc_voltage_v": 231.66006504363133,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": 6.119299823303482,
+      "pcc_reactive_power_kvar": 94.19842902307786,
+      "frequency_hz": 49.98042627123576,
+      "pcc_phase_angle_deg": -30.014792643062403,
+      "f1_voltage_v": 185.77016932696984,
+      "f2_voltage_v": 224.5403954073264,
+      "delta_theta_deg": -2.0769542731821424
     },
     "features": {
-      "feeder_phase_coupling": -1.004926916330632,
-      "power_balance_pf": 0.8913931809829817,
-      "aggregate_impedance_proxy": 1.5993749837354148,
-      "voltage_sensitivity_stiffness": 0.00467073097179498
+      "feeder_phase_coupling": -2.0769542731821424,
+      "power_balance_pf": 0.06482516441726828,
+      "aggregate_impedance_proxy": 37.85727679237879,
+      "voltage_sensitivity_stiffness": 0.036925399539732055
     },
-    "hidden_state": {
-      "avg_electrical_distance": 1.0,
-      "loading_factor": 0.9230249027958719
-    },
-    "realization": {
+    "ground_truth": {
       "num_buses": 20,
-      "topology_type": "Radial"
-    },
-    "event": "Baseline-Complexity"
+      "topology_type": "Multi-drop",
+      "active_loads": 18,
+      "total_hidden_demand_kw": 338.3020278590669,
+      "avg_electrical_distance_km": 0.7452272727272727
+    }
   },
   {
     "sig_id": "S0003",
     "boundary": {
-      "f1_voltage": 132.39642686622133,
-      "f2_voltage": 133.3957596126702,
-      "f1_phase": 50.85886300167048,
-      "f2_phase": 51.40263284999758,
-      "f1_kw": 59.98975407817533,
-      "f1_kvar": 34.498302383475874,
-      "f2_kw": 55.87733799061563,
-      "f2_kvar": 31.76423762934771,
-      "delta_theta": -0.5437698483271021,
-      "p_total": 115.86709206879095,
-      "q_total": 66.26254001282359,
-      "v_pcc": 146.29341803534803
+      "pcc_voltage_v": 211.96798231990024,
+      "pcc_current_a": 2.5165055224836883e-15,
+      "pcc_active_power_kw": 40.75986493147695,
+      "pcc_reactive_power_kvar": 194.00600000969058,
+      "frequency_hz": 49.965039091118996,
+      "pcc_phase_angle_deg": -30.638867191980268,
+      "f1_voltage_v": 153.3470645148134,
+      "f2_voltage_v": 184.48941207046497,
+      "delta_theta_deg": 1.6250826094655757
     },
     "features": {
-      "feeder_phase_coupling": -0.5437698483271021,
-      "power_balance_pf": 0.8680727692491886,
-      "aggregate_impedance_proxy": 1.2625967749833233,
-      "voltage_sensitivity_stiffness": 0.0038695043563797497
+      "feeder_phase_coupling": 1.6250826094655757,
+      "power_balance_pf": 0.2056071182353112,
+      "aggregate_impedance_proxy": 5.200409213225779,
+      "voltage_sensitivity_stiffness": 0.008858073735127746
     },
-    "hidden_state": {
-      "avg_electrical_distance": 2.0,
-      "loading_factor": 1.1586709206879096
-    },
-    "realization": {
-      "num_buses": 40,
-      "topology_type": "Radial"
-    },
-    "event": "Baseline-Complexity"
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 17,
+      "total_hidden_demand_kw": 408.77811642881284,
+      "avg_electrical_distance_km": 0.6991818181818182
+    }
   },
   {
     "sig_id": "S0004",
     "boundary": {
-      "f1_voltage": 130.74905070141435,
-      "f2_voltage": 130.44128424724838,
-      "f1_phase": 49.79820093021984,
-      "f2_phase": 49.83050408433174,
-      "f1_kw": 64.86114354210217,
-      "f1_kvar": 35.60138898212806,
-      "f2_kw": 63.04483487903486,
-      "f2_kvar": 40.26844638702006,
-      "delta_theta": -0.03230315411190077,
-      "p_total": 127.90597842113704,
-      "q_total": 75.86983536914812,
-      "v_pcc": 145.61624185482106
+      "pcc_voltage_v": 216.80090063895014,
+      "pcc_current_a": 4.588921835117314e-15,
+      "pcc_active_power_kw": 45.18676744411597,
+      "pcc_reactive_power_kvar": 133.2755954755272,
+      "frequency_hz": 50.0181992309743,
+      "pcc_phase_angle_deg": -30.791441802735488,
+      "f1_voltage_v": 158.23590194155358,
+      "f2_voltage_v": 201.66991512608328,
+      "delta_theta_deg": -1.1944846367160409
     },
     "features": {
-      "feeder_phase_coupling": -0.03230315411190077,
-      "power_balance_pf": 0.8600740994452011,
-      "aggregate_impedance_proxy": 1.1384631313863136,
-      "voltage_sensitivity_stiffness": 0.0035589601893848684
+      "feeder_phase_coupling": -1.1944846367160409,
+      "power_balance_pf": 0.3210940875972626,
+      "aggregate_impedance_proxy": 4.797884604363228,
+      "voltage_sensitivity_stiffness": 0.007539457979419988
     },
-    "hidden_state": {
-      "avg_electrical_distance": 4.0,
-      "loading_factor": 1.2790597842113705
-    },
-    "realization": {
-      "num_buses": 80,
-      "topology_type": "Radial"
-    },
-    "event": "Baseline-Complexity"
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 18,
+      "total_hidden_demand_kw": 385.89982798348956,
+      "avg_electrical_distance_km": 0.7710909090909088
+    }
   },
   {
     "sig_id": "S0005",
     "boundary": {
-      "f1_voltage": 134.93839767564074,
-      "f2_voltage": 134.22403012280023,
-      "f1_phase": 52.362625991218444,
-      "f2_phase": 51.8894542063747,
-      "f1_kw": 50.87767797550073,
-      "f1_kvar": 29.77204945408832,
-      "f2_kw": 55.176676889123044,
-      "f2_kvar": 30.050003993667502,
-      "delta_theta": 0.47317178484374267,
-      "p_total": 106.05435486462378,
-      "q_total": 59.82205344775582,
-      "v_pcc": 146.75895543802844
+      "pcc_voltage_v": 226.09424154312433,
+      "pcc_current_a": 2.3684757858670005e-15,
+      "pcc_active_power_kw": 83.44585950848047,
+      "pcc_reactive_power_kvar": 285.083671451481,
+      "frequency_hz": 49.97704107712809,
+      "pcc_phase_angle_deg": -31.49923847972806,
+      "f1_voltage_v": 181.04455287307613,
+      "f2_voltage_v": 163.74469370321052,
+      "delta_theta_deg": 1.0417362855670085
     },
     "features": {
-      "feeder_phase_coupling": 0.47317178484374267,
-      "power_balance_pf": 0.8709906908520778,
-      "aggregate_impedance_proxy": 1.3838088425652526,
-      "voltage_sensitivity_stiffness": 0.00412766333624509
+      "feeder_phase_coupling": 1.0417362855670085,
+      "power_balance_pf": 0.2809196401376535,
+      "aggregate_impedance_proxy": 2.7094722274467617,
+      "voltage_sensitivity_stiffness": 0.002943797270054133
     },
-    "hidden_state": {
-      "avg_electrical_distance": 0.8,
-      "loading_factor": 1.0605435486462378
-    },
-    "realization": {
+    "ground_truth": {
       "num_buses": 20,
-      "topology_type": "Radial"
-    },
-    "event": "Topology-Radial"
+      "topology_type": "Multi-drop",
+      "active_loads": 20,
+      "total_hidden_demand_kw": 417.20444682147536,
+      "avg_electrical_distance_km": 0.8384999999999999
+    }
   },
   {
     "sig_id": "S0006",
     "boundary": {
-      "f1_voltage": 134.24150437047086,
-      "f2_voltage": 135.08307577835322,
-      "f1_phase": 51.61928106694043,
-      "f2_phase": 52.00974745028069,
-      "f1_kw": 59.2309086654047,
-      "f1_kvar": 27.92413178644516,
-      "f2_kw": 56.844117100644475,
-      "f2_kvar": 24.264794573297728,
-      "delta_theta": -0.39046638334026085,
-      "p_total": 116.07502576604918,
-      "q_total": 52.18892635974289,
-      "v_pcc": 147.10704732301215
+      "pcc_voltage_v": 223.4358285072452,
+      "pcc_current_a": 1.1842378929335002e-15,
+      "pcc_active_power_kw": -50.781843093244206,
+      "pcc_reactive_power_kvar": 55.88536230482,
+      "frequency_hz": 50.02325146998483,
+      "pcc_phase_angle_deg": -28.89544329554798,
+      "f1_voltage_v": 209.55974561546512,
+      "f2_voltage_v": 203.2007621486139,
+      "delta_theta_deg": 0.29818465021520524
     },
     "features": {
-      "feeder_phase_coupling": -0.39046638334026085,
-      "power_balance_pf": 0.9120532852155611,
-      "aggregate_impedance_proxy": 1.2673445048564016,
-      "voltage_sensitivity_stiffness": 0.0037963411315383843
+      "feeder_phase_coupling": 0.29818465021520524,
+      "power_balance_pf": -0.6725057715211861,
+      "aggregate_impedance_proxy": 4.3999156095430205,
+      "voltage_sensitivity_stiffness": 0.0024976326782462956
     },
-    "hidden_state": {
-      "avg_electrical_distance": 0.4,
-      "loading_factor": 1.1607502576604918
-    },
-    "realization": {
-      "num_buses": 20,
-      "topology_type": "Multi-drop"
-    },
-    "event": "Topology-Multi-drop"
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 7,
+      "total_hidden_demand_kw": 118.63082697816198,
+      "avg_electrical_distance_km": 0.6665
+    }
   },
   {
     "sig_id": "S0007",
     "boundary": {
-      "f1_voltage": 137.35888115455,
-      "f2_voltage": 136.31841569841262,
-      "f1_phase": 53.70833689514609,
-      "f2_phase": 53.05216416913576,
-      "f1_kw": 44.64257501840479,
-      "f1_kvar": 24.252402039629754,
-      "f2_kw": 50.440851135831394,
-      "f2_kvar": 25.273761592688665,
-      "delta_theta": 0.6561727260103325,
-      "p_total": 95.08342615423618,
-      "q_total": 49.526163632318415,
-      "v_pcc": 147.45256838743805
+      "pcc_voltage_v": 224.97102289575662,
+      "pcc_current_a": 2.3684757858670005e-15,
+      "pcc_active_power_kw": 7.681563808311841,
+      "pcc_reactive_power_kvar": 173.75300658448754,
+      "frequency_hz": 50.02122724893942,
+      "pcc_phase_angle_deg": -29.951007855566257,
+      "f1_voltage_v": 173.77532713721064,
+      "f2_voltage_v": 205.28209664084184,
+      "delta_theta_deg": 4.4739855234946795
     },
     "features": {
-      "feeder_phase_coupling": 0.6561727260103325,
-      "power_balance_pf": 0.8869005251303633,
-      "aggregate_impedance_proxy": 1.5507704423427349,
-      "voltage_sensitivity_stiffness": 0.004497853530552454
+      "feeder_phase_coupling": 4.4739855234946795,
+      "power_balance_pf": 0.04416653335094715,
+      "aggregate_impedance_proxy": 29.28713465416924,
+      "voltage_sensitivity_stiffness": 0.03592186537692322
     },
-    "hidden_state": {
-      "avg_electrical_distance": 1.0,
-      "loading_factor": 0.9508342615423618
-    },
-    "realization": {
-      "num_buses": 20,
-      "topology_type": "Radial"
-    },
-    "event": "Normal"
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Radial",
+      "active_loads": 9,
+      "total_hidden_demand_kw": 217.24970158187674,
+      "avg_electrical_distance_km": 0.5200833333333333
+    }
   },
   {
     "sig_id": "S0008",
     "boundary": {
-      "f1_voltage": 139.09893375344748,
-      "f2_voltage": 136.84590439608542,
-      "f1_phase": 54.69617212547644,
-      "f2_phase": 53.38734829985319,
-      "f1_kw": 38.89756448474201,
-      "f1_kvar": 20.274817025196867,
-      "f2_kw": 49.68567713840646,
-      "f2_kvar": 24.7133774552451,
-      "delta_theta": 1.30882382562325,
-      "p_total": 88.58324162314847,
-      "q_total": 44.98819448044197,
-      "v_pcc": 147.7704865883327
+      "pcc_voltage_v": 223.11422847699342,
+      "pcc_current_a": 5.921189464667502e-15,
+      "pcc_active_power_kw": 154.46878060309746,
+      "pcc_reactive_power_kvar": 317.57788873235626,
+      "frequency_hz": 49.999279356885815,
+      "pcc_phase_angle_deg": -33.08661911968624,
+      "f1_voltage_v": 137.311377975547,
+      "f2_voltage_v": 179.9531170977924,
+      "delta_theta_deg": -1.593814345591042
     },
     "features": {
-      "feeder_phase_coupling": 1.30882382562325,
-      "power_balance_pf": 0.8916051430632703,
-      "aggregate_impedance_proxy": 1.668153955675105,
-      "voltage_sensitivity_stiffness": 0.004746056894182507
+      "feeder_phase_coupling": -1.593814345591042,
+      "power_balance_pf": 0.4374002972418045,
+      "aggregate_impedance_proxy": 1.444396894708979,
+      "voltage_sensitivity_stiffness": 0.0027699400098501266
     },
-    "hidden_state": {
-      "avg_electrical_distance": 1.0,
-      "loading_factor": 0.8858324162314847
-    },
-    "realization": {
-      "num_buses": 20,
-      "topology_type": "Radial"
-    },
-    "event": "Load Connected"
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 35,
+      "total_hidden_demand_kw": 703.2345099811736,
+      "avg_electrical_distance_km": 0.8076190476190475
+    }
   },
   {
     "sig_id": "S0009",
     "boundary": {
-      "f1_voltage": 139.02054230573597,
-      "f2_voltage": 137.78864632501177,
-      "f1_phase": 54.54036305214081,
-      "f2_phase": 53.96013301401987,
-      "f1_kw": 41.865690014826285,
-      "f1_kvar": 18.56935788971748,
-      "f2_kw": 45.54953151886562,
-      "f2_kvar": 23.75472527426052,
-      "delta_theta": 0.5802300381209449,
-      "p_total": 87.4152215336919,
-      "q_total": 42.324083163978,
-      "v_pcc": 147.93313561346739
+      "pcc_voltage_v": 242.3887807730812,
+      "pcc_current_a": -2.3684757858670005e-15,
+      "pcc_active_power_kw": 40.35531749626925,
+      "pcc_reactive_power_kvar": 102.13624317553266,
+      "frequency_hz": 49.98799985750406,
+      "pcc_phase_angle_deg": -30.718946582098862,
+      "f1_voltage_v": 229.89729521925497,
+      "f2_voltage_v": 195.97574699173666,
+      "delta_theta_deg": 2.3004222256918894
     },
     "features": {
-      "feeder_phase_coupling": 0.5802300381209449,
-      "power_balance_pf": 0.9000526596455483,
-      "aggregate_impedance_proxy": 1.692304055583116,
-      "voltage_sensitivity_stiffness": 0.004813209052125911
+      "feeder_phase_coupling": 2.3004222256918894,
+      "power_balance_pf": 0.3674688751264916,
+      "aggregate_impedance_proxy": 6.006365203027439,
+      "voltage_sensitivity_stiffness": 0.0010430992697281244
     },
-    "hidden_state": {
-      "avg_electrical_distance": 1.0,
-      "loading_factor": 0.874152215336919
-    },
-    "realization": {
+    "ground_truth": {
       "num_buses": 20,
-      "topology_type": "Radial"
-    },
-    "event": "Motor Start"
+      "topology_type": "Multi-drop",
+      "active_loads": 19,
+      "total_hidden_demand_kw": 351.8297325254535,
+      "avg_electrical_distance_km": 0.7716363636363636
+    }
   },
   {
     "sig_id": "S0010",
     "boundary": {
-      "f1_voltage": 135.73566266217685,
-      "f2_voltage": 143.20629908935697,
-      "f1_phase": 53.04036637781621,
-      "f2_phase": 57.12355785198872,
-      "f1_kw": 53.34515161297766,
-      "f1_kvar": 31.1184913990174,
-      "f2_kw": 21.571775204947045,
-      "f2_kvar": 11.394615453004004,
-      "delta_theta": -4.083191474172509,
-      "p_total": 74.9169268179247,
-      "q_total": 42.51310685202141,
-      "v_pcc": 148.03023303181502
+      "pcc_voltage_v": 237.5795598911735,
+      "pcc_current_a": 1.1842378929335002e-15,
+      "pcc_active_power_kw": 22.22624905260049,
+      "pcc_reactive_power_kvar": 157.52802842089557,
+      "frequency_hz": 50.026845800919745,
+      "pcc_phase_angle_deg": -30.280375907299533,
+      "f1_voltage_v": 201.01163693904684,
+      "f2_voltage_v": 206.75418647062193,
+      "delta_theta_deg": -0.597945209819553
     },
     "features": {
-      "feeder_phase_coupling": -4.083191474172509,
-      "power_balance_pf": 0.8697223382221038,
-      "aggregate_impedance_proxy": 1.9759250324784028,
-      "voltage_sensitivity_stiffness": 0.00579888620050505
+      "feeder_phase_coupling": -0.597945209819553,
+      "power_balance_pf": 0.13971014517649902,
+      "aggregate_impedance_proxy": 10.689142762675635,
+      "voltage_sensitivity_stiffness": 0.007308993301592256
     },
-    "hidden_state": {
-      "avg_electrical_distance": 1.0,
-      "loading_factor": 0.749169268179247
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 71,
+      "total_hidden_demand_kw": 1332.0836450261684,
+      "avg_electrical_distance_km": 0.8180609756097563
+    }
+  },
+  {
+    "sig_id": "S0011",
+    "boundary": {
+      "pcc_voltage_v": 235.08175650470608,
+      "pcc_current_a": 2.3684757858670005e-15,
+      "pcc_active_power_kw": -92.164790560207,
+      "pcc_reactive_power_kvar": 60.727876316591136,
+      "frequency_hz": 50.01063869773082,
+      "pcc_phase_angle_deg": -28.041920513759447,
+      "f1_voltage_v": 227.2768192817003,
+      "f2_voltage_v": 218.65592777307427,
+      "delta_theta_deg": 1.283153318629175
     },
-    "realization": {
+    "features": {
+      "feeder_phase_coupling": 1.283153318629175,
+      "power_balance_pf": -0.8350293752042175,
+      "aggregate_impedance_proxy": 2.5506676956041074,
+      "voltage_sensitivity_stiffness": 0.0005752007040376614
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 70,
+      "total_hidden_demand_kw": 1329.9380510845785,
+      "avg_electrical_distance_km": 0.890939024390244
+    }
+  },
+  {
+    "sig_id": "S0012",
+    "boundary": {
+      "pcc_voltage_v": 232.80838418424227,
+      "pcc_current_a": -7.105427357601002e-15,
+      "pcc_active_power_kw": -31.322122694054467,
+      "pcc_reactive_power_kvar": 82.90884953158127,
+      "frequency_hz": 50.0123424007797,
+      "pcc_phase_angle_deg": -29.254283404425525,
+      "f1_voltage_v": 200.94227885224572,
+      "f2_voltage_v": 222.08488470369085,
+      "delta_theta_deg": 0.12138641346866663
+    },
+    "features": {
+      "feeder_phase_coupling": 0.12138641346866663,
+      "power_balance_pf": -0.35341045601479976,
+      "aggregate_impedance_proxy": 7.432713900827666,
+      "voltage_sensitivity_stiffness": 0.005195704683753635
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 9,
+      "total_hidden_demand_kw": 145.82227368035726,
+      "avg_electrical_distance_km": 0.5886666666666667
+    }
+  },
+  {
+    "sig_id": "S0013",
+    "boundary": {
+      "pcc_voltage_v": 229.775773063373,
+      "pcc_current_a": -2.3684757858670005e-15,
+      "pcc_active_power_kw": -21.64203221135159,
+      "pcc_reactive_power_kvar": 118.37550359403104,
+      "frequency_hz": 49.987063008823185,
+      "pcc_phase_angle_deg": -29.40452891943445,
+      "f1_voltage_v": 191.79706761627457,
+      "f2_voltage_v": 215.37260949328478,
+      "delta_theta_deg": 2.893170939928222
+    },
+    "features": {
+      "feeder_phase_coupling": 2.893170939928222,
+      "power_balance_pf": -0.17984430845588956,
+      "aggregate_impedance_proxy": 10.617106573094619,
+      "voltage_sensitivity_stiffness": 0.009280345780705542
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Radial",
+      "active_loads": 8,
+      "total_hidden_demand_kw": 210.6301715430389,
+      "avg_electrical_distance_km": 0.7300833333333334
+    }
+  },
+  {
+    "sig_id": "S0014",
+    "boundary": {
+      "pcc_voltage_v": 202.34264169983314,
+      "pcc_current_a": 1.1842378929335002e-15,
+      "pcc_active_power_kw": 163.12065621701524,
+      "pcc_reactive_power_kvar": 311.58898754719996,
+      "frequency_hz": 50.00520875339514,
+      "pcc_phase_angle_deg": -33.282853983792705,
+      "f1_voltage_v": 142.54783989156965,
+      "f2_voltage_v": 123.60097487591042,
+      "delta_theta_deg": 1.430414711408332
+    },
+    "features": {
+      "feeder_phase_coupling": 1.430414711408332,
+      "power_balance_pf": 0.46380032707133156,
+      "aggregate_impedance_proxy": 1.2404476854861926,
+      "voltage_sensitivity_stiffness": 0.0024892657622035646
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Multi-drop",
+      "active_loads": 72,
+      "total_hidden_demand_kw": 1453.912865580626,
+      "avg_electrical_distance_km": 0.8339024390243903
+    }
+  },
+  {
+    "sig_id": "S0015",
+    "boundary": {
+      "pcc_voltage_v": 216.46567561993797,
+      "pcc_current_a": -4.736951571734001e-15,
+      "pcc_active_power_kw": 62.76139029468084,
+      "pcc_reactive_power_kvar": 136.76367953039335,
+      "frequency_hz": 49.99774412559565,
+      "pcc_phase_angle_deg": -31.159606408145365,
+      "f1_voltage_v": 171.31596985627917,
+      "f2_voltage_v": 183.34772972714254,
+      "delta_theta_deg": 0.6716058264544458
+    },
+    "features": {
+      "feeder_phase_coupling": 0.6716058264544458,
+      "power_balance_pf": 0.41708323108691747,
+      "aggregate_impedance_proxy": 3.4490260836248208,
+      "voltage_sensitivity_stiffness": 0.0045598647994985544
+    },
+    "ground_truth": {
       "num_buses": 20,
-      "topology_type": "Radial"
+      "topology_type": "Multi-drop",
+      "active_loads": 18,
+      "total_hidden_demand_kw": 347.2892782549247,
+      "avg_electrical_distance_km": 0.8058181818181818
+    }
+  },
+  {
+    "sig_id": "S0016",
+    "boundary": {
+      "pcc_voltage_v": 235.20041263274098,
+      "pcc_current_a": 9.473903143468002e-15,
+      "pcc_active_power_kw": 53.78196484952532,
+      "pcc_reactive_power_kvar": 183.01188531361103,
+      "frequency_hz": 49.97929801537096,
+      "pcc_phase_angle_deg": -30.92965986436047,
+      "f1_voltage_v": 183.13233875658884,
+      "f2_voltage_v": 207.97665025546894,
+      "delta_theta_deg": 0.8288623232562209
     },
-    "event": "Feeder Disconnected"
+    "features": {
+      "feeder_phase_coupling": 0.8288623232562209,
+      "power_balance_pf": 0.2819488972859299,
+      "aggregate_impedance_proxy": 4.373220817007693,
+      "voltage_sensitivity_stiffness": 0.0044057256883685385
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 19,
+      "total_hidden_demand_kw": 360.7151475366833,
+      "avg_electrical_distance_km": 0.7170454545454545
+    }
+  },
+  {
+    "sig_id": "S0017",
+    "boundary": {
+      "pcc_voltage_v": 242.83705673821987,
+      "pcc_current_a": 4.736951571734001e-15,
+      "pcc_active_power_kw": -9.915619402929938,
+      "pcc_reactive_power_kvar": 99.76736149762493,
+      "frequency_hz": 50.00487769731304,
+      "pcc_phase_angle_deg": -29.67457053589442,
+      "f1_voltage_v": 214.47931567144497,
+      "f2_voltage_v": 222.68402995472707,
+      "delta_theta_deg": -0.9911287198453493
+    },
+    "features": {
+      "feeder_phase_coupling": -0.9911287198453493,
+      "power_balance_pf": -0.09890014599206959,
+      "aggregate_impedance_proxy": 24.490354296586897,
+      "voltage_sensitivity_stiffness": 0.010724108061951594
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Radial",
+      "active_loads": 9,
+      "total_hidden_demand_kw": 163.46235432086863,
+      "avg_electrical_distance_km": 0.56725
+    }
+  },
+  {
+    "sig_id": "S0018",
+    "boundary": {
+      "pcc_voltage_v": 223.98712243123705,
+      "pcc_current_a": 7.105427357601002e-15,
+      "pcc_active_power_kw": -88.66156012641929,
+      "pcc_reactive_power_kvar": 52.1231719977792,
+      "frequency_hz": 50.01032525970689,
+      "pcc_phase_angle_deg": -28.1293015618194,
+      "f1_voltage_v": 223.98719307591594,
+      "f2_voltage_v": 199.55310855898406,
+      "delta_theta_deg": 0.8143090556262749
+    },
+    "features": {
+      "feeder_phase_coupling": 0.8143090556262749,
+      "power_balance_pf": -0.8620645720208158,
+      "aggregate_impedance_proxy": 2.5263160222484915,
+      "voltage_sensitivity_stiffness": 0.0007525248597328053
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Radial",
+      "active_loads": 16,
+      "total_hidden_demand_kw": 270.70459833038205,
+      "avg_electrical_distance_km": 0.8035909090909091
+    }
+  },
+  {
+    "sig_id": "S0019",
+    "boundary": {
+      "pcc_voltage_v": 211.0735569070276,
+      "pcc_current_a": -2.5165055224836883e-15,
+      "pcc_active_power_kw": 31.7908994033552,
+      "pcc_reactive_power_kvar": 205.64077443562886,
+      "frequency_hz": 50.00441952117372,
+      "pcc_phase_angle_deg": -30.43288052310847,
+      "f1_voltage_v": 199.01845685991842,
+      "f2_voltage_v": 136.8329321961889,
+      "delta_theta_deg": -3.764383837197691
+    },
+    "features": {
+      "feeder_phase_coupling": -3.764383837197691,
+      "power_balance_pf": 0.15277944771281812,
+      "aggregate_impedance_proxy": 6.639433115419121,
+      "voltage_sensitivity_stiffness": 0.005371236032443998
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 17,
+      "total_hidden_demand_kw": 391.2350620923147,
+      "avg_electrical_distance_km": 0.6854999999999998
+    }
+  },
+  {
+    "sig_id": "S0020",
+    "boundary": {
+      "pcc_voltage_v": 217.01967874198613,
+      "pcc_current_a": -2.3684757858670005e-15,
+      "pcc_active_power_kw": 27.54468588070712,
+      "pcc_reactive_power_kvar": 131.36124974855562,
+      "frequency_hz": 50.012538199026224,
+      "pcc_phase_angle_deg": -30.421352486219522,
+      "f1_voltage_v": 170.42518769673936,
+      "f2_voltage_v": 194.21804818555526,
+      "delta_theta_deg": -1.6957710770623642
+    },
+    "features": {
+      "feeder_phase_coupling": -1.6957710770623642,
+      "power_balance_pf": 0.20522339285717472,
+      "aggregate_impedance_proxy": 7.878821773573737,
+      "voltage_sensitivity_stiffness": 0.010524536093624453
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 16,
+      "total_hidden_demand_kw": 350.8383796957759,
+      "avg_electrical_distance_km": 0.7198636363636365
+    }
+  },
+  {
+    "sig_id": "S0021",
+    "boundary": {
+      "pcc_voltage_v": 242.53692407000395,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": 44.60688264654344,
+      "pcc_reactive_power_kvar": 100.27005218185525,
+      "frequency_hz": 49.996327229697876,
+      "pcc_phase_angle_deg": -30.80930762130161,
+      "f1_voltage_v": 223.43709951628855,
+      "f2_voltage_v": 202.29070960314175,
+      "delta_theta_deg": 1.6213497884871018
+    },
+    "features": {
+      "feeder_phase_coupling": 1.6213497884871018,
+      "power_balance_pf": 0.4064611749867447,
+      "aggregate_impedance_proxy": 5.4372084360750454,
+      "voltage_sensitivity_stiffness": 0.0015471173887787466
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 17,
+      "total_hidden_demand_kw": 335.18047748701514,
+      "avg_electrical_distance_km": 0.6336363636363637
+    }
+  },
+  {
+    "sig_id": "S0022",
+    "boundary": {
+      "pcc_voltage_v": 250.45882936264226,
+      "pcc_current_a": -5.921189464667502e-15,
+      "pcc_active_power_kw": -102.08479113840664,
+      "pcc_reactive_power_kvar": 20.452429152623527,
+      "frequency_hz": 50.032981270991236,
+      "pcc_phase_angle_deg": -27.916700284063353,
+      "f1_voltage_v": 243.87917483177168,
+      "f2_voltage_v": 244.23241246416742,
+      "delta_theta_deg": 0.22732983244892324
+    },
+    "features": {
+      "feeder_phase_coupling": 0.22732983244892324,
+      "power_balance_pf": -0.9805150932838204,
+      "aggregate_impedance_proxy": 2.453439186348834,
+      "voltage_sensitivity_stiffness": -0.0001583314039940569
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Radial",
+      "active_loads": 32,
+      "total_hidden_demand_kw": 614.6478321611902,
+      "avg_electrical_distance_km": 0.8226666666666667
+    }
+  },
+  {
+    "sig_id": "S0023",
+    "boundary": {
+      "pcc_voltage_v": 219.55821435304094,
+      "pcc_current_a": -4.736951571734001e-15,
+      "pcc_active_power_kw": -25.552851516076544,
+      "pcc_reactive_power_kvar": 102.6988576548658,
+      "frequency_hz": 49.996646549254855,
+      "pcc_phase_angle_deg": -29.345285203940623,
+      "f1_voltage_v": 193.16966373521961,
+      "f2_voltage_v": 195.25362727193848,
+      "delta_theta_deg": -1.8002349523701078
+    },
+    "features": {
+      "feeder_phase_coupling": -1.8002349523701078,
+      "power_balance_pf": -0.24145171051280828,
+      "aggregate_impedance_proxy": 8.592317206656524,
+      "voltage_sensitivity_stiffness": 0.0076361886008807865
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Radial",
+      "active_loads": 17,
+      "total_hidden_demand_kw": 308.38244373321555,
+      "avg_electrical_distance_km": 0.8136363636363634
+    }
+  },
+  {
+    "sig_id": "S0024",
+    "boundary": {
+      "pcc_voltage_v": 215.0967861949216,
+      "pcc_current_a": -4.736951571734001e-15,
+      "pcc_active_power_kw": 13.267769618272967,
+      "pcc_reactive_power_kvar": 156.2107119873322,
+      "frequency_hz": 50.004965135882095,
+      "pcc_phase_angle_deg": -30.091420740466877,
+      "f1_voltage_v": 172.61376261547966,
+      "f2_voltage_v": 185.62954014976424,
+      "delta_theta_deg": 0.8132067368169551
+    },
+    "features": {
+      "feeder_phase_coupling": 0.8132067368169551,
+      "power_balance_pf": 0.08463036953395355,
+      "aggregate_impedance_proxy": 16.21197655457509,
+      "voltage_sensitivity_stiffness": 0.021162258316063352
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 67,
+      "total_hidden_demand_kw": 1378.1970310682448,
+      "avg_electrical_distance_km": 0.8243536585365856
+    }
+  },
+  {
+    "sig_id": "S0025",
+    "boundary": {
+      "pcc_voltage_v": 246.63691738399257,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": -64.45466764847819,
+      "pcc_reactive_power_kvar": 60.58569150005222,
+      "frequency_hz": 50.00560513419473,
+      "pcc_phase_angle_deg": -28.60835370826587,
+      "f1_voltage_v": 246.63699517232988,
+      "f2_voltage_v": 217.6705744922959,
+      "delta_theta_deg": 1.469799895162808
+    },
+    "features": {
+      "feeder_phase_coupling": 1.469799895162808,
+      "power_balance_pf": -0.7286372291174809,
+      "aggregate_impedance_proxy": 3.8265174975779788,
+      "voltage_sensitivity_stiffness": -0.00042904799809295686
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Radial",
+      "active_loads": 35,
+      "total_hidden_demand_kw": 666.8436696431447,
+      "avg_electrical_distance_km": 0.8341190476190479
+    }
+  },
+  {
+    "sig_id": "S0026",
+    "boundary": {
+      "pcc_voltage_v": 226.56172989445795,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": 69.60427509550641,
+      "pcc_reactive_power_kvar": 151.9429469338899,
+      "frequency_hz": 50.007757775074154,
+      "pcc_phase_angle_deg": -31.293100414130322,
+      "f1_voltage_v": 190.2330950732069,
+      "f2_voltage_v": 183.58527798706197,
+      "delta_theta_deg": -1.3184654210198659
+    },
+    "features": {
+      "feeder_phase_coupling": -1.3184654210198659,
+      "power_balance_pf": 0.41647549149600605,
+      "aggregate_impedance_proxy": 3.2549972875744713,
+      "voltage_sensitivity_stiffness": 0.0029791575387855375
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 20,
+      "total_hidden_demand_kw": 365.6995450364742,
+      "avg_electrical_distance_km": 0.6995454545454547
+    }
+  },
+  {
+    "sig_id": "S0027",
+    "boundary": {
+      "pcc_voltage_v": 232.06735969821383,
+      "pcc_current_a": -5.921189464667502e-15,
+      "pcc_active_power_kw": 6.977191199530929,
+      "pcc_reactive_power_kvar": 89.30003116715406,
+      "frequency_hz": 50.030199707321366,
+      "pcc_phase_angle_deg": -30.03838226116567,
+      "f1_voltage_v": 201.81857941781934,
+      "f2_voltage_v": 210.1735864801558,
+      "delta_theta_deg": 0.19772669142817278
+    },
+    "features": {
+      "feeder_phase_coupling": 0.19772669142817278,
+      "power_balance_pf": 0.07789461573665725,
+      "aggregate_impedance_proxy": 33.26085236892507,
+      "voltage_sensitivity_stiffness": 0.022801328654304266
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Radial",
+      "active_loads": 38,
+      "total_hidden_demand_kw": 701.2099620538321,
+      "avg_electrical_distance_km": 0.8342142857142857
+    }
+  },
+  {
+    "sig_id": "S0028",
+    "boundary": {
+      "pcc_voltage_v": 224.99011790361956,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": -76.11308372270378,
+      "pcc_reactive_power_kvar": 38.42329897680538,
+      "frequency_hz": 49.99548198466181,
+      "pcc_phase_angle_deg": -28.40867555701846,
+      "f1_voltage_v": 216.87413325725728,
+      "f2_voltage_v": 208.83318069421043,
+      "delta_theta_deg": 0.5606954182238226
+    },
+    "features": {
+      "feeder_phase_coupling": 0.5606954182238226,
+      "power_balance_pf": -0.8926999414836035,
+      "aggregate_impedance_proxy": 2.955997890813473,
+      "voltage_sensitivity_stiffness": 0.001265981774957792
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Radial",
+      "active_loads": 8,
+      "total_hidden_demand_kw": 99.68205803734585,
+      "avg_electrical_distance_km": 0.7786666666666667
+    }
+  },
+  {
+    "sig_id": "S0029",
+    "boundary": {
+      "pcc_voltage_v": 222.17594992440243,
+      "pcc_current_a": -2.3684757858670005e-15,
+      "pcc_active_power_kw": -49.09937897831014,
+      "pcc_reactive_power_kvar": 71.56816314708541,
+      "frequency_hz": 49.98913045981718,
+      "pcc_phase_angle_deg": -28.905276309242385,
+      "f1_voltage_v": 200.39722321294266,
+      "f2_voltage_v": 205.83689369728538,
+      "delta_theta_deg": 0.5928193726369066
+    },
+    "features": {
+      "feeder_phase_coupling": 0.5928193726369066,
+      "power_balance_pf": -0.5657169462969408,
+      "aggregate_impedance_proxy": 4.525025571046918,
+      "voltage_sensitivity_stiffness": 0.0033607668776869854
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Radial",
+      "active_loads": 15,
+      "total_hidden_demand_kw": 251.08012572472992,
+      "avg_electrical_distance_km": 0.7601363636363637
+    }
+  },
+  {
+    "sig_id": "S0030",
+    "boundary": {
+      "pcc_voltage_v": 223.88635302106889,
+      "pcc_current_a": -4.736951571734001e-15,
+      "pcc_active_power_kw": -79.52630596969288,
+      "pcc_reactive_power_kvar": 52.58041759515088,
+      "frequency_hz": 49.98069972724557,
+      "pcc_phase_angle_deg": -28.31451769064965,
+      "f1_voltage_v": 207.61647807718097,
+      "f2_voltage_v": 213.48145911027527,
+      "delta_theta_deg": -1.3600544772892498
+    },
+    "features": {
+      "feeder_phase_coupling": -1.3600544772892498,
+      "power_balance_pf": -0.8341603837375557,
+      "aggregate_impedance_proxy": 2.8152489604023856,
+      "voltage_sensitivity_stiffness": 0.001696688133607173
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Radial",
+      "active_loads": 8,
+      "total_hidden_demand_kw": 150.60515842629266,
+      "avg_electrical_distance_km": 0.8141666666666668
+    }
+  },
+  {
+    "sig_id": "S0031",
+    "boundary": {
+      "pcc_voltage_v": 213.1971761079426,
+      "pcc_current_a": -2.3684757858670005e-15,
+      "pcc_active_power_kw": 34.173028850731725,
+      "pcc_reactive_power_kvar": 178.92113444100906,
+      "frequency_hz": 50.00306333254967,
+      "pcc_phase_angle_deg": -30.512511721414047,
+      "f1_voltage_v": 167.21313536818002,
+      "f2_voltage_v": 177.73982285764714,
+      "delta_theta_deg": 1.4552841808531554
+    },
+    "features": {
+      "feeder_phase_coupling": 1.4552841808531554,
+      "power_balance_pf": 0.18760376982501242,
+      "aggregate_impedance_proxy": 6.238755446596069,
+      "voltage_sensitivity_stiffness": 0.008874794068811236
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 34,
+      "total_hidden_demand_kw": 622.228441896036,
+      "avg_electrical_distance_km": 0.9305238095238095
+    }
+  },
+  {
+    "sig_id": "S0032",
+    "boundary": {
+      "pcc_voltage_v": 229.2645352145289,
+      "pcc_current_a": 1.3322676295501878e-15,
+      "pcc_active_power_kw": 13.18904917118962,
+      "pcc_reactive_power_kvar": 122.3226117305652,
+      "frequency_hz": 49.99625917055682,
+      "pcc_phase_angle_deg": -30.129444677266083,
+      "f1_voltage_v": 201.85798283436202,
+      "f2_voltage_v": 195.75257791971373,
+      "delta_theta_deg": -0.2628874415279405
+    },
+    "features": {
+      "feeder_phase_coupling": -0.2628874415279405,
+      "power_balance_pf": 0.10720050816086354,
+      "aggregate_impedance_proxy": 17.38294511270707,
+      "voltage_sensitivity_stiffness": 0.012049773824551076
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 69,
+      "total_hidden_demand_kw": 1460.9575791554673,
+      "avg_electrical_distance_km": 0.8329024390243901
+    }
+  },
+  {
+    "sig_id": "S0033",
+    "boundary": {
+      "pcc_voltage_v": 233.51404582395344,
+      "pcc_current_a": 3.552713678800501e-15,
+      "pcc_active_power_kw": 66.55014402767004,
+      "pcc_reactive_power_kvar": 201.6194146090702,
+      "frequency_hz": 49.98479563579554,
+      "pcc_phase_angle_deg": -31.18956283959348,
+      "f1_voltage_v": 233.5141194733875,
+      "f2_voltage_v": 147.68583639677738,
+      "delta_theta_deg": 2.476877971507779
+    },
+    "features": {
+      "feeder_phase_coupling": 2.476877971507779,
+      "power_balance_pf": 0.313444293520199,
+      "aggregate_impedance_proxy": 3.5088435303463816,
+      "voltage_sensitivity_stiffness": 0.00040607728477500145
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Multi-drop",
+      "active_loads": 68,
+      "total_hidden_demand_kw": 1287.4877459923478,
+      "avg_electrical_distance_km": 0.7825487804878049
+    }
+  },
+  {
+    "sig_id": "S0034",
+    "boundary": {
+      "pcc_voltage_v": 236.56656379325418,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": 48.202447196841945,
+      "pcc_reactive_power_kvar": 167.76770480467258,
+      "frequency_hz": 50.01277514654308,
+      "pcc_phase_angle_deg": -30.82380203002664,
+      "f1_voltage_v": 201.86750705445914,
+      "f2_voltage_v": 196.39329547432317,
+      "delta_theta_deg": -0.4376598162600125
+    },
+    "features": {
+      "feeder_phase_coupling": -0.4376598162600125,
+      "power_balance_pf": 0.27614461151996983,
+      "aggregate_impedance_proxy": 4.907770717935302,
+      "voltage_sensitivity_stiffness": 0.0032962099066888577
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 69,
+      "total_hidden_demand_kw": 1460.5313379819584,
+      "avg_electrical_distance_km": 0.8136585365853658
+    }
+  },
+  {
+    "sig_id": "S0035",
+    "boundary": {
+      "pcc_voltage_v": 227.7447401281174,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": -11.527398820520137,
+      "pcc_reactive_power_kvar": 141.90132652999432,
+      "frequency_hz": 50.040194259388336,
+      "pcc_phase_angle_deg": -29.584391770261004,
+      "f1_voltage_v": 196.58329365515115,
+      "f2_voltage_v": 199.03610203540657,
+      "delta_theta_deg": -1.5702532528716482
+    },
+    "features": {
+      "feeder_phase_coupling": -1.5702532528716482,
+      "power_balance_pf": -0.08096858976791947,
+      "aggregate_impedance_proxy": 19.756817987930358,
+      "voltage_sensitivity_stiffness": 0.015693299956639675
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Radial",
+      "active_loads": 34,
+      "total_hidden_demand_kw": 748.1450100764126,
+      "avg_electrical_distance_km": 0.8658809523809523
+    }
+  },
+  {
+    "sig_id": "S0036",
+    "boundary": {
+      "pcc_voltage_v": 223.7711599361351,
+      "pcc_current_a": -7.105427357601002e-15,
+      "pcc_active_power_kw": -51.83117730743432,
+      "pcc_reactive_power_kvar": 51.75741568334142,
+      "frequency_hz": 49.99505671365491,
+      "pcc_phase_angle_deg": -28.880501306397207,
+      "f1_voltage_v": 206.4650405487789,
+      "f2_voltage_v": 208.16132794893846,
+      "delta_theta_deg": 0.18844916694989067
+    },
+    "features": {
+      "feeder_phase_coupling": 0.18844916694989067,
+      "power_balance_pf": -0.7076100968460449,
+      "aggregate_impedance_proxy": 4.31730798417984,
+      "voltage_sensitivity_stiffness": 0.0026958483730511584
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 8,
+      "total_hidden_demand_kw": 179.19570219756906,
+      "avg_electrical_distance_km": 0.6968333333333333
+    }
+  },
+  {
+    "sig_id": "S0037",
+    "boundary": {
+      "pcc_voltage_v": 230.8849380460176,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": -21.571793209403502,
+      "pcc_reactive_power_kvar": 105.15570447780215,
+      "frequency_hz": 50.00474070457428,
+      "pcc_phase_angle_deg": -29.424664449446144,
+      "f1_voltage_v": 200.13764132254036,
+      "f2_voltage_v": 212.0156908663951,
+      "delta_theta_deg": 0.4134514492769803
+    },
+    "features": {
+      "feeder_phase_coupling": 0.4134514492769803,
+      "power_balance_pf": -0.2009565882954289,
+      "aggregate_impedance_proxy": 10.703093855093936,
+      "voltage_sensitivity_stiffness": 0.0076995524592794
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 9,
+      "total_hidden_demand_kw": 199.464884415568,
+      "avg_electrical_distance_km": 0.6341666666666667
+    }
+  },
+  {
+    "sig_id": "S0038",
+    "boundary": {
+      "pcc_voltage_v": 6.284854467907601,
+      "pcc_current_a": -7.401486830834377e-17,
+      "pcc_active_power_kw": 0.007722267054882762,
+      "pcc_reactive_power_kvar": -0.008264270025554594,
+      "frequency_hz": 49.99741181024293,
+      "pcc_phase_angle_deg": 65.21814741999108,
+      "f1_voltage_v": 0.8153682197421027,
+      "f2_voltage_v": 6.284854467907601,
+      "delta_theta_deg": 9.140330880643418
+    },
+    "features": {
+      "feeder_phase_coupling": 9.140330880643418,
+      "power_balance_pf": 0.6826805987994053,
+      "aggregate_impedance_proxy": 813.7559433393183,
+      "voltage_sensitivity_stiffness": 129.03899675302236
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 31,
+      "total_hidden_demand_kw": 676.5465975220645,
+      "avg_electrical_distance_km": 0.8478095238095238
+    }
+  },
+  {
+    "sig_id": "S0039",
+    "boundary": {
+      "pcc_voltage_v": 218.9748625602417,
+      "pcc_current_a": 3.552713678800501e-15,
+      "pcc_active_power_kw": -56.376379679073935,
+      "pcc_reactive_power_kvar": 112.3177599122636,
+      "frequency_hz": 50.00232765648393,
+      "pcc_phase_angle_deg": -28.68850745129737,
+      "f1_voltage_v": 176.46738883072067,
+      "f2_voltage_v": 215.8460503205422,
+      "delta_theta_deg": 1.6715937854130836
+    },
+    "features": {
+      "feeder_phase_coupling": 1.6715937854130836,
+      "power_balance_pf": -0.44859760555233563,
+      "aggregate_impedance_proxy": 3.8841596413712645,
+      "voltage_sensitivity_stiffness": 0.004695569492342213
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 8,
+      "total_hidden_demand_kw": 153.46714167434453,
+      "avg_electrical_distance_km": 0.77775
+    }
+  },
+  {
+    "sig_id": "S0040",
+    "boundary": {
+      "pcc_voltage_v": 243.3642931703605,
+      "pcc_current_a": 1.0658141036401503e-14,
+      "pcc_active_power_kw": 9.743385343225968,
+      "pcc_reactive_power_kvar": 92.61912763702557,
+      "frequency_hz": 50.03839004416876,
+      "pcc_phase_angle_deg": -30.09190040855474,
+      "f1_voltage_v": 199.8039613417494,
+      "f2_voltage_v": 236.05444000337556,
+      "delta_theta_deg": -2.2301935784800797
+    },
+    "features": {
+      "feeder_phase_coupling": -2.2301935784800797,
+      "power_balance_pf": 0.10462110032169779,
+      "aggregate_impedance_proxy": 24.977383077861642,
+      "voltage_sensitivity_stiffness": 0.01718945431388127
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Radial",
+      "active_loads": 31,
+      "total_hidden_demand_kw": 564.5987322169532,
+      "avg_electrical_distance_km": 0.7155
+    }
+  },
+  {
+    "sig_id": "S0041",
+    "boundary": {
+      "pcc_voltage_v": 231.11593121867068,
+      "pcc_current_a": 1.1842378929335002e-15,
+      "pcc_active_power_kw": -25.596204574145148,
+      "pcc_reactive_power_kvar": 102.6777571598762,
+      "frequency_hz": 50.00844088400681,
+      "pcc_phase_angle_deg": -29.34441354168656,
+      "f1_voltage_v": 203.4548121753205,
+      "f2_voltage_v": 210.74380811653523,
+      "delta_theta_deg": -3.1920091380443303
+    },
+    "features": {
+      "feeder_phase_coupling": -3.1920091380443303,
+      "power_balance_pf": -0.24188420969441055,
+      "aggregate_impedance_proxy": 9.029304384557765,
+      "voltage_sensitivity_stiffness": 0.005948991755636424
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 8,
+      "total_hidden_demand_kw": 181.74666914834194,
+      "avg_electrical_distance_km": 0.8307500000000001
+    }
+  },
+  {
+    "sig_id": "S0042",
+    "boundary": {
+      "pcc_voltage_v": 218.705021801459,
+      "pcc_current_a": -3.552713678800501e-15,
+      "pcc_active_power_kw": -27.547467447791757,
+      "pcc_reactive_power_kvar": 113.5387784716732,
+      "frequency_hz": 50.01563355439715,
+      "pcc_phase_angle_deg": -29.28803817668083,
+      "f1_voltage_v": 165.93601258881256,
+      "f2_voltage_v": 218.70510638052534,
+      "delta_theta_deg": -1.0592061637660741
+    },
+    "features": {
+      "feeder_phase_coupling": -1.0592061637660741,
+      "power_balance_pf": -0.23578526801555968,
+      "aggregate_impedance_proxy": 7.939205819073756,
+      "voltage_sensitivity_stiffness": 0.011202479390491947
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 15,
+      "total_hidden_demand_kw": 323.1112723389765,
+      "avg_electrical_distance_km": 0.7896363636363636
+    }
+  },
+  {
+    "sig_id": "S0043",
+    "boundary": {
+      "pcc_voltage_v": 217.5371625195472,
+      "pcc_current_a": -4.884981308350689e-15,
+      "pcc_active_power_kw": 8.044839720358663,
+      "pcc_reactive_power_kvar": 125.9217403491536,
+      "frequency_hz": 49.98854854188478,
+      "pcc_phase_angle_deg": -30.017170933313494,
+      "f1_voltage_v": 181.85679452645263,
+      "f2_voltage_v": 189.40243163587206,
+      "delta_theta_deg": -0.011745757714972882
+    },
+    "features": {
+      "feeder_phase_coupling": -0.011745757714972882,
+      "power_balance_pf": 0.0637576299706033,
+      "aggregate_impedance_proxy": 27.04058042678672,
+      "voltage_sensitivity_stiffness": 0.030114127123324806
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Radial",
+      "active_loads": 33,
+      "total_hidden_demand_kw": 650.7805584235971,
+      "avg_electrical_distance_km": 0.8198333333333335
+    }
+  },
+  {
+    "sig_id": "S0044",
+    "boundary": {
+      "pcc_voltage_v": 228.0822846727119,
+      "pcc_current_a": 2.3684757858670005e-15,
+      "pcc_active_power_kw": 116.6339461752336,
+      "pcc_reactive_power_kvar": 261.7537196108432,
+      "frequency_hz": 50.00237412829555,
+      "pcc_phase_angle_deg": -32.25135716277334,
+      "f1_voltage_v": 173.6056006475571,
+      "f2_voltage_v": 173.75480078787254,
+      "delta_theta_deg": -4.725340844603821
+    },
+    "features": {
+      "feeder_phase_coupling": -4.725340844603821,
+      "power_balance_pf": 0.4070094551373265,
+      "aggregate_impedance_proxy": 1.9555394479622272,
+      "voltage_sensitivity_stiffness": 0.002371893752507091
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 30,
+      "total_hidden_demand_kw": 585.457369898297,
+      "avg_electrical_distance_km": 0.8605714285714287
+    }
+  },
+  {
+    "sig_id": "S0045",
+    "boundary": {
+      "pcc_voltage_v": 238.64884042179133,
+      "pcc_current_a": -2.3684757858670005e-15,
+      "pcc_active_power_kw": -109.34318519673724,
+      "pcc_reactive_power_kvar": 19.750345044232937,
+      "frequency_hz": 50.00722192042726,
+      "pcc_phase_angle_deg": -27.77209196644535,
+      "f1_voltage_v": 231.79980564790424,
+      "f2_voltage_v": 233.83035236207866,
+      "delta_theta_deg": -0.3531095076933788
+    },
+    "features": {
+      "feeder_phase_coupling": -0.3531095076933788,
+      "power_balance_pf": -0.9840755350859962,
+      "aggregate_impedance_proxy": 2.1825670965212147,
+      "voltage_sensitivity_stiffness": 0.00031247924681460565
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Radial",
+      "active_loads": 9,
+      "total_hidden_demand_kw": 156.81110754643834,
+      "avg_electrical_distance_km": 0.72625
+    }
+  },
+  {
+    "sig_id": "S0046",
+    "boundary": {
+      "pcc_voltage_v": 0.0,
+      "pcc_current_a": -4.258e-320,
+      "pcc_active_power_kw": 0.0,
+      "pcc_reactive_power_kvar": 0.0,
+      "frequency_hz": 50.008088336958544,
+      "pcc_phase_angle_deg": 43.88684195222294,
+      "f1_voltage_v": 0.0,
+      "f2_voltage_v": 0.0,
+      "delta_theta_deg": -3.606166302272314
+    },
+    "features": {
+      "feeder_phase_coupling": -3.606166302272314,
+      "power_balance_pf": 0.0,
+      "aggregate_impedance_proxy": 0.0,
+      "voltage_sensitivity_stiffness": 1000000.0
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Radial",
+      "active_loads": 37,
+      "total_hidden_demand_kw": 737.0627764274993,
+      "avg_electrical_distance_km": 0.7387142857142854
+    }
+  },
+  {
+    "sig_id": "S0047",
+    "boundary": {
+      "pcc_voltage_v": 223.47687426967218,
+      "pcc_current_a": 5.921189464667502e-15,
+      "pcc_active_power_kw": -42.106258415053205,
+      "pcc_reactive_power_kvar": 54.71828066055957,
+      "frequency_hz": 49.993141102324735,
+      "pcc_phase_angle_deg": -29.0744902706038,
+      "f1_voltage_v": 198.72806815363185,
+      "f2_voltage_v": 212.4535127459087,
+      "delta_theta_deg": -1.451032242057753
+    },
+    "features": {
+      "feeder_phase_coupling": -1.451032242057753,
+      "power_balance_pf": -0.6098497197461121,
+      "aggregate_impedance_proxy": 5.307450183755294,
+      "voltage_sensitivity_stiffness": 0.004084104954517089
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 8,
+      "total_hidden_demand_kw": 135.04368819854392,
+      "avg_electrical_distance_km": 0.6036666666666667
+    }
+  },
+  {
+    "sig_id": "S0048",
+    "boundary": {
+      "pcc_voltage_v": 6.284854467907601,
+      "pcc_current_a": 7.401486830834377e-17,
+      "pcc_active_power_kw": 0.006987076011372648,
+      "pcc_reactive_power_kvar": -0.007472594859635432,
+      "frequency_hz": 50.029718257243545,
+      "pcc_phase_angle_deg": 65.21814741999108,
+      "f1_voltage_v": 0.8153682197421027,
+      "f2_voltage_v": 6.284854467907601,
+      "delta_theta_deg": 9.140330880643418
+    },
+    "features": {
+      "feeder_phase_coupling": 9.140330880643418,
+      "power_balance_pf": 0.6829122838095855,
+      "aggregate_impedance_proxy": 899.3683608591838,
+      "voltage_sensitivity_stiffness": 142.6147384195355
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Multi-drop",
+      "active_loads": 75,
+      "total_hidden_demand_kw": 1731.6240175941855,
+      "avg_electrical_distance_km": 0.7114634146341465
+    }
+  },
+  {
+    "sig_id": "S0049",
+    "boundary": {
+      "pcc_voltage_v": 242.11246931587138,
+      "pcc_current_a": 7.105427357601002e-15,
+      "pcc_active_power_kw": -10.521954667943737,
+      "pcc_reactive_power_kvar": 108.02541069293473,
+      "frequency_hz": 50.01179708739201,
+      "pcc_phase_angle_deg": -29.651054704773177,
+      "f1_voltage_v": 223.1304178023688,
+      "f2_voltage_v": 210.987778346169,
+      "delta_theta_deg": -1.6531454175036941
+    },
+    "features": {
+      "feeder_phase_coupling": -1.6531454175036941,
+      "power_balance_pf": -0.09694380780658166,
+      "aggregate_impedance_proxy": 23.010215682004148,
+      "voltage_sensitivity_stiffness": 0.0066803100147636105
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 8,
+      "total_hidden_demand_kw": 176.57023024917447,
+      "avg_electrical_distance_km": 0.747
+    }
+  },
+  {
+    "sig_id": "S0050",
+    "boundary": {
+      "pcc_voltage_v": 0.0,
+      "pcc_current_a": -5e-324,
+      "pcc_active_power_kw": 0.0,
+      "pcc_reactive_power_kvar": 0.0,
+      "frequency_hz": 49.98532249701808,
+      "pcc_phase_angle_deg": 74.99999999596919,
+      "f1_voltage_v": 20.0,
+      "f2_voltage_v": 20.0,
+      "delta_theta_deg": 15.000000004447234
+    },
+    "features": {
+      "feeder_phase_coupling": 15.000000004447234,
+      "power_balance_pf": 0.0,
+      "aggregate_impedance_proxy": 0.0,
+      "voltage_sensitivity_stiffness": 916666.6666666666
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 9,
+      "total_hidden_demand_kw": 184.61758816364775,
+      "avg_electrical_distance_km": 0.6942500000000001
+    }
+  },
+  {
+    "sig_id": "S0051",
+    "boundary": {
+      "pcc_voltage_v": 231.72381382479173,
+      "pcc_current_a": -7.105427357601002e-15,
+      "pcc_active_power_kw": -76.08522987184838,
+      "pcc_reactive_power_kvar": 99.36760107770792,
+      "frequency_hz": 50.01335556566599,
+      "pcc_phase_angle_deg": -28.30150424709109,
+      "f1_voltage_v": 195.6334993566767,
+      "f2_voltage_v": 231.72391444304128,
+      "delta_theta_deg": 1.2820623062441179
+    },
+    "features": {
+      "feeder_phase_coupling": 1.2820623062441179,
+      "power_balance_pf": -0.6079453075885267,
+      "aggregate_impedance_proxy": 3.0455820554068898,
+      "voltage_sensitivity_stiffness": 0.002429649187219315
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Radial",
+      "active_loads": 9,
+      "total_hidden_demand_kw": 227.36326577723474,
+      "avg_electrical_distance_km": 0.65475
+    }
+  },
+  {
+    "sig_id": "S0052",
+    "boundary": {
+      "pcc_voltage_v": 219.6123844270321,
+      "pcc_current_a": -8.585724723767877e-15,
+      "pcc_active_power_kw": 113.43011133515517,
+      "pcc_reactive_power_kvar": 233.38811671550124,
+      "frequency_hz": 50.01439787359072,
+      "pcc_phase_angle_deg": -32.192260932430685,
+      "f1_voltage_v": 130.26508000106705,
+      "f2_voltage_v": 201.74980186113248,
+      "delta_theta_deg": -1.1381691575101058
+    },
+    "features": {
+      "feeder_phase_coupling": -1.1381691575101058,
+      "power_balance_pf": 0.43712273946063973,
+      "aggregate_impedance_proxy": 1.9361030321308081,
+      "voltage_sensitivity_stiffness": 0.004030929917250723
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 37,
+      "total_hidden_demand_kw": 751.2633878378493,
+      "avg_electrical_distance_km": 0.7999761904761906
+    }
+  },
+  {
+    "sig_id": "S0053",
+    "boundary": {
+      "pcc_voltage_v": 212.45597141794426,
+      "pcc_current_a": -3.552713678800501e-15,
+      "pcc_active_power_kw": 218.5178579001106,
+      "pcc_reactive_power_kvar": 318.557072446145,
+      "frequency_hz": 50.025973819767636,
+      "pcc_phase_angle_deg": -34.5396632974768,
+      "f1_voltage_v": 112.35958570136415,
+      "f2_voltage_v": 166.02671438109044,
+      "delta_theta_deg": -4.869473573837524
+    },
+    "features": {
+      "feeder_phase_coupling": -4.869473573837524,
+      "power_balance_pf": 0.5656669562957658,
+      "aggregate_impedance_proxy": 0.9722590752413633,
+      "voltage_sensitivity_stiffness": 0.0024338288058220587
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Multi-drop",
+      "active_loads": 67,
+      "total_hidden_demand_kw": 1303.8187008490922,
+      "avg_electrical_distance_km": 0.8300975609756096
+    }
+  },
+  {
+    "sig_id": "S0054",
+    "boundary": {
+      "pcc_voltage_v": 219.55268880664653,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": -24.473071685955894,
+      "pcc_reactive_power_kvar": 102.6940307197632,
+      "frequency_hz": 49.96101520423937,
+      "pcc_phase_angle_deg": -29.367755981148818,
+      "f1_voltage_v": 188.0183609273572,
+      "f2_voltage_v": 200.11202661499877,
+      "delta_theta_deg": 0.9411604380034646
+    },
+    "features": {
+      "feeder_phase_coupling": 0.9411604380034646,
+      "power_balance_pf": -0.23181873715410356,
+      "aggregate_impedance_proxy": 8.971194243730537,
+      "voltage_sensitivity_stiffness": 0.008850141769364769
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 68,
+      "total_hidden_demand_kw": 1344.5847607580126,
+      "avg_electrical_distance_km": 0.8224024390243904
+    }
+  },
+  {
+    "sig_id": "S0055",
+    "boundary": {
+      "pcc_voltage_v": 207.75963055858014,
+      "pcc_current_a": -3.2566542055671257e-15,
+      "pcc_active_power_kw": 121.23435114112237,
+      "pcc_reactive_power_kvar": 244.16296008179563,
+      "frequency_hz": 49.993207923639865,
+      "pcc_phase_angle_deg": -32.35969940939103,
+      "f1_voltage_v": 114.62173282515523,
+      "f2_voltage_v": 186.23107683741173,
+      "delta_theta_deg": 0.24670047534600315
+    },
+    "features": {
+      "feeder_phase_coupling": 0.24670047534600315,
+      "power_balance_pf": 0.4447258376060087,
+      "aggregate_impedance_proxy": 1.7137026501922357,
+      "voltage_sensitivity_stiffness": 0.0043090876252115775
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Multi-drop",
+      "active_loads": 69,
+      "total_hidden_demand_kw": 1388.6106008944644,
+      "avg_electrical_distance_km": 0.808109756097561
+    }
+  },
+  {
+    "sig_id": "S0056",
+    "boundary": {
+      "pcc_voltage_v": 223.38705209502655,
+      "pcc_current_a": -3.552713678800501e-15,
+      "pcc_active_power_kw": -63.592282457759374,
+      "pcc_reactive_power_kvar": 57.51010665038341,
+      "frequency_hz": 49.98153741606813,
+      "pcc_phase_angle_deg": -28.631109377204623,
+      "f1_voltage_v": 215.9702019682371,
+      "f2_voltage_v": 199.26167122327297,
+      "delta_theta_deg": 0.3933494053657185
+    },
+    "features": {
+      "feeder_phase_coupling": 0.3933494053657185,
+      "power_balance_pf": -0.7416852701400034,
+      "aggregate_impedance_proxy": 3.512801238587532,
+      "voltage_sensitivity_stiffness": 0.001574470250501154
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Radial",
+      "active_loads": 17,
+      "total_hidden_demand_kw": 322.179008242903,
+      "avg_electrical_distance_km": 0.8581363636363637
+    }
+  },
+  {
+    "sig_id": "S0057",
+    "boundary": {
+      "pcc_voltage_v": 216.25327696116233,
+      "pcc_current_a": -1.3322676295501878e-15,
+      "pcc_active_power_kw": 12.273029392340643,
+      "pcc_reactive_power_kvar": 141.77322543688118,
+      "frequency_hz": 50.01345386650189,
+      "pcc_phase_angle_deg": -30.08741694417958,
+      "f1_voltage_v": 180.4963240618545,
+      "f2_voltage_v": 183.62448793148192,
+      "delta_theta_deg": 3.009786582008225
+    },
+    "features": {
+      "feeder_phase_coupling": 3.009786582008225,
+      "power_balance_pf": 0.08624547368135069,
+      "aggregate_impedance_proxy": 17.62020218707531,
+      "voltage_sensitivity_stiffness": 0.02020136634146492
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 16,
+      "total_hidden_demand_kw": 365.9617002937725,
+      "avg_electrical_distance_km": 0.6703636363636364
+    }
+  },
+  {
+    "sig_id": "S0058",
+    "boundary": {
+      "pcc_voltage_v": 234.46497386387531,
+      "pcc_current_a": -3.552713678800501e-15,
+      "pcc_active_power_kw": -32.87182551104077,
+      "pcc_reactive_power_kvar": 63.2761589963834,
+      "frequency_hz": 50.011089432357295,
+      "pcc_phase_angle_deg": -29.250874317229684,
+      "f1_voltage_v": 216.86473340559235,
+      "f2_voltage_v": 214.15864319888044,
+      "delta_theta_deg": 0.2651525198824629
+    },
+    "features": {
+      "feeder_phase_coupling": 0.2651525198824629,
+      "power_balance_pf": -0.46100189895702676,
+      "aggregate_impedance_proxy": 7.132702948073932,
+      "voltage_sensitivity_stiffness": 0.0029325095187816242
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Radial",
+      "active_loads": 10,
+      "total_hidden_demand_kw": 202.34955783211686,
+      "avg_electrical_distance_km": 0.7102499999999999
+    }
+  },
+  {
+    "sig_id": "S0059",
+    "boundary": {
+      "pcc_voltage_v": 224.92737112144252,
+      "pcc_current_a": 1.1842378929335002e-15,
+      "pcc_active_power_kw": 97.94504308134069,
+      "pcc_reactive_power_kvar": 170.53688540569834,
+      "frequency_hz": 50.03667927184102,
+      "pcc_phase_angle_deg": -31.886159262070517,
+      "f1_voltage_v": 149.15324086698737,
+      "f2_voltage_v": 211.75116305911615,
+      "delta_theta_deg": -5.025442805254407
+    },
+    "features": {
+      "feeder_phase_coupling": -5.025442805254407,
+      "power_balance_pf": 0.4980366950940383,
+      "aggregate_impedance_proxy": 2.2964650557984996,
+      "voltage_sensitivity_stiffness": 0.003864699501690581
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 34,
+      "total_hidden_demand_kw": 613.1704000436819,
+      "avg_electrical_distance_km": 0.751857142857143
+    }
+  },
+  {
+    "sig_id": "S0060",
+    "boundary": {
+      "pcc_voltage_v": 244.19852439560404,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": -16.453316447367847,
+      "pcc_reactive_power_kvar": 84.74110306131658,
+      "frequency_hz": 50.021589831426624,
+      "pcc_phase_angle_deg": -29.558969960231053,
+      "f1_voltage_v": 212.08763385335556,
+      "f2_voltage_v": 232.30482193304215,
+      "delta_theta_deg": -0.3212251782176061
+    },
+    "features": {
+      "feeder_phase_coupling": -0.3212251782176061,
+      "power_balance_pf": -0.19060041250892762,
+      "aggregate_impedance_proxy": 14.841901955442438,
+      "voltage_sensitivity_stiffness": 0.007068576047538914
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Radial",
+      "active_loads": 37,
+      "total_hidden_demand_kw": 661.6874790654342,
+      "avg_electrical_distance_km": 0.7803333333333332
+    }
+  },
+  {
+    "sig_id": "S0061",
+    "boundary": {
+      "pcc_voltage_v": 228.13602857420815,
+      "pcc_current_a": 2.3684757858670005e-15,
+      "pcc_active_power_kw": -0.456600962312513,
+      "pcc_reactive_power_kvar": 136.54835861278085,
+      "frequency_hz": 50.016987561998484,
+      "pcc_phase_angle_deg": -29.82507418763262,
+      "f1_voltage_v": 208.03617085635935,
+      "f2_voltage_v": 187.1140448879432,
+      "delta_theta_deg": -1.7415724102803054
+    },
+    "features": {
+      "feeder_phase_coupling": -1.7415724102803054,
+      "power_balance_pf": -0.003343858621834326,
+      "aggregate_impedance_proxy": 499.63873877980524,
+      "voltage_sensitivity_stiffness": 0.29168210481907997
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Radial",
+      "active_loads": 18,
+      "total_hidden_demand_kw": 417.9534728828867,
+      "avg_electrical_distance_km": 0.9523636363636364
+    }
+  },
+  {
+    "sig_id": "S0062",
+    "boundary": {
+      "pcc_voltage_v": 239.08373687782333,
+      "pcc_current_a": -5.921189464667502e-15,
+      "pcc_active_power_kw": 11.561810067658367,
+      "pcc_reactive_power_kvar": 141.05386052444285,
+      "frequency_hz": 50.00265644067752,
+      "pcc_phase_angle_deg": -30.073235955754782,
+      "f1_voltage_v": 205.09375454241572,
+      "f2_voltage_v": 211.39548334508268,
+      "delta_theta_deg": -1.1156091161970565
+    },
+    "features": {
+      "feeder_phase_coupling": -1.1156091161970565,
+      "power_balance_pf": 0.08169336675740664,
+      "aggregate_impedance_proxy": 20.67874448723762,
+      "voltage_sensitivity_stiffness": 0.012579576725089822
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 74,
+      "total_hidden_demand_kw": 1582.3365674757108,
+      "avg_electrical_distance_km": 0.8402560975609757
+    }
+  },
+  {
+    "sig_id": "S0063",
+    "boundary": {
+      "pcc_voltage_v": 216.90125394874985,
+      "pcc_current_a": -3.4046839421838135e-15,
+      "pcc_active_power_kw": -24.569376624562977,
+      "pcc_reactive_power_kvar": 135.95619433127905,
+      "frequency_hz": 50.008235932081135,
+      "pcc_phase_angle_deg": -29.31776852686868,
+      "f1_voltage_v": 184.86481946713184,
+      "f2_voltage_v": 190.3314183981137,
+      "delta_theta_deg": -1.1585723093754474
+    },
+    "features": {
+      "feeder_phase_coupling": -1.1585723093754474,
+      "power_balance_pf": -0.17783484768800875,
+      "aggregate_impedance_proxy": 8.828113485947853,
+      "voltage_sensitivity_stiffness": 0.009350253897244863
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Radial",
+      "active_loads": 10,
+      "total_hidden_demand_kw": 270.5124887913863,
+      "avg_electrical_distance_km": 0.8615833333333334
+    }
+  },
+  {
+    "sig_id": "S0064",
+    "boundary": {
+      "pcc_voltage_v": 222.951268212149,
+      "pcc_current_a": -3.552713678800501e-15,
+      "pcc_active_power_kw": -51.44211579250277,
+      "pcc_reactive_power_kvar": 62.01764759358495,
+      "frequency_hz": 49.99613882674341,
+      "pcc_phase_angle_deg": -28.872285368063583,
+      "f1_voltage_v": 217.92588068489317,
+      "f2_voltage_v": 192.6306865630661,
+      "delta_theta_deg": 1.5003943978129684
+    },
+    "features": {
+      "feeder_phase_coupling": 1.5003943978129684,
+      "power_balance_pf": -0.6384303296447472,
+      "aggregate_impedance_proxy": 4.334022044844044,
+      "voltage_sensitivity_stiffness": 0.001787941532757513
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Radial",
+      "active_loads": 33,
+      "total_hidden_demand_kw": 696.5624794007911,
+      "avg_electrical_distance_km": 0.7751904761904762
+    }
+  },
+  {
+    "sig_id": "S0065",
+    "boundary": {
+      "pcc_voltage_v": 224.51836223314635,
+      "pcc_current_a": 3.552713678800501e-15,
+      "pcc_active_power_kw": 49.71331628062656,
+      "pcc_reactive_power_kvar": 177.02017812048314,
+      "frequency_hz": 49.99809313324079,
+      "pcc_phase_angle_deg": -30.84767955966777,
+      "f1_voltage_v": 163.88696699197615,
+      "f2_voltage_v": 204.18567565593665,
+      "delta_theta_deg": 2.261833087323076
+    },
+    "features": {
+      "feeder_phase_coupling": 2.261833087323076,
+      "power_balance_pf": 0.2703745667007981,
+      "aggregate_impedance_proxy": 4.516261929691058,
+      "voltage_sensitivity_stiffness": 0.006379329621944627
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 17,
+      "total_hidden_demand_kw": 332.80454707262356,
+      "avg_electrical_distance_km": 0.8686363636363637
+    }
+  },
+  {
+    "sig_id": "S0066",
+    "boundary": {
+      "pcc_voltage_v": 235.02228948200388,
+      "pcc_current_a": 3.552713678800501e-15,
+      "pcc_active_power_kw": -38.152924278875275,
+      "pcc_reactive_power_kvar": 57.01091365637787,
+      "frequency_hz": 49.96601613406776,
+      "pcc_phase_angle_deg": -29.151886793873697,
+      "f1_voltage_v": 223.50046790031357,
+      "f2_voltage_v": 211.18631457402378,
+      "delta_theta_deg": 1.3474838879763773
+    },
+    "features": {
+      "feeder_phase_coupling": 1.3474838879763773,
+      "power_balance_pf": -0.5561692107974392,
+      "aggregate_impedance_proxy": 6.160007070601539,
+      "voltage_sensitivity_stiffness": 0.0018019077151451071
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 9,
+      "total_hidden_demand_kw": 156.19001899025346,
+      "avg_electrical_distance_km": 0.7522500000000001
+    }
+  },
+  {
+    "sig_id": "S0067",
+    "boundary": {
+      "pcc_voltage_v": 224.1569788680442,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": -61.550294230193785,
+      "pcc_reactive_power_kvar": 47.67898703759918,
+      "frequency_hz": 50.025329878713706,
+      "pcc_phase_angle_deg": -28.688972549809225,
+      "f1_voltage_v": 196.54803853718386,
+      "f2_voltage_v": 222.10188770053978,
+      "delta_theta_deg": -2.399362141275155
+    },
+    "features": {
+      "feeder_phase_coupling": -2.399362141275155,
+      "power_balance_pf": -0.7905548907799675,
+      "aggregate_impedance_proxy": 3.6418505878763514,
+      "voltage_sensitivity_stiffness": 0.0029414942487487167
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 8,
+      "total_hidden_demand_kw": 155.72317967246224,
+      "avg_electrical_distance_km": 0.7374166666666665
+    }
+  },
+  {
+    "sig_id": "S0068",
+    "boundary": {
+      "pcc_voltage_v": 244.3976717597477,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": -25.277593796539545,
+      "pcc_reactive_power_kvar": 83.06992705235703,
+      "frequency_hz": 50.006626290844224,
+      "pcc_phase_angle_deg": -29.378893956801733,
+      "f1_voltage_v": 225.35759718254894,
+      "f2_voltage_v": 221.59909813158254,
+      "delta_theta_deg": -0.7831906608520285
+    },
+    "features": {
+      "feeder_phase_coupling": -0.7831906608520285,
+      "power_balance_pf": -0.2911135700954576,
+      "aggregate_impedance_proxy": 9.66854931123452,
+      "voltage_sensitivity_stiffness": 0.002413600353611631
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Radial",
+      "active_loads": 9,
+      "total_hidden_demand_kw": 190.04440554226196,
+      "avg_electrical_distance_km": 0.8515
+    }
+  },
+  {
+    "sig_id": "S0069",
+    "boundary": {
+      "pcc_voltage_v": 216.9508257231979,
+      "pcc_current_a": 2.5165055224836883e-15,
+      "pcc_active_power_kw": -28.866029932554667,
+      "pcc_reactive_power_kvar": 135.63567350848416,
+      "frequency_hz": 50.0230299329161,
+      "pcc_phase_angle_deg": -29.227779348856725,
+      "f1_voltage_v": 204.1006767118747,
+      "f2_voltage_v": 172.46893427105408,
+      "delta_theta_deg": -3.751183578011979
+    },
+    "features": {
+      "feeder_phase_coupling": -3.751183578011979,
+      "power_balance_pf": -0.20815852882434585,
+      "aggregate_impedance_proxy": 7.515783040283661,
+      "voltage_sensitivity_stiffness": 0.005181887113265282
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 71,
+      "total_hidden_demand_kw": 1455.0997305437204,
+      "avg_electrical_distance_km": 0.8651463414634147
+    }
+  },
+  {
+    "sig_id": "S0070",
+    "boundary": {
+      "pcc_voltage_v": 6.284854467907601,
+      "pcc_current_a": 2.220446049250313e-16,
+      "pcc_active_power_kw": 0.007336291757039953,
+      "pcc_reactive_power_kvar": -0.007848640563447034,
+      "frequency_hz": 50.028336985328636,
+      "pcc_phase_angle_deg": 65.21814741999108,
+      "f1_voltage_v": 0.8153682197421027,
+      "f2_voltage_v": 6.284854467907601,
+      "delta_theta_deg": 9.140330880643418
+    },
+    "features": {
+      "feeder_phase_coupling": 9.140330880643418,
+      "power_balance_pf": 0.6827964328945955,
+      "aggregate_impedance_proxy": 856.5632492230441,
+      "voltage_sensitivity_stiffness": 135.82704155951345
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Multi-drop",
+      "active_loads": 68,
+      "total_hidden_demand_kw": 1514.9921627725469,
+      "avg_electrical_distance_km": 0.8844024390243901
+    }
+  },
+  {
+    "sig_id": "S0071",
+    "boundary": {
+      "pcc_voltage_v": 6.284854467907601,
+      "pcc_current_a": 7.401486830834377e-17,
+      "pcc_active_power_kw": 0.006987076011372648,
+      "pcc_reactive_power_kvar": -0.007472594859635432,
+      "frequency_hz": 49.993894055663446,
+      "pcc_phase_angle_deg": 65.21814741999108,
+      "f1_voltage_v": 0.8153682197421027,
+      "f2_voltage_v": 6.284854467907601,
+      "delta_theta_deg": 9.140330880643418
+    },
+    "features": {
+      "feeder_phase_coupling": 9.140330880643418,
+      "power_balance_pf": 0.6829122838095855,
+      "aggregate_impedance_proxy": 899.3683608591838,
+      "voltage_sensitivity_stiffness": 142.6147384195355
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Multi-drop",
+      "active_loads": 70,
+      "total_hidden_demand_kw": 1669.452922755343,
+      "avg_electrical_distance_km": 0.8150853658536588
+    }
+  },
+  {
+    "sig_id": "S0072",
+    "boundary": {
+      "pcc_voltage_v": 202.29433780939416,
+      "pcc_current_a": -3.552713678800501e-15,
+      "pcc_active_power_kw": 196.29658582160494,
+      "pcc_reactive_power_kvar": 312.40318815268284,
+      "frequency_hz": 49.998128881489734,
+      "pcc_phase_angle_deg": -34.03376548572089,
+      "f1_voltage_v": 96.90368816061341,
+      "f2_voltage_v": 162.22538722286916,
+      "delta_theta_deg": 1.0697527194353285
+    },
+    "features": {
+      "feeder_phase_coupling": 1.0697527194353285,
+      "power_balance_pf": 0.5320333431051576,
+      "aggregate_impedance_proxy": 1.0305545352820629,
+      "voltage_sensitivity_stiffness": 0.0030374172180893345
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Multi-drop",
+      "active_loads": 73,
+      "total_hidden_demand_kw": 1381.9773477136278,
+      "avg_electrical_distance_km": 0.8360121951219514
+    }
+  },
+  {
+    "sig_id": "S0073",
+    "boundary": {
+      "pcc_voltage_v": 241.1323960985468,
+      "pcc_current_a": -4.736951571734001e-15,
+      "pcc_active_power_kw": 9.170073845745456,
+      "pcc_reactive_power_kvar": 117.95900505981871,
+      "frequency_hz": 49.966572247881516,
+      "pcc_phase_angle_deg": -30.050270524650845,
+      "f1_voltage_v": 212.40313917118237,
+      "f2_voltage_v": 213.57860282703305,
+      "delta_theta_deg": -0.2516902603849758
+    },
+    "features": {
+      "feeder_phase_coupling": -0.2516902603849758,
+      "power_balance_pf": 0.07750565021798365,
+      "aggregate_impedance_proxy": 26.295575571056816,
+      "voltage_sensitivity_stiffness": 0.012539365496392068
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 67,
+      "total_hidden_demand_kw": 1437.0270915218632,
+      "avg_electrical_distance_km": 0.8504999999999998
+    }
+  },
+  {
+    "sig_id": "S0074",
+    "boundary": {
+      "pcc_voltage_v": 243.0813244847966,
+      "pcc_current_a": 3.552713678800501e-15,
+      "pcc_active_power_kw": -9.584284673975718,
+      "pcc_reactive_power_kvar": 96.97556756922876,
+      "frequency_hz": 50.024836184847274,
+      "pcc_phase_angle_deg": -29.685114002333815,
+      "f1_voltage_v": 209.89462034342216,
+      "f2_voltage_v": 228.26680484241493,
+      "delta_theta_deg": 0.2463535788457598
+    },
+    "features": {
+      "feeder_phase_coupling": 0.2463535788457598,
+      "power_balance_pf": -0.09835277571976749,
+      "aggregate_impedance_proxy": 25.36248738336725,
+      "voltage_sensitivity_stiffness": 0.013087994887612062
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Radial",
+      "active_loads": 16,
+      "total_hidden_demand_kw": 325.26851875657354,
+      "avg_electrical_distance_km": 0.7039545454545455
+    }
+  },
+  {
+    "sig_id": "S0075",
+    "boundary": {
+      "pcc_voltage_v": 224.82399235506736,
+      "pcc_current_a": 4.736951571734001e-15,
+      "pcc_active_power_kw": -79.45426320251555,
+      "pcc_reactive_power_kvar": 40.796755424441585,
+      "frequency_hz": 49.980520338508896,
+      "pcc_phase_angle_deg": -28.33677208578486,
+      "f1_voltage_v": 210.53783422531774,
+      "f2_voltage_v": 215.06588299304767,
+      "delta_theta_deg": -0.18405083641461673
+    },
+    "features": {
+      "feeder_phase_coupling": -0.18405083641461673,
+      "power_balance_pf": -0.8895855811802384,
+      "aggregate_impedance_proxy": 2.8296025973134538,
+      "voltage_sensitivity_stiffness": 0.001545027511025513
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 7,
+      "total_hidden_demand_kw": 112.14582015126149,
+      "avg_electrical_distance_km": 0.652
+    }
+  },
+  {
+    "sig_id": "S0076",
+    "boundary": {
+      "pcc_voltage_v": 6.284854467907601,
+      "pcc_current_a": -7.401486830834377e-17,
+      "pcc_active_power_kw": 0.007722267054882762,
+      "pcc_reactive_power_kvar": -0.008264270025554594,
+      "frequency_hz": 50.00420956960965,
+      "pcc_phase_angle_deg": 65.21814741999108,
+      "f1_voltage_v": 0.8153682197421027,
+      "f2_voltage_v": 6.284854467907601,
+      "delta_theta_deg": 9.140330880643418
+    },
+    "features": {
+      "feeder_phase_coupling": 9.140330880643418,
+      "power_balance_pf": 0.6826805987994053,
+      "aggregate_impedance_proxy": 813.7559433393183,
+      "voltage_sensitivity_stiffness": 129.03899675302236
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Multi-drop",
+      "active_loads": 68,
+      "total_hidden_demand_kw": 1466.5329436065601,
+      "avg_electrical_distance_km": 0.9052073170731706
+    }
+  },
+  {
+    "sig_id": "S0077",
+    "boundary": {
+      "pcc_voltage_v": 206.80991267751338,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": 141.81181078090668,
+      "pcc_reactive_power_kvar": 255.79176090995935,
+      "frequency_hz": 50.028450202604525,
+      "pcc_phase_angle_deg": -32.81106429146208,
+      "f1_voltage_v": 132.65254819480705,
+      "f2_voltage_v": 159.5316791860005,
+      "delta_theta_deg": 3.3131772580751147
+    },
+    "features": {
+      "feeder_phase_coupling": 3.3131772580751147,
+      "power_balance_pf": 0.48487270939451343,
+      "aggregate_impedance_proxy": 1.4583405294689138,
+      "voltage_sensitivity_stiffness": 0.0031540465041045695
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 34,
+      "total_hidden_demand_kw": 779.9664112036411,
+      "avg_electrical_distance_km": 0.7740476190476189
+    }
+  },
+  {
+    "sig_id": "S0078",
+    "boundary": {
+      "pcc_voltage_v": 204.1089635825797,
+      "pcc_current_a": 2.3684757858670005e-15,
+      "pcc_active_power_kw": 257.3503910797819,
+      "pcc_reactive_power_kvar": 418.966935151047,
+      "frequency_hz": 50.00659846867057,
+      "pcc_phase_angle_deg": -35.50857346495702,
+      "f1_voltage_v": 107.96780347171291,
+      "f2_voltage_v": 123.9413548034463,
+      "delta_theta_deg": -0.822285306350139
+    },
+    "features": {
+      "feeder_phase_coupling": -0.822285306350139,
+      "power_balance_pf": 0.5233959380358028,
+      "aggregate_impedance_proxy": 0.793116971507482,
+      "voltage_sensitivity_stiffness": 0.002137685308171777
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Multi-drop",
+      "active_loads": 73,
+      "total_hidden_demand_kw": 1446.2709355301595,
+      "avg_electrical_distance_km": 0.7523658536585369
+    }
+  },
+  {
+    "sig_id": "S0079",
+    "boundary": {
+      "pcc_voltage_v": 220.5867033963599,
+      "pcc_current_a": 3.552713678800501e-15,
+      "pcc_active_power_kw": -11.109213228983332,
+      "pcc_reactive_power_kvar": 88.8470880785321,
+      "frequency_hz": 49.99743289002338,
+      "pcc_phase_angle_deg": -29.664118034352786,
+      "f1_voltage_v": 207.59709929450682,
+      "f2_voltage_v": 182.84111125708884,
+      "delta_theta_deg": 1.4298349265890593
+    },
+    "features": {
+      "feeder_phase_coupling": 1.4298349265890593,
+      "power_balance_pf": -0.12407132090558846,
+      "aggregate_impedance_proxy": 19.856193142883253,
+      "voltage_sensitivity_stiffness": 0.012153162545074444
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 15,
+      "total_hidden_demand_kw": 257.8684749888557,
+      "avg_electrical_distance_km": 0.8067272727272727
+    }
+  },
+  {
+    "sig_id": "S0080",
+    "boundary": {
+      "pcc_voltage_v": 219.230567580237,
+      "pcc_current_a": 5.921189464667502e-15,
+      "pcc_active_power_kw": 96.28515874359566,
+      "pcc_reactive_power_kvar": 238.3130561797728,
+      "frequency_hz": 50.03196330613041,
+      "pcc_phase_angle_deg": -31.813354808542645,
+      "f1_voltage_v": 165.3600045136836,
+      "f2_voltage_v": 168.23267593804107,
+      "delta_theta_deg": -0.8016021279352259
+    },
+    "features": {
+      "feeder_phase_coupling": -0.8016021279352259,
+      "power_balance_pf": 0.3746080438265267,
+      "aggregate_impedance_proxy": 2.276888444325596,
+      "voltage_sensitivity_stiffness": 0.003229988733686148
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 32,
+      "total_hidden_demand_kw": 641.1472923687727,
+      "avg_electrical_distance_km": 0.7334999999999999
+    }
+  },
+  {
+    "sig_id": "S0081",
+    "boundary": {
+      "pcc_voltage_v": 212.83291608904108,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": 40.55429587758479,
+      "pcc_reactive_power_kvar": 183.18197264323663,
+      "frequency_hz": 50.001951099800515,
+      "pcc_phase_angle_deg": -30.64519383555969,
+      "f1_voltage_v": 150.76514956808774,
+      "f2_voltage_v": 191.1308772798935,
+      "delta_theta_deg": -1.7744296384091953
+    },
+    "features": {
+      "feeder_phase_coupling": -1.7744296384091953,
+      "power_balance_pf": 0.21615424398514316,
+      "aggregate_impedance_proxy": 5.248097796677084,
+      "voltage_sensitivity_stiffness": 0.009168248630273816
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 36,
+      "total_hidden_demand_kw": 693.9078580536147,
+      "avg_electrical_distance_km": 0.7557380952380951
+    }
+  },
+  {
+    "sig_id": "S0082",
+    "boundary": {
+      "pcc_voltage_v": 219.23374640795205,
+      "pcc_current_a": -5.921189464667502e-15,
+      "pcc_active_power_kw": 0.04828879459706013,
+      "pcc_reactive_power_kvar": 105.12317650074473,
+      "frequency_hz": 49.994880617207535,
+      "pcc_phase_angle_deg": -29.875199471937773,
+      "f1_voltage_v": 177.75218461243756,
+      "f2_voltage_v": 203.77730233996078,
+      "delta_theta_deg": -3.3737570220564166
+    },
+    "features": {
+      "feeder_phase_coupling": -3.3737570220564166,
+      "power_balance_pf": 0.00045935435600864306,
+      "aggregate_impedance_proxy": 4539.960218039505,
+      "voltage_sensitivity_stiffness": 5.371029212536078
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 17,
+      "total_hidden_demand_kw": 311.3019239000668,
+      "avg_electrical_distance_km": 0.905
+    }
+  },
+  {
+    "sig_id": "S0083",
+    "boundary": {
+      "pcc_voltage_v": 222.0492122494702,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": -48.25525528188948,
+      "pcc_reactive_power_kvar": 73.09420112637936,
+      "frequency_hz": 49.98649407988737,
+      "pcc_phase_angle_deg": -28.92022743377748,
+      "f1_voltage_v": 207.37470392692364,
+      "f2_voltage_v": 198.05693350264673,
+      "delta_theta_deg": -0.4163923020805882
+    },
+    "features": {
+      "feeder_phase_coupling": -0.4163923020805882,
+      "power_balance_pf": -0.550946243232063,
+      "aggregate_impedance_proxy": 4.601554926003092,
+      "voltage_sensitivity_stiffness": 0.002817076192564682
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Radial",
+      "active_loads": 35,
+      "total_hidden_demand_kw": 844.3306507494825,
+      "avg_electrical_distance_km": 0.7485952380952381
+    }
+  },
+  {
+    "sig_id": "S0084",
+    "boundary": {
+      "pcc_voltage_v": 6.284854467907601,
+      "pcc_current_a": -7.401486830834377e-17,
+      "pcc_active_power_kw": 0.007722267054882762,
+      "pcc_reactive_power_kvar": -0.008264270025554594,
+      "frequency_hz": 50.005257462579095,
+      "pcc_phase_angle_deg": 65.21814741999108,
+      "f1_voltage_v": 0.8153682197421027,
+      "f2_voltage_v": 6.284854467907601,
+      "delta_theta_deg": 9.140330880643418
+    },
+    "features": {
+      "feeder_phase_coupling": 9.140330880643418,
+      "power_balance_pf": 0.6826805987994053,
+      "aggregate_impedance_proxy": 813.7559433393183,
+      "voltage_sensitivity_stiffness": 129.03899675302236
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Multi-drop",
+      "active_loads": 74,
+      "total_hidden_demand_kw": 1500.7465698523683,
+      "avg_electrical_distance_km": 0.7909024390243901
+    }
+  },
+  {
+    "sig_id": "S0085",
+    "boundary": {
+      "pcc_voltage_v": 6.284854467907601,
+      "pcc_current_a": 7.401486830834377e-17,
+      "pcc_active_power_kw": 0.006987076011372648,
+      "pcc_reactive_power_kvar": -0.007472594859635432,
+      "frequency_hz": 50.04072164352685,
+      "pcc_phase_angle_deg": 65.21814741999108,
+      "f1_voltage_v": 0.8153682197421027,
+      "f2_voltage_v": 6.284854467907601,
+      "delta_theta_deg": 9.140330880643418
+    },
+    "features": {
+      "feeder_phase_coupling": 9.140330880643418,
+      "power_balance_pf": 0.6829122838095855,
+      "aggregate_impedance_proxy": 899.3683608591838,
+      "voltage_sensitivity_stiffness": 142.6147384195355
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Multi-drop",
+      "active_loads": 70,
+      "total_hidden_demand_kw": 1384.3117641472293,
+      "avg_electrical_distance_km": 0.8352439024390248
+    }
+  },
+  {
+    "sig_id": "S0086",
+    "boundary": {
+      "pcc_voltage_v": 234.11024095314494,
+      "pcc_current_a": -2.3684757858670005e-15,
+      "pcc_active_power_kw": 75.10888022396263,
+      "pcc_reactive_power_kvar": 194.56669029850113,
+      "frequency_hz": 49.94392014637336,
+      "pcc_phase_angle_deg": -31.380012306501612,
+      "f1_voltage_v": 178.87045654068046,
+      "f2_voltage_v": 203.40224676455196,
+      "delta_theta_deg": 2.949880673232691
+    },
+    "features": {
+      "feeder_phase_coupling": 2.949880673232691,
+      "power_balance_pf": 0.36012969465621414,
+      "aggregate_impedance_proxy": 3.116944855763006,
+      "voltage_sensitivity_stiffness": 0.003391162628571239
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 20,
+      "total_hidden_demand_kw": 402.6594366763866,
+      "avg_electrical_distance_km": 0.7964090909090907
+    }
+  },
+  {
+    "sig_id": "S0087",
+    "boundary": {
+      "pcc_voltage_v": 6.284854467907601,
+      "pcc_current_a": 7.401486830834377e-17,
+      "pcc_active_power_kw": 0.006987076011372648,
+      "pcc_reactive_power_kvar": -0.007472594859635432,
+      "frequency_hz": 49.98761852732618,
+      "pcc_phase_angle_deg": 65.21814741999108,
+      "f1_voltage_v": 0.8153682197421027,
+      "f2_voltage_v": 6.284854467907601,
+      "delta_theta_deg": 9.140330880643418
+    },
+    "features": {
+      "feeder_phase_coupling": 9.140330880643418,
+      "power_balance_pf": 0.6829122838095855,
+      "aggregate_impedance_proxy": 899.3683608591838,
+      "voltage_sensitivity_stiffness": 142.6147384195355
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Radial",
+      "active_loads": 30,
+      "total_hidden_demand_kw": 669.0723740693157,
+      "avg_electrical_distance_km": 0.8665952380952382
+    }
+  },
+  {
+    "sig_id": "S0088",
+    "boundary": {
+      "pcc_voltage_v": 215.0652544444931,
+      "pcc_current_a": 1.4802973661668755e-15,
+      "pcc_active_power_kw": 140.25649290611523,
+      "pcc_reactive_power_kvar": 287.0579323349399,
+      "frequency_hz": 49.997769495646494,
+      "pcc_phase_angle_deg": -32.770451281813585,
+      "f1_voltage_v": 162.02205942644943,
+      "f2_voltage_v": 143.22692976955412,
+      "delta_theta_deg": 4.671013766869891
+    },
+    "features": {
+      "feeder_phase_coupling": 4.671013766869891,
+      "power_balance_pf": 0.43900059453385204,
+      "aggregate_impedance_proxy": 1.5333711007238873,
+      "voltage_sensitivity_stiffness": 0.002316527931609456
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 37,
+      "total_hidden_demand_kw": 870.7527585324839,
+      "avg_electrical_distance_km": 0.7723095238095238
+    }
+  },
+  {
+    "sig_id": "S0089",
+    "boundary": {
+      "pcc_voltage_v": 239.03854981899744,
+      "pcc_current_a": -5.921189464667502e-15,
+      "pcc_active_power_kw": 47.65909805869359,
+      "pcc_reactive_power_kvar": 139.78067539759155,
+      "frequency_hz": 49.985247164170104,
+      "pcc_phase_angle_deg": -30.83774191247423,
+      "f1_voltage_v": 207.88828407041055,
+      "f2_voltage_v": 201.5302399572191,
+      "delta_theta_deg": 0.7868146630453126
+    },
+    "features": {
+      "feeder_phase_coupling": 0.7868146630453126,
+      "power_balance_pf": 0.3227139329333292,
+      "aggregate_impedance_proxy": 5.015591031727529,
+      "voltage_sensitivity_stiffness": 0.0028074138835170216
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 64,
+      "total_hidden_demand_kw": 1265.80030802422,
+      "avg_electrical_distance_km": 0.8604146341463413
+    }
+  },
+  {
+    "sig_id": "S0090",
+    "boundary": {
+      "pcc_voltage_v": 222.1976161925678,
+      "pcc_current_a": -3.552713678800501e-15,
+      "pcc_active_power_kw": -39.37039047191778,
+      "pcc_reactive_power_kvar": 70.56869922095851,
+      "frequency_hz": 49.99197857911829,
+      "pcc_phase_angle_deg": -29.106730814252654,
+      "f1_voltage_v": 200.479113739989,
+      "f2_voltage_v": 203.81889323458242,
+      "delta_theta_deg": -1.1808480734970175
+    },
+    "features": {
+      "feeder_phase_coupling": -1.1808480734970175,
+      "power_balance_pf": -0.48720771684668157,
+      "aggregate_impedance_proxy": 5.643774620606898,
+      "voltage_sensitivity_stiffness": 0.0041825939052236505
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 9,
+      "total_hidden_demand_kw": 135.9674702306332,
+      "avg_electrical_distance_km": 0.8289999999999998
+    }
+  },
+  {
+    "sig_id": "S0091",
+    "boundary": {
+      "pcc_voltage_v": 249.98868096182835,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": -106.05391628958145,
+      "pcc_reactive_power_kvar": 26.17516155977944,
+      "frequency_hz": 49.99649280052881,
+      "pcc_phase_angle_deg": -27.82587022087125,
+      "f1_voltage_v": 236.88642557784814,
+      "f2_voltage_v": 249.98875980729903,
+      "delta_theta_deg": -1.0501778619741664
+    },
+    "features": {
+      "feeder_phase_coupling": -1.0501778619741664,
+      "power_balance_pf": -0.9708668452089436,
+      "aggregate_impedance_proxy": 2.3571847919509787,
+      "voltage_sensitivity_stiffness": 0.00012232670975785377
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Radial",
+      "active_loads": 8,
+      "total_hidden_demand_kw": 105.79369262744508,
+      "avg_electrical_distance_km": 0.7288333333333333
+    }
+  },
+  {
+    "sig_id": "S0092",
+    "boundary": {
+      "pcc_voltage_v": 229.6661874589481,
+      "pcc_current_a": -7.105427357601002e-15,
+      "pcc_active_power_kw": 0.8804729991788143,
+      "pcc_reactive_power_kvar": 118.24630224865885,
+      "frequency_hz": 50.01399038276455,
+      "pcc_phase_angle_deg": -29.87625473277504,
+      "f1_voltage_v": 187.52968691808846,
+      "f2_voltage_v": 214.44575922460066,
+      "delta_theta_deg": 1.2982293141168277
+    },
+    "features": {
+      "feeder_phase_coupling": 1.2982293141168277,
+      "power_balance_pf": 0.007445886826039009,
+      "aggregate_impedance_proxy": 260.84380421585337,
+      "voltage_sensitivity_stiffness": 0.24830523639751934
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Radial",
+      "active_loads": 34,
+      "total_hidden_demand_kw": 812.0070854330223,
+      "avg_electrical_distance_km": 0.8922380952380952
+    }
+  },
+  {
+    "sig_id": "S0093",
+    "boundary": {
+      "pcc_voltage_v": 248.61727327150186,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": -85.1344001096315,
+      "pcc_reactive_power_kvar": 39.8436055094383,
+      "frequency_hz": 49.96376797031527,
+      "pcc_phase_angle_deg": -28.223263918035652,
+      "f1_voltage_v": 228.2853965384237,
+      "f2_voltage_v": 248.6173516844358,
+      "delta_theta_deg": -1.4102412375140467
+    },
+    "features": {
+      "feeder_phase_coupling": -1.4102412375140467,
+      "power_balance_pf": -0.9057169265910313,
+      "aggregate_impedance_proxy": 2.920291562882388,
+      "voltage_sensitivity_stiffness": 0.0005733387105608693
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Radial",
+      "active_loads": 8,
+      "total_hidden_demand_kw": 174.69798962288888,
+      "avg_electrical_distance_km": 0.8102499999999999
+    }
+  },
+  {
+    "sig_id": "S0094",
+    "boundary": {
+      "pcc_voltage_v": 232.56546999806673,
+      "pcc_current_a": -2.6645352591003757e-15,
+      "pcc_active_power_kw": 114.28297217012509,
+      "pcc_reactive_power_kvar": 211.03973973181286,
+      "frequency_hz": 49.99138730694026,
+      "pcc_phase_angle_deg": -32.22007105775204,
+      "f1_voltage_v": 162.6991043416369,
+      "f2_voltage_v": 205.19188066354855,
+      "delta_theta_deg": -1.7039793373955376
+    },
+    "features": {
+      "feeder_phase_coupling": -1.7039793373955376,
+      "power_balance_pf": 0.4761857886444711,
+      "aggregate_impedance_proxy": 2.034996671392708,
+      "voltage_sensitivity_stiffness": 0.00281832941783647
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 39,
+      "total_hidden_demand_kw": 779.6410477112795,
+      "avg_electrical_distance_km": 0.8158095238095238
+    }
+  },
+  {
+    "sig_id": "S0095",
+    "boundary": {
+      "pcc_voltage_v": 230.73264876383328,
+      "pcc_current_a": 3.552713678800501e-15,
+      "pcc_active_power_kw": -42.209690990102935,
+      "pcc_reactive_power_kvar": 108.44132023248318,
+      "frequency_hz": 49.98963980449515,
+      "pcc_phase_angle_deg": -28.98994846467619,
+      "f1_voltage_v": 208.9586888067918,
+      "f2_voltage_v": 206.89522362914377,
+      "delta_theta_deg": -3.170472304497917
+    },
+    "features": {
+      "feeder_phase_coupling": -3.170472304497917,
+      "power_balance_pf": -0.36273039298038073,
+      "aggregate_impedance_proxy": 5.466342867840259,
+      "voltage_sensitivity_stiffness": 0.0030641966463222266
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 8,
+      "total_hidden_demand_kw": 186.43363066305227,
+      "avg_electrical_distance_km": 0.6665
+    }
+  },
+  {
+    "sig_id": "S0096",
+    "boundary": {
+      "pcc_voltage_v": 218.28742701249914,
+      "pcc_current_a": 2.3684757858670005e-15,
+      "pcc_active_power_kw": -7.633423183878907,
+      "pcc_reactive_power_kvar": 117.45602408180382,
+      "frequency_hz": 49.99505015416399,
+      "pcc_phase_angle_deg": -29.69898240045998,
+      "f1_voltage_v": 186.3534228758489,
+      "f2_voltage_v": 191.98285877235858,
+      "delta_theta_deg": -1.6849056177039117
+    },
+    "features": {
+      "feeder_phase_coupling": -1.6849056177039117,
+      "power_balance_pf": -0.06485281282927158,
+      "aggregate_impedance_proxy": 28.596265811285868,
+      "voltage_sensitivity_stiffness": 0.029282717598221823
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 60,
+      "total_hidden_demand_kw": 1198.5588499220466,
+      "avg_electrical_distance_km": 0.8056341463414634
+    }
+  },
+  {
+    "sig_id": "S0097",
+    "boundary": {
+      "pcc_voltage_v": 207.29434659944,
+      "pcc_current_a": 3.552713678800501e-15,
+      "pcc_active_power_kw": 114.98954103376933,
+      "pcc_reactive_power_kvar": 250.09437850789868,
+      "frequency_hz": 50.04036585404146,
+      "pcc_phase_angle_deg": -32.21967660519787,
+      "f1_voltage_v": 142.65194400552653,
+      "f2_voltage_v": 157.41420924823578,
+      "delta_theta_deg": 3.352449248113512
+    },
+    "features": {
+      "feeder_phase_coupling": 3.352449248113512,
+      "power_balance_pf": 0.41774406590669916,
+      "aggregate_impedance_proxy": 1.8027234732230104,
+      "voltage_sensitivity_stiffness": 0.0035274242579195077
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 33,
+      "total_hidden_demand_kw": 694.6480230404953,
+      "avg_electrical_distance_km": 0.8686666666666667
+    }
+  },
+  {
+    "sig_id": "S0098",
+    "boundary": {
+      "pcc_voltage_v": 230.55235685861257,
+      "pcc_current_a": 5.921189464667502e-15,
+      "pcc_active_power_kw": 2.4102847249145762,
+      "pcc_reactive_power_kvar": 107.60325431013334,
+      "frequency_hz": 49.9932347230686,
+      "pcc_phase_angle_deg": -29.921403541895796,
+      "f1_voltage_v": 206.96652783487602,
+      "f2_voltage_v": 198.8287329447106,
+      "delta_theta_deg": -0.9250071498311954
+    },
+    "features": {
+      "feeder_phase_coupling": -0.9250071498311954,
+      "power_balance_pf": 0.022394120580557102,
+      "aggregate_impedance_proxy": 95.65353786708572,
+      "voltage_sensitivity_stiffness": 0.05710504191761803
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Radial",
+      "active_loads": 17,
+      "total_hidden_demand_kw": 324.02279739710013,
+      "avg_electrical_distance_km": 0.7947272727272728
+    }
+  },
+  {
+    "sig_id": "S0099",
+    "boundary": {
+      "pcc_voltage_v": 221.3801731564205,
+      "pcc_current_a": 1.1842378929335002e-15,
+      "pcc_active_power_kw": 129.71961121029787,
+      "pcc_reactive_power_kvar": 212.11257830117842,
+      "frequency_hz": 50.027553193904296,
+      "pcc_phase_angle_deg": -32.55564409742422,
+      "f1_voltage_v": 159.85755681995485,
+      "f2_voltage_v": 177.57497947290236,
+      "delta_theta_deg": 0.36199080246443316
+    },
+    "features": {
+      "feeder_phase_coupling": 0.36199080246443316,
+      "power_balance_pf": 0.5217289285152091,
+      "aggregate_impedance_proxy": 1.7066052648810348,
+      "voltage_sensitivity_stiffness": 0.0025742202038205944
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 34,
+      "total_hidden_demand_kw": 670.1306556210486,
+      "avg_electrical_distance_km": 0.7251428571428571
+    }
+  },
+  {
+    "sig_id": "S0100",
+    "boundary": {
+      "pcc_voltage_v": 6.284854467907601,
+      "pcc_current_a": 2.220446049250313e-16,
+      "pcc_active_power_kw": 0.007336291757039953,
+      "pcc_reactive_power_kvar": -0.007848640563447034,
+      "frequency_hz": 49.99641073814626,
+      "pcc_phase_angle_deg": 65.21814741999108,
+      "f1_voltage_v": 0.8153682197421027,
+      "f2_voltage_v": 6.284854467907601,
+      "delta_theta_deg": 9.140330880643418
+    },
+    "features": {
+      "feeder_phase_coupling": 9.140330880643418,
+      "power_balance_pf": 0.6827964328945955,
+      "aggregate_impedance_proxy": 856.5632492230441,
+      "voltage_sensitivity_stiffness": 135.82704155951345
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 32,
+      "total_hidden_demand_kw": 613.8566276390065,
+      "avg_electrical_distance_km": 0.8627142857142858
+    }
+  },
+  {
+    "sig_id": "S0101",
+    "boundary": {
+      "pcc_voltage_v": 212.09655507060086,
+      "pcc_current_a": 2.3684757858670005e-15,
+      "pcc_active_power_kw": 84.77726859776263,
+      "pcc_reactive_power_kvar": 190.72544911682377,
+      "frequency_hz": 50.00110170820778,
+      "pcc_phase_angle_deg": -31.591362553767016,
+      "f1_voltage_v": 186.1707226087199,
+      "f2_voltage_v": 143.09468031753286,
+      "delta_theta_deg": 3.8824320366383986
+    },
+    "features": {
+      "feeder_phase_coupling": 3.8824320366383986,
+      "power_balance_pf": 0.40618008184372884,
+      "aggregate_impedance_proxy": 2.501809224063502,
+      "voltage_sensitivity_stiffness": 0.002645622545538075
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 31,
+      "total_hidden_demand_kw": 569.0046611494158,
+      "avg_electrical_distance_km": 0.7647857142857142
+    }
+  },
+  {
+    "sig_id": "S0102",
+    "boundary": {
+      "pcc_voltage_v": 231.93584411684017,
+      "pcc_current_a": -7.105427357601002e-15,
+      "pcc_active_power_kw": -18.503517599785617,
+      "pcc_reactive_power_kvar": 92.43055592390186,
+      "frequency_hz": 50.02359040070924,
+      "pcc_phase_angle_deg": -29.50607598948787,
+      "f1_voltage_v": 190.5222259223407,
+      "f2_voltage_v": 225.9092950377245,
+      "delta_theta_deg": -1.285707883943008
+    },
+    "features": {
+      "feeder_phase_coupling": -1.285707883943008,
+      "power_balance_pf": -0.1962936828450273,
+      "aggregate_impedance_proxy": 12.53468862508817,
+      "voltage_sensitivity_stiffness": 0.011141523752819403
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 9,
+      "total_hidden_demand_kw": 213.5407636950427,
+      "avg_electrical_distance_km": 0.8378333333333333
+    }
+  },
+  {
+    "sig_id": "S0103",
+    "boundary": {
+      "pcc_voltage_v": 210.00691450452834,
+      "pcc_current_a": -2.0724163126336257e-15,
+      "pcc_active_power_kw": 100.99900595757171,
+      "pcc_reactive_power_kvar": 216.44619626356285,
+      "frequency_hz": 49.99731853804867,
+      "pcc_phase_angle_deg": -31.92831750147641,
+      "f1_voltage_v": 151.84560203736666,
+      "f2_voltage_v": 163.9416924623648,
+      "delta_theta_deg": -0.9526766100536221
+    },
+    "features": {
+      "feeder_phase_coupling": -0.9526766100536221,
+      "power_balance_pf": 0.42285376855802065,
+      "aggregate_impedance_proxy": 2.0792968250940262,
+      "voltage_sensitivity_stiffness": 0.003636768346299425
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 34,
+      "total_hidden_demand_kw": 734.5459621866999,
+      "avg_electrical_distance_km": 0.8468095238095237
+    }
+  },
+  {
+    "sig_id": "S0104",
+    "boundary": {
+      "pcc_voltage_v": 216.6262937164503,
+      "pcc_current_a": -1.4802973661668753e-16,
+      "pcc_active_power_kw": -1.9444067497862847,
+      "pcc_reactive_power_kvar": 137.9290854977398,
+      "frequency_hz": 49.98651734659065,
+      "pcc_phase_angle_deg": -29.79192566584455,
+      "f1_voltage_v": 157.72458748211486,
+      "f2_voltage_v": 211.1644211597286,
+      "delta_theta_deg": 0.22136410918675864
+    },
+    "features": {
+      "feeder_phase_coupling": 0.22136410918675864,
+      "power_balance_pf": -0.014095747477004351,
+      "aggregate_impedance_proxy": 111.40991067344815,
+      "voltage_sensitivity_stiffness": 0.1763077825945721
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 18,
+      "total_hidden_demand_kw": 329.9016463849436,
+      "avg_electrical_distance_km": 0.7610454545454547
+    }
+  },
+  {
+    "sig_id": "S0105",
+    "boundary": {
+      "pcc_voltage_v": 247.32300803940848,
+      "pcc_current_a": 3.552713678800501e-15,
+      "pcc_active_power_kw": -55.08236882873045,
+      "pcc_reactive_power_kvar": 52.04379151597744,
+      "frequency_hz": 50.005430391845685,
+      "pcc_phase_angle_deg": -28.813726981154574,
+      "f1_voltage_v": 235.21253876832876,
+      "f2_voltage_v": 230.24072991607682,
+      "delta_theta_deg": 0.10206749572659746
+    },
+    "features": {
+      "feeder_phase_coupling": 0.10206749572659746,
+      "power_balance_pf": -0.7268711433920645,
+      "aggregate_impedance_proxy": 4.490057504940666,
+      "voltage_sensitivity_stiffness": 0.00036214409790261056
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Radial",
+      "active_loads": 8,
+      "total_hidden_demand_kw": 130.8833252321549,
+      "avg_electrical_distance_km": 0.6955
+    }
+  },
+  {
+    "sig_id": "S0106",
+    "boundary": {
+      "pcc_voltage_v": 245.47896179433545,
+      "pcc_current_a": 1.1842378929335002e-15,
+      "pcc_active_power_kw": -44.80063863918101,
+      "pcc_reactive_power_kvar": 72.19534122823842,
+      "frequency_hz": 49.98717067034143,
+      "pcc_phase_angle_deg": -28.992645090543892,
+      "f1_voltage_v": 221.37345335933853,
+      "f2_voltage_v": 234.05796734108927,
+      "delta_theta_deg": 0.5260391219646152
+    },
+    "features": {
+      "feeder_phase_coupling": 0.5260391219646152,
+      "power_balance_pf": -0.5272756581126932,
+      "aggregate_impedance_proxy": 5.479362878998908,
+      "voltage_sensitivity_stiffness": 0.001732354975907101
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 67,
+      "total_hidden_demand_kw": 1285.938605024151,
+      "avg_electrical_distance_km": 0.8382804878048783
+    }
+  },
+  {
+    "sig_id": "S0107",
+    "boundary": {
+      "pcc_voltage_v": 215.77194378672766,
+      "pcc_current_a": 1.3322676295501878e-15,
+      "pcc_active_power_kw": 30.186737305700955,
+      "pcc_reactive_power_kvar": 146.8615092667024,
+      "frequency_hz": 50.010825651185684,
+      "pcc_phase_angle_deg": -30.460917325862084,
+      "f1_voltage_v": 149.64752539108602,
+      "f2_voltage_v": 208.20245901194406,
+      "delta_theta_deg": -1.7299263670845697
+    },
+    "features": {
+      "feeder_phase_coupling": -1.7299263670845697,
+      "power_balance_pf": 0.20133646681742653,
+      "aggregate_impedance_proxy": 7.147905202662381,
+      "voltage_sensitivity_stiffness": 0.012471325665970005
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 39,
+      "total_hidden_demand_kw": 806.1983525466566,
+      "avg_electrical_distance_km": 0.7738333333333333
+    }
+  },
+  {
+    "sig_id": "S0108",
+    "boundary": {
+      "pcc_voltage_v": 209.24397634316986,
+      "pcc_current_a": 2.6645352591003757e-15,
+      "pcc_active_power_kw": 112.82744898383808,
+      "pcc_reactive_power_kvar": 225.73867875342916,
+      "frequency_hz": 49.9908982087074,
+      "pcc_phase_angle_deg": -32.18226173480369,
+      "f1_voltage_v": 122.5341828020135,
+      "f2_voltage_v": 187.16082092223596,
+      "delta_theta_deg": -0.30709576493081414
+    },
+    "features": {
+      "feeder_phase_coupling": -0.30709576493081414,
+      "power_balance_pf": 0.44708079565091435,
+      "aggregate_impedance_proxy": 1.8545484841954945,
+      "voltage_sensitivity_stiffness": 0.004337959468743822
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 35,
+      "total_hidden_demand_kw": 795.0173792522668,
+      "avg_electrical_distance_km": 0.8514285714285712
+    }
+  },
+  {
+    "sig_id": "S0109",
+    "boundary": {
+      "pcc_voltage_v": 231.1887355125307,
+      "pcc_current_a": 1.1842378929335002e-15,
+      "pcc_active_power_kw": -15.71200749956872,
+      "pcc_reactive_power_kvar": 101.14763670643168,
+      "frequency_hz": 50.01238453241678,
+      "pcc_phase_angle_deg": -29.552166039257443,
+      "f1_voltage_v": 207.70865538356477,
+      "f2_voltage_v": 204.66533185096594,
+      "delta_theta_deg": -0.20439909185407856
+    },
+    "features": {
+      "feeder_phase_coupling": -0.20439909185407856,
+      "power_balance_pf": -0.15349649163137583,
+      "aggregate_impedance_proxy": 14.714142722038154,
+      "voltage_sensitivity_stiffness": 0.008563339896286335
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Radial",
+      "active_loads": 17,
+      "total_hidden_demand_kw": 305.2559873311257,
+      "avg_electrical_distance_km": 0.7465
+    }
+  },
+  {
+    "sig_id": "S0110",
+    "boundary": {
+      "pcc_voltage_v": 244.36197211621285,
+      "pcc_current_a": -2.3684757858670005e-15,
+      "pcc_active_power_kw": -17.026776399190773,
+      "pcc_reactive_power_kvar": 82.92408898753438,
+      "frequency_hz": 50.01225703351398,
+      "pcc_phase_angle_deg": -29.54956475853901,
+      "f1_voltage_v": 234.35987793742552,
+      "f2_voltage_v": 210.8755801557113,
+      "delta_theta_deg": 0.9470459171456973
+    },
+    "features": {
+      "feeder_phase_coupling": 0.9470459171456973,
+      "power_balance_pf": -0.20113352316633462,
+      "aggregate_impedance_proxy": 14.351627814657785,
+      "voltage_sensitivity_stiffness": 0.0013802088347720561
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 62,
+      "total_hidden_demand_kw": 1396.2476286738465,
+      "avg_electrical_distance_km": 0.8181585365853659
+    }
+  },
+  {
+    "sig_id": "S0111",
+    "boundary": {
+      "pcc_voltage_v": 206.14584079035012,
+      "pcc_current_a": 1.0954200509634878e-14,
+      "pcc_active_power_kw": 121.76793897802722,
+      "pcc_reactive_power_kvar": 264.3472889638524,
+      "frequency_hz": 49.99158692607533,
+      "pcc_phase_angle_deg": -32.36432983590491,
+      "f1_voltage_v": 145.12587336760168,
+      "f2_voltage_v": 147.93791541003063,
+      "delta_theta_deg": -1.2474021290595942
+    },
+    "features": {
+      "feeder_phase_coupling": -1.2474021290595942,
+      "power_balance_pf": 0.41838249746834977,
+      "aggregate_impedance_proxy": 1.692940201070567,
+      "voltage_sensitivity_stiffness": 0.003246411666647715
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Multi-drop",
+      "active_loads": 34,
+      "total_hidden_demand_kw": 720.0026615213316,
+      "avg_electrical_distance_km": 0.8717380952380951
+    }
+  },
+  {
+    "sig_id": "S0112",
+    "boundary": {
+      "pcc_voltage_v": 221.42958454660607,
+      "pcc_current_a": 1.1842378929335002e-15,
+      "pcc_active_power_kw": -79.94136355410491,
+      "pcc_reactive_power_kvar": 83.47683964633414,
+      "frequency_hz": 49.99950361010753,
+      "pcc_phase_angle_deg": -28.250616287255287,
+      "f1_voltage_v": 210.68466494195104,
+      "f2_voltage_v": 198.69716963612578,
+      "delta_theta_deg": -2.125500844066167
+    },
+    "features": {
+      "feeder_phase_coupling": -2.125500844066167,
+      "power_balance_pf": -0.6916470072557872,
+      "aggregate_impedance_proxy": 2.769899985842009,
+      "voltage_sensitivity_stiffness": 0.0015279602755075207
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Radial",
+      "active_loads": 18,
+      "total_hidden_demand_kw": 363.4117927200634,
+      "avg_electrical_distance_km": 0.9753636363636361
+    }
+  },
+  {
+    "sig_id": "S0113",
+    "boundary": {
+      "pcc_voltage_v": 224.56263027072842,
+      "pcc_current_a": -1.3322676295501878e-15,
+      "pcc_active_power_kw": 27.132728561755286,
+      "pcc_reactive_power_kvar": 177.5512090477465,
+      "frequency_hz": 49.97703665227247,
+      "pcc_phase_angle_deg": -30.363014838102817,
+      "f1_voltage_v": 185.40320742363988,
+      "f2_voltage_v": 187.42001382757425,
+      "delta_theta_deg": 0.3935951752335711
+    },
+    "features": {
+      "feeder_phase_coupling": 0.3935951752335711,
+      "power_balance_pf": 0.1510626623454227,
+      "aggregate_impedance_proxy": 8.276448182613326,
+      "voltage_sensitivity_stiffness": 0.008384214909785035
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 69,
+      "total_hidden_demand_kw": 1549.1658999201563,
+      "avg_electrical_distance_km": 0.8180365853658539
+    }
+  },
+  {
+    "sig_id": "S0114",
+    "boundary": {
+      "pcc_voltage_v": 233.5185008602738,
+      "pcc_current_a": 9.473903143468002e-15,
+      "pcc_active_power_kw": -33.221208928681015,
+      "pcc_reactive_power_kvar": 74.58039932189628,
+      "frequency_hz": 49.977680529669854,
+      "pcc_phase_angle_deg": -29.22726861280167,
+      "f1_voltage_v": 202.80020404761686,
+      "f2_voltage_v": 223.91185929911708,
+      "delta_theta_deg": -0.933412924482635
+    },
+    "features": {
+      "feeder_phase_coupling": -0.933412924482635,
+      "power_balance_pf": -0.4068989123251328,
+      "aggregate_impedance_proxy": 7.029199158055627,
+      "voltage_sensitivity_stiffness": 0.004665668412870789
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 66,
+      "total_hidden_demand_kw": 1304.322769251814,
+      "avg_electrical_distance_km": 0.7707926829268297
+    }
+  },
+  {
+    "sig_id": "S0115",
+    "boundary": {
+      "pcc_voltage_v": 222.48089153947242,
+      "pcc_current_a": 5.921189464667502e-15,
+      "pcc_active_power_kw": 42.85105201946658,
+      "pcc_reactive_power_kvar": 201.56441519727468,
+      "frequency_hz": 50.04907691166048,
+      "pcc_phase_angle_deg": -30.676564102486704,
+      "f1_voltage_v": 166.32435909085456,
+      "f2_voltage_v": 193.617343069062,
+      "delta_theta_deg": 2.5173699986563527
+    },
+    "features": {
+      "feeder_phase_coupling": 2.5173699986563527,
+      "power_balance_pf": 0.207945179312255,
+      "aggregate_impedance_proxy": 5.191958560234279,
+      "voltage_sensitivity_stiffness": 0.007163927499797548
+    },
+    "ground_truth": {
+      "num_buses": 40,
+      "topology_type": "Radial",
+      "active_loads": 36,
+      "total_hidden_demand_kw": 783.9363977327502,
+      "avg_electrical_distance_km": 0.8350476190476188
+    }
+  },
+  {
+    "sig_id": "S0116",
+    "boundary": {
+      "pcc_voltage_v": 241.53090672811413,
+      "pcc_current_a": 1.1842378929335002e-15,
+      "pcc_active_power_kw": -35.20925183128703,
+      "pcc_reactive_power_kvar": 116.30609511303865,
+      "frequency_hz": 49.99582391383572,
+      "pcc_phase_angle_deg": -29.12386424730479,
+      "f1_voltage_v": 227.40033921114892,
+      "f2_voltage_v": 209.07237774730484,
+      "delta_theta_deg": -2.67907982942166
+    },
+    "features": {
+      "feeder_phase_coupling": -2.67907982942166,
+      "power_balance_pf": -0.289743437908621,
+      "aggregate_impedance_proxy": 6.859870270052683,
+      "voltage_sensitivity_stiffness": 0.001491045177009906
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Multi-drop",
+      "active_loads": 7,
+      "total_hidden_demand_kw": 116.86210416008616,
+      "avg_electrical_distance_km": 1.0101666666666667
+    }
+  },
+  {
+    "sig_id": "S0117",
+    "boundary": {
+      "pcc_voltage_v": 237.85112532425308,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": 58.6620624004252,
+      "pcc_reactive_power_kvar": 152.78488716489784,
+      "frequency_hz": 50.00271799558373,
+      "pcc_phase_angle_deg": -31.05981493889834,
+      "f1_voltage_v": 180.48815468812973,
+      "f2_voltage_v": 221.92529444626203,
+      "delta_theta_deg": -5.002002451678052
+    },
+    "features": {
+      "feeder_phase_coupling": -5.002002451678052,
+      "power_balance_pf": 0.35843951661129375,
+      "aggregate_impedance_proxy": 4.05459868843497,
+      "voltage_sensitivity_stiffness": 0.004227025231625172
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 17,
+      "total_hidden_demand_kw": 323.18517281067204,
+      "avg_electrical_distance_km": 0.7050454545454546
+    }
+  },
+  {
+    "sig_id": "S0118",
+    "boundary": {
+      "pcc_voltage_v": 234.96724201980746,
+      "pcc_current_a": -3.552713678800501e-15,
+      "pcc_active_power_kw": 74.67895171554031,
+      "pcc_reactive_power_kvar": 184.87413415485366,
+      "frequency_hz": 50.00982223164545,
+      "pcc_phase_angle_deg": -31.377691555487942,
+      "f1_voltage_v": 218.6626619365433,
+      "f2_voltage_v": 167.43275857450612,
+      "delta_theta_deg": 1.0899005791990675
+    },
+    "features": {
+      "feeder_phase_coupling": 1.0899005791990675,
+      "power_balance_pf": 0.37454171485169896,
+      "aggregate_impedance_proxy": 3.1463649860600147,
+      "voltage_sensitivity_stiffness": 0.0011905037769216363
+    },
+    "ground_truth": {
+      "num_buses": 20,
+      "topology_type": "Multi-drop",
+      "active_loads": 19,
+      "total_hidden_demand_kw": 362.8420478553798,
+      "avg_electrical_distance_km": 0.8917727272727274
+    }
+  },
+  {
+    "sig_id": "S0119",
+    "boundary": {
+      "pcc_voltage_v": 229.913616632984,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": -37.18303115498013,
+      "pcc_reactive_power_kvar": 117.83081715407012,
+      "frequency_hz": 49.986732918635475,
+      "pcc_phase_angle_deg": -29.08028064461243,
+      "f1_voltage_v": 203.52863525503417,
+      "f2_voltage_v": 207.3677573263443,
+      "delta_theta_deg": 0.08052226362280379
+    },
+    "features": {
+      "feeder_phase_coupling": 0.08052226362280379,
+      "power_balance_pf": -0.3009348579721725,
+      "aggregate_impedance_proxy": 6.18329391951405,
+      "voltage_sensitivity_stiffness": 0.004086918440037376
+    },
+    "ground_truth": {
+      "num_buses": 80,
+      "topology_type": "Radial",
+      "active_loads": 67,
+      "total_hidden_demand_kw": 1388.3116042005372,
+      "avg_electrical_distance_km": 0.8118536585365855
+    }
+  },
+  {
+    "sig_id": "S0120",
+    "boundary": {
+      "pcc_voltage_v": 218.03169244888943,
+      "pcc_current_a": -7.105427357601002e-15,
+      "pcc_active_power_kw": -27.522361538746544,
+      "pcc_reactive_power_kvar": 121.98286638920848,
+      "frequency_hz": 49.96894940448408,
+      "pcc_phase_angle_deg": -29.276205830359,
+      "f1_voltage_v": 198.37440169309772,
+      "f2_voltage_v": 183.0369736920142,
+      "delta_theta_deg": -2.3348482876244105
+    },
+    "features": {
+      "feeder_phase_coupling": -2.3348482876244105,
+      "power_balance_pf": -0.2200922787265932,
+      "aggregate_impedance_proxy": 7.921983156131308,
+      "voltage_sensitivity_stiffness": 0.00630178432906164
+    },
+    "ground_truth": {
+      "num_buses": 10,
+      "topology_type": "Radial",
+      "active_loads": 8,
+      "total_hidden_demand_kw": 172.64361159764493,
+      "avg_electrical_distance_km": 0.6316666666666667
+    }
   }
 ]

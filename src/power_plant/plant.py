@@ -5,312 +5,329 @@ import numpy as np
 import opendssdirect as dss
 from typing import Dict, Any, List, Tuple
 
-class OpenDSSMicrogrid:
+class MonteCarloMicrogridCampaign:
     """
-    Utility-scale OpenDSS plant-network digital twin simulator.
-    Represents a multi-feeder microgrid coupled with shared Solar (100 kW) and BESS (100 kWh).
-    Manages known plant assets and unknown downstream distribution network realizations.
+    Combines a fixed solar-BESS plant with a dynamic Monte Carlo downstream network simulator.
+    Evaluates hidden distribution network state realization from boundary electrical signatures.
     """
 
     def __init__(self):
-        # Known fixed parameters
         self.solar_capacity_kw = 100.0
         self.bess_capacity_kwh = 100.0
-        self.base_kv = 11.0 # 11kV Distribution level
-        self.feeder_impedance = {"r1": 0.15, "x1": 0.15} # Known feeder linecodes
+        self.base_kv = 11.0 # 11kV MV level
+        self.pcc_bus = "plant_pcc"
+        self.signature_db: List[Dict[str, Any]] = []
 
-    def build_base_circuit(self):
-        """Initializes the OpenDSS circuit and defines the known plant boundary."""
+    def build_fixed_plant(self):
+        """Builds the static, unchanged plant infrastructure above the PCC."""
         dss.Text.Command("clear")
-        # Define 11kV utility grid connection / plant substation bus
-        dss.Text.Command(f"new circuit.microgrid basekv={self.base_kv} pu=1.0 phases=3")
 
-        # Define known transformer at plant interface (Substation Transformer)
+        # 1. 3-Phase 11kV Substation Source
+        dss.Text.Command(f"new circuit.plant_network basekv={self.base_kv} pu=1.0 phases=3")
+
+        # 2. MV/LV Step-up Transformer (11kV to 0.415kV)
         dss.Text.Command("new transformer.sub_xfmr phases=3 windings=2 wdg=1 bus=sourcebus conn=delta kv=11 kva=200 wdg=2 bus=plant_pcc conn=wye kv=0.415 kva=200")
 
-        # Define shared sources (Solar PV and BESS) coupled at plant_pcc
-        # Model Solar PV as generator
-        dss.Text.Command(f"new generator.solar bus1=plant_pcc.1.2.3 phases=3 kv=0.415 kw={self.solar_capacity_kw} pf=1.0 model=1")
-        # Model AC-coupled BESS as storage/generator
-        dss.Text.Command(f"new generator.bess bus1=plant_pcc.1.2.3 phases=3 kv=0.415 kw=50.0 pf=1.0 model=1")
+        # 3. PV System: 100 kWp Solar PV subsystem at plant_pcc
+        dss.Text.Command("new generator.solar bus1=plant_pcc phases=3 kv=0.415 kw=100.0 pf=1.0 model=1")
 
-        # Define 2 known outgoing feeder branches from plant_pcc to feeder boundaries (Feeder 1 & Feeder 2)
-        dss.Text.Command(f"new line.feeder1 bus1=plant_pcc.1.2.3 bus2=f1_boundary.1.2.3 r1={self.feeder_impedance['r1']} x1={self.feeder_impedance['x1']} length=1.0 units=km")
-        dss.Text.Command(f"new line.feeder2 bus1=plant_pcc.1.2.3 bus2=f2_boundary.1.2.3 r1={self.feeder_impedance['r1']} x1={self.feeder_impedance['x1']} length=1.0 units=km")
+        # 4. Battery Storage: 100 kWh AC-coupled BESS coupled at plant_pcc
+        dss.Text.Command("new generator.bess bus1=plant_pcc phases=3 kv=0.415 kw=50.0 pf=1.0 model=1")
 
-    def generate_random_downstream_network(self, num_buses: int, topology_type: str = "Radial") -> List[str]:
+        # 5. Known Plant Feeders outgoing from PCC (feeder 1 and feeder 2)
+        dss.Text.Command("new line.feeder1 bus1=plant_pcc bus2=f1_boundary phases=3 r1=0.15 x1=0.15 length=1.0 units=km")
+        dss.Text.Command("new line.feeder2 bus1=plant_pcc bus2=f2_boundary phases=3 r1=0.15 x1=0.15 length=1.0 units=km")
+
+    def generate_random_hidden_network(self, num_buses: int, topology_type: str = "Radial") -> List[str]:
         """
-        Generates an unknown downstream topology connected to the f1_boundary and f2_boundary.
-        Returns a list of created lines and loads.
+        Generates a random unknown downstream network.
+        Uses random line lengths, random conductor types, random load locations and transformers.
         """
-        buses = []
-        # Downstream buses are unknown and hidden
-        for i in range(1, num_buses + 1):
-            buses.append(f"h_bus_{i}")
-
         elements = []
-        # Connect first set of hidden buses to known interfaces
-        half_buses = num_buses // 2
-        f1_root = "f1_boundary"
-        f2_root = "f2_boundary"
+        buses = [f"h_bus_{i}" for i in range(1, num_buses + 1)]
 
-        # Topology connection building
-        if topology_type == "Radial":
-            # Deep branching radial structure (cascaded)
-            for i, bus in enumerate(buses):
-                parent = f1_root if i < half_buses else f2_root
-                if i != 0 and i != half_buses:
+        # Define random linecodes (conductor types)
+        linecodes = [
+            {"r1": 0.25, "x1": 0.20, "name": "cond_light"},
+            {"r1": 0.12, "x1": 0.10, "name": "cond_medium"},
+            {"r1": 0.06, "x1": 0.05, "name": "cond_heavy"}
+        ]
+        for lc in linecodes:
+            dss.Text.Command(f"new linecode.{lc['name']} nphases=3 r1={lc['r1']} x1={lc['x1']}")
+
+        # Root interface boundary buses
+        roots = ["f1_boundary", "f2_boundary"]
+
+        # Build connections dynamically
+        for i, bus in enumerate(buses):
+            # Select root or parent bus
+            if i == 0:
+                parent = roots[0]
+            elif i == num_buses // 2:
+                parent = roots[1]
+            else:
+                # Random connection to form an unknown topology
+                if topology_type == "Radial":
                     parent = buses[i - 1]
-                # Hidden downstream impedances vary slightly
-                r = random.uniform(0.1, 0.4)
-                x = random.uniform(0.1, 0.3)
-                dss.Text.Command(f"new line.line_{bus} bus1={parent}.1.2.3 bus2={bus}.1.2.3 r1={r:.3f} x1={x:.3f} length=0.5 units=km")
-                elements.append(f"Line.line_{bus}")
-        else:
-            # Star / Multi-drop / Ring-like direct connection topology
-            for i, bus in enumerate(buses):
-                parent = f1_root if i < half_buses else f2_root
-                r = random.uniform(0.2, 0.6)
-                x = random.uniform(0.2, 0.5)
-                dss.Text.Command(f"new line.line_{bus} bus1={parent}.1.2.3 bus2={bus}.1.2.3 r1={r:.3f} x1={x:.3f} length=1.0 units=km")
-                elements.append(f"Line.line_{bus}")
+                else:
+                    # Mesh / Multi-drop connections
+                    parent = random.choice(buses[:i] + roots)
 
-        # Add consumer loads dynamically to hidden buses (known load types, unknown magnitudes)
-        for bus in buses:
-            kw = random.uniform(2.0, 10.0) # Downstream loads continuously change
+            # Random line length and conductor type
+            length = random.uniform(0.2, 1.5) # km
+            lc = random.choice(linecodes)["name"]
+
+            # Connect the line
+            dss.Text.Command(f"new line.line_{bus} bus1={parent} bus2={bus} phases=3 linecode={lc} length={length:.3f} units=km")
+            elements.append(f"Line.line_{bus}")
+
+            # Random transformer location (e.g. 10% chance of adding a local distribution step-down xfmr)
+            if random.random() < 0.10:
+                dss.Text.Command(f"new transformer.xfmr_{bus} phases=3 windings=2 wdg=1 bus={bus} kv=0.415 kva=50 wdg=2 bus={bus}_sec kv=0.208 kva=50")
+                load_bus = f"{bus}_sec"
+            else:
+                load_bus = bus
+
+            # Place consumer loads at random locations with random nominal parameters
+            kw = random.uniform(5.0, 30.0)
             pf = random.uniform(0.85, 0.98)
-            dss.Text.Command(f"new load.load_{bus} bus1={bus}.1.2.3 phases=3 kv=0.415 kw={kw:.2f} pf={pf:.2f} model=1")
+            dss.Text.Command(f"new load.load_{bus} bus1={load_bus} phases=3 kv=0.415 kw={kw:.2f} pf={pf:.2f} model=1")
             elements.append(f"Load.load_{bus}")
 
         return elements
 
-    def get_boundary_measurements(self) -> Dict[str, Any]:
-        """Reads physical boundary measurements from the known plant interfaces (f1_boundary & f2_boundary)."""
+    def apply_dynamic_load_switching(self):
+        """Simulates switching events, motor starts, tap changes, and line outages programmatically."""
+        # Get all load names in OpenDSS
+        loads = dss.Loads.AllNames()
+        lines = dss.Lines.AllNames()
+
+        # 1. Randomly connect/disconnect or scale loads
+        for load in loads:
+            dss.Loads.Name(load)
+            if random.random() < 0.15:
+                # Disconnect load (set kW to 0)
+                dss.Loads.kW(0.0)
+            elif random.random() < 0.15:
+                # Motor starting simulation (high starting reactive surge, low PF)
+                dss.Loads.kW(dss.Loads.kW() * 1.8)
+                dss.Loads.PF(0.45) # Surge PF
+            else:
+                # Normal operational fluctuations
+                dss.Loads.kW(dss.Loads.kW() * random.uniform(0.85, 1.25))
+
+        # 2. Toggle random line switches (line outages)
+        for line in lines:
+            if "feeder" not in line and random.random() < 0.05:
+                # Disconnect line/switch
+                dss.Text.Command(f"Line.{line}.enabled=false")
+
+        # 3. Change transformer tap programmatically
+        dss.Transformers.First()
+        dss.Transformers.Tap(random.choice([0.95, 1.0, 1.05]))
+
+    def collect_boundary_measurements(self) -> Dict[str, Any]:
+        """Collects electrical measurements only at the known plant PCC and feeder boundaries."""
         dss.Solution.Solve()
 
-        # Extract voltages
+        # Measure plant PCC voltage, current, active/reactive powers, phase angles, frequency
+        dss.Circuit.SetActiveBus(self.pcc_bus)
+        pcc_volts = dss.Bus.VMagAngle()[0:6:2]
+        pcc_angles = dss.Bus.VMagAngle()[1:6:2]
+        v_pcc_mean = np.mean(pcc_volts)
+        theta_pcc_mean = np.mean(pcc_angles)
+
+        # Output current and power from the transformer
+        dss.Circuit.SetActiveElement("Transformer.sub_xfmr")
+        currents = dss.CktElement.Currents()[:6]
+        i_pcc_mean = np.mean(currents)
+        powers = dss.CktElement.Powers()[:6]
+        p_pcc = sum(powers[0:6:2])
+        q_pcc = sum(powers[1:6:2])
+
+        # Frequency proxy based on nominal voltage frequency
+        frequency = 50.0 + random.normalvariate(0, 0.02) # Hz
+
+        # Known plant feeder measurements
         dss.Circuit.SetActiveBus("f1_boundary")
-        f1_volts_mag = dss.Bus.VMagAngle()[0:6:2]
-        f1_volts_angle = dss.Bus.VMagAngle()[1:6:2]
+        f1_volts = dss.Bus.VMagAngle()[0:6:2]
+        f1_angles = dss.Bus.VMagAngle()[1:6:2]
+        v_f1 = np.mean(f1_volts)
+        theta_f1 = np.mean(f1_angles)
 
         dss.Circuit.SetActiveBus("f2_boundary")
-        f2_volts_mag = dss.Bus.VMagAngle()[0:6:2]
-        f2_volts_angle = dss.Bus.VMagAngle()[1:6:2]
+        f2_volts = dss.Bus.VMagAngle()[0:6:2]
+        f2_angles = dss.Bus.VMagAngle()[1:6:2]
+        v_f2 = np.mean(f2_volts)
+        theta_f2 = np.mean(f2_angles)
 
-        # Extract feeder line active/reactive powers
-        dss.Circuit.SetActiveElement("Line.feeder1")
-        f1_powers = dss.CktElement.Powers()[:6] # Active, Reactive per phase for Term1
-        f1_p = sum(f1_powers[0:6:2])
-        f1_q = sum(f1_powers[1:6:2])
-
-        dss.Circuit.SetActiveElement("Line.feeder2")
-        f2_powers = dss.CktElement.Powers()[:6]
-        f2_p = sum(f2_powers[0:6:2])
-        f2_q = sum(f2_powers[1:6:2])
-
-        # Derived boundary physics features
-        v1_mean = np.mean(f1_volts_mag)
-        v2_mean = np.mean(f2_volts_mag)
-        theta1_mean = np.mean(f1_volts_angle)
-        theta2_mean = np.mean(f2_volts_angle)
-
-        delta_theta = theta1_mean - theta2_mean
-        p_total = f1_p + f2_p
-        q_total = f1_q + f2_q
-
-        # Calculate voltage sensitivity (V_pcc stiffness indicator)
-        dss.Circuit.SetActiveBus("plant_pcc")
-        v_pcc = np.mean(dss.Bus.VMagAngle()[:3])
+        # Derived boundary phase relationship (feeder-to-feeder coupling)
+        delta_theta = theta_f1 - theta_f2
 
         return {
-            "f1_voltage": float(v1_mean),
-            "f2_voltage": float(v2_mean),
-            "f1_phase": float(theta1_mean),
-            "f2_phase": float(theta2_mean),
-            "f1_kw": float(f1_p),
-            "f1_kvar": float(f1_q),
-            "f2_kw": float(f2_p),
-            "f2_kvar": float(f2_q),
-            "delta_theta": float(delta_theta),
-            "p_total": float(p_total),
-            "q_total": float(q_total),
-            "v_pcc": float(v_pcc)
+            "pcc_voltage_v": float(v_pcc_mean),
+            "pcc_current_a": float(i_pcc_mean),
+            "pcc_active_power_kw": float(p_pcc),
+            "pcc_reactive_power_kvar": float(q_pcc),
+            "frequency_hz": float(frequency),
+            "pcc_phase_angle_deg": float(theta_pcc_mean),
+            "f1_voltage_v": float(v_f1),
+            "f2_voltage_v": float(v_f2),
+            "delta_theta_deg": float(delta_theta)
         }
 
-class SignatureAtlasBuilder:
+    def capture_hidden_ground_truth(self, num_buses: int, topology: str) -> Dict[str, Any]:
+        """Captures true downstream state (hidden from the estimator but recorded as reference)."""
+        all_loads = dss.Loads.AllNames()
+        active_loads = 0
+        total_hidden_demand_kw = 0.0
+
+        for load in all_loads:
+            dss.Loads.Name(load)
+            kw = dss.Loads.kW()
+            if kw > 0:
+                active_loads += 1
+                total_hidden_demand_kw += kw
+
+        # Average electrical impedance distance from the PCC to all hidden buses
+        avg_electrical_distance = 0.0
+        lines = dss.Lines.AllNames()
+        total_len = 0.0
+        for line in lines:
+            if "feeder" not in line:
+                dss.Lines.Name(line)
+                total_len += dss.Lines.Length()
+        avg_electrical_distance = total_len / max(len(lines), 1)
+
+        return {
+            "num_buses": num_buses,
+            "topology_type": topology,
+            "active_loads": active_loads,
+            "total_hidden_demand_kw": float(total_hidden_demand_kw),
+            "avg_electrical_distance_km": float(avg_electrical_distance)
+        }
+
+    def run_monte_carlo_campaign(self, num_realizations: int = 120):
+        """Executes a Monte Carlo campaign generating hundreds of random realization scenarios."""
+        print(f"Starting Monte Carlo realization campaign with {num_realizations} scenarios...", flush=True)
+        self.signature_db = []
+
+        topologies = ["Radial", "Multi-drop"]
+
+        for idx in range(1, num_realizations + 1):
+            # Step 1: Fixed plant
+            self.build_fixed_plant()
+
+            # Step 2: Random hidden network size and connection type
+            num_buses = random.choice([10, 20, 40, 80])
+            topology = random.choice(topologies)
+            self.generate_random_hidden_network(num_buses, topology)
+
+            # Step 3: Dynamic load switching and tap/switch changes
+            self.apply_dynamic_load_switching()
+
+            # Step 4: Collect PCC boundary measurements
+            meas = self.collect_boundary_measurements()
+
+            # Step 5: Capture ground truth reference state
+            gt = self.capture_hidden_ground_truth(num_buses, topology)
+
+            # Define noise-robust derived signature features
+            derived_features = {
+                "feeder_phase_coupling": meas["delta_theta_deg"],
+                "power_balance_pf": meas["pcc_active_power_kw"] / (np.sqrt(meas["pcc_active_power_kw"]**2 + meas["pcc_reactive_power_kvar"]**2) + 1e-6),
+                "aggregate_impedance_proxy": meas["pcc_voltage_v"] / (abs(meas["pcc_active_power_kw"]) + 1e-6),
+                "voltage_sensitivity_stiffness": (1.0 - (meas["f1_voltage_v"] / 240.0)) / (abs(meas["pcc_active_power_kw"]) + 1e-6)
+            }
+
+            self.signature_db.append({
+                "sig_id": f"S{idx:04d}",
+                "boundary": meas,
+                "features": derived_features,
+                "ground_truth": gt
+            })
+
+            if idx % 20 == 0:
+                print(f"  Processed {idx}/{num_realizations} random scenarios...", flush=True)
+
+        # Export signature database
+        os.makedirs("src/power_plant", exist_ok=True)
+        with open("src/power_plant/signature_atlas.json", "w") as f:
+            json.dump(self.signature_db, f, indent=2)
+        print("Signature Atlas successfully populated and saved to src/power_plant/signature_atlas.json", flush=True)
+
+
+class LatentNetworkStateEstimator:
     """
-    Constructs the Network Signature Atlas from OpenDSS experiments
-    and maps boundary measurements to latent states X_R = Phi(M).
+    State Estimator mapping boundary measurement signatures to hidden network coordinates:
+    X_R = Phi(M)
+    Uses a k-NN similarity lookup on the noise-robust features in the Signature Atlas.
     """
 
-    def __init__(self):
-        self.atlas: List[Dict[str, Any]] = []
+    def __init__(self, atlas_path: str = "src/power_plant/signature_atlas.json"):
+        with open(atlas_path, "r") as f:
+            self.atlas = json.load(f)
 
-    def add_entry(self, sig_id: str, measurements: Dict[str, Any], hidden_state: Dict[str, Any], realization: Dict[str, Any], event: str):
-        # Derive robust signature features
-        derived_features = {
-            "feeder_phase_coupling": measurements["delta_theta"],
-            "power_balance_pf": measurements["p_total"] / (np.sqrt(measurements["p_total"]**2 + measurements["q_total"]**2) + 1e-6),
-            "aggregate_impedance_proxy": measurements["v_pcc"] / (measurements["p_total"] + 1e-6),
-            "voltage_sensitivity_stiffness": (1.0 - (measurements["f1_voltage"] / 240.0)) / (measurements["p_total"] + 1e-6) # normalized to 240V level
+    def estimate_latent_state(self, m: Dict[str, Any]) -> Dict[str, Any]:
+        """Estimates latent coordinates from boundary measurement vector m."""
+        # Calculate derived signature features
+        p_act = m["pcc_active_power_kw"]
+        p_react = m["pcc_reactive_power_kvar"]
+        pf = p_act / (np.sqrt(p_act**2 + p_react**2) + 1e-6)
+        impedance = m["pcc_voltage_v"] / (abs(p_act) + 1e-6)
+        stiffness = (1.0 - (m["f1_voltage_v"] / 240.0)) / (abs(p_act) + 1e-6)
+
+        query_feat = {
+            "feeder_phase_coupling": m["delta_theta_deg"],
+            "power_balance_pf": pf,
+            "aggregate_impedance_proxy": impedance,
+            "voltage_sensitivity_stiffness": stiffness
         }
 
-        self.atlas.append({
-            "sig_id": sig_id,
-            "boundary": measurements,
-            "features": derived_features,
-            "hidden_state": hidden_state,
-            "realization": realization,
-            "event": event
-        })
-
-    def estimate_state(self, m: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Latent State Estimation mapping boundary measurements to latent coordinates:
-        X_R = Phi(M)
-        Uses minimum Euclidean distance on normalized derived signature features.
-        """
-        if not self.atlas:
-            return {"effective_electrical_distance": 1.0, "aggregate_loading_factor": 1.0, "feeder_coupling_index": 0.0, "hidden_buses": 10}
-
-        # Calculate query features
-        m_features = {
-            "feeder_phase_coupling": m["delta_theta"],
-            "power_balance_pf": m["p_total"] / (np.sqrt(m["p_total"]**2 + m["q_total"]**2) + 1e-6),
-            "aggregate_impedance_proxy": m["v_pcc"] / (m["p_total"] + 1e-6),
-            "voltage_sensitivity_stiffness": (1.0 - (m["f1_voltage"] / 240.0)) / (m["p_total"] + 1e-6)
-        }
-
-        best_sig = None
-        min_dist = float("inf")
+        # Find closest match in Atlas
+        best_match = None
+        min_distance = float("inf")
 
         for entry in self.atlas:
             dist = 0.0
-            for k in m_features:
-                dist += (m_features[k] - entry["features"][k]) ** 2
+            for k in query_feat:
+                dist += (query_feat[k] - entry["features"][k]) ** 2
             dist = np.sqrt(dist)
-            if dist < min_dist:
-                min_dist = dist
-                best_sig = entry
+            if dist < min_distance:
+                min_distance = dist
+                best_match = entry
 
-        # Map to latent state coordinates X_R
-        estimated_latent_state = {
-            "effective_electrical_distance": best_sig["hidden_state"]["avg_electrical_distance"],
-            "aggregate_loading_factor": best_sig["hidden_state"]["loading_factor"],
-            "feeder_coupling_index": best_sig["features"]["feeder_phase_coupling"],
-            "estimated_buses": best_sig["realization"]["num_buses"],
-            "estimated_topology": best_sig["realization"]["topology_type"],
-            "matching_sig_id": best_sig["sig_id"],
-            "matching_event": best_sig["event"]
+        gt = best_match["ground_truth"]
+
+        # Latent state coordinates X_R
+        return {
+            "estimated_buses": gt["num_buses"],
+            "estimated_topology": gt["topology_type"],
+            "estimated_active_loads": gt["active_loads"],
+            "estimated_hidden_demand_kw": gt["total_hidden_demand_kw"],
+            "estimated_electrical_distance_km": gt["avg_electrical_distance_km"],
+            "matching_sig_id": best_match["sig_id"]
         }
-        return estimated_latent_state
 
-def run_pipeline_experiments() -> Tuple[List[Dict[str, Any]], SignatureAtlasBuilder]:
-    """Runs the 3 physical experiments to populate the Signature Atlas."""
-    random.seed(42) # For repeatability
-    np.random.seed(42)
 
-    microgrid = OpenDSSMicrogrid()
-    atlas_builder = SignatureAtlasBuilder()
-    sig_counter = 1
+def run_full_campaign() -> Tuple[List[Dict[str, Any]], LatentNetworkStateEstimator]:
+    """Runs the full OpenDSS Monte Carlo network realization campaign and instantiates the Estimator."""
+    campaign = MonteCarloMicrogridCampaign()
+    campaign.run_monte_carlo_campaign(num_realizations=120)
 
-    # --- EXPERIMENT 1: Hidden Bus Discovery (Varying bus count / complexity) ---
-    print("Executing Experiment 1: Hidden Bus Discovery...")
-    for bus_count in [10, 20, 40, 80]:
-        microgrid.build_base_circuit()
-        microgrid.generate_random_downstream_network(num_buses=bus_count, topology_type="Radial")
-        meas = microgrid.get_boundary_measurements()
+    estimator = LatentNetworkStateEstimator()
+    return campaign.signature_db, estimator
 
-        # Hidden state calculation
-        avg_dist = 0.5 * (bus_count / 10.0) # Proxy distance
-        loading = float(meas["p_total"] / 100.0)
-
-        atlas_builder.add_entry(
-            sig_id=f"S{sig_counter:04d}",
-            measurements=meas,
-            hidden_state={"avg_electrical_distance": avg_dist, "loading_factor": loading},
-            realization={"num_buses": bus_count, "topology_type": "Radial"},
-            event="Baseline-Complexity"
-        )
-        sig_counter += 1
-
-    # --- EXPERIMENT 2: Connectivity / Topology Experiment (Fixed buses, different connections) ---
-    print("Executing Experiment 2: Topology Connectivity Experiment...")
-    for topo in ["Radial", "Multi-drop"]:
-        microgrid.build_base_circuit()
-        # Fix downstream buses to 20
-        microgrid.generate_random_downstream_network(num_buses=20, topology_type=topo)
-        meas = microgrid.get_boundary_measurements()
-
-        avg_dist = 0.8 if topo == "Radial" else 0.4
-        loading = float(meas["p_total"] / 100.0)
-
-        atlas_builder.add_entry(
-            sig_id=f"S{sig_counter:04d}",
-            measurements=meas,
-            hidden_state={"avg_electrical_distance": avg_dist, "loading_factor": loading},
-            realization={"num_buses": 20, "topology_type": topo},
-            event=f"Topology-{topo}"
-        )
-        sig_counter += 1
-
-    # --- EXPERIMENT 3: Dynamic Load Switching ---
-    print("Executing Experiment 3: Dynamic Load Switching Experiment...")
-    # Fix topology (Radial, 20 buses) and dynamically switch events
-    events = ["Normal", "Load Connected", "Motor Start", "Feeder Disconnected"]
-    for event in events:
-        microgrid.build_base_circuit()
-        # Generate baseline downstream
-        microgrid.generate_random_downstream_network(num_buses=20, topology_type="Radial")
-
-        # Apply specific load disturbances to represent switching events
-        if event == "Load Connected":
-            dss.Text.Command("new load.dist_load bus1=h_bus_5 kw=35.0 pf=0.95")
-        elif event == "Motor Start":
-            # Low power factor starting surge
-            dss.Text.Command("new load.starting_motor bus1=h_bus_10 kw=50.0 pf=0.45")
-        elif event == "Feeder Disconnected":
-            # Disconnect a downstream line
-            dss.Text.Command("line.line_h_bus_15.enabled=false")
-
-        meas = microgrid.get_boundary_measurements()
-        avg_dist = 1.0
-        loading = float(meas["p_total"] / 100.0)
-
-        atlas_builder.add_entry(
-            sig_id=f"S{sig_counter:04d}",
-            measurements=meas,
-            hidden_state={"avg_electrical_distance": avg_dist, "loading_factor": loading},
-            realization={"num_buses": 20, "topology_type": "Radial"},
-            event=event
-        )
-        sig_counter += 1
-
-    # Save constructed atlas to json
-    serialized_atlas = [
-        {
-            "sig_id": entry["sig_id"],
-            "boundary": entry["boundary"],
-            "features": entry["features"],
-            "hidden_state": entry["hidden_state"],
-            "realization": entry["realization"],
-            "event": entry["event"]
-        } for entry in atlas_builder.atlas
-    ]
-
-    os.makedirs("src/power_plant", exist_ok=True)
-    with open("src/power_plant/signature_atlas.json", "w") as f:
-        json.dump(serialized_atlas, f, indent=2)
-    print("Network Signature Atlas successfully saved to src/power_plant/signature_atlas.json")
-
-    return serialized_atlas, atlas_builder
 
 if __name__ == "__main__":
-    atlas_data, builder = run_pipeline_experiments()
-    # Run test query
-    test_meas = builder.atlas[0]["boundary"]
-    estimated = builder.estimate_state(test_meas)
-    print("\n--- TEST QUERY STATE ESTIMATION ---")
-    print("Estimated Latent State coordinates:")
-    for k, v in estimated.items():
-        print(f"  {k:30s}: {v}")
+    random.seed(101)
+    np.random.seed(101)
+    db, estimator = run_full_campaign()
+
+    # Test state estimator on a query
+    test_meas = db[5]["boundary"]
+    latent_state = estimator.estimate_latent_state(test_meas)
+    print("\n--- LATENT STATE ESTIMATION DEMO ---")
+    print("Estimated Latent network state coordinates:")
+    for k, v in latent_state.items():
+        print(f"  {k:35s}: {v}")
