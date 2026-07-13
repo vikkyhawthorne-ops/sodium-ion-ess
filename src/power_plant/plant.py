@@ -243,7 +243,23 @@ class MonteCarloMicrogridCampaign:
             topology = random.choice(topologies)
             self.generate_random_hidden_network(num_buses, topology)
 
+            # Determine event category
+            if idx <= 40:
+                event = "Baseline-Complexity"
+            elif idx <= 80:
+                event = f"Topology-{topology}"
+            else:
+                event = random.choice(["Normal", "Load Connected", "Motor Start", "Feeder Disconnected"])
+
             # Step 3: Dynamic load switching and tap/switch changes
+            if event == "Load Connected":
+                dss.Text.Command("new load.dist_load bus1=h_bus_5 kw=35.0 pf=0.95")
+            elif event == "Motor Start":
+                dss.Text.Command("new load.starting_motor bus1=h_bus_10 kw=50.0 pf=0.45")
+            elif event == "Feeder Disconnected":
+                target_bus = 15 if num_buses >= 15 else num_buses
+                dss.Text.Command(f"line.line_h_bus_{target_bus}.enabled=false")
+
             self.apply_dynamic_load_switching()
 
             # Step 4: Collect PCC boundary measurements
@@ -264,7 +280,9 @@ class MonteCarloMicrogridCampaign:
                 "sig_id": f"S{idx:04d}",
                 "boundary": meas,
                 "features": derived_features,
-                "ground_truth": gt
+                "ground_truth": gt,
+                "realization": {"num_buses": num_buses, "topology_type": topology},
+                "event": event
             })
 
             if idx % 20 == 0:
@@ -326,10 +344,38 @@ class LatentNetworkStateEstimator:
             "estimated_active_loads": gt["active_loads"],
             "estimated_hidden_demand_kw": gt["total_hidden_demand_kw"],
             "estimated_electrical_distance_km": gt["avg_electrical_distance_km"],
+            "estimated_aggregate_loading_factor": float(gt["total_hidden_demand_kw"] / (gt["num_buses"] * 20.0 + 1e-6)),
             "estimated_xfmr_nodes_count": gt["transformer_node_count"],
             "estimated_xfmr_total_p_kw": gt["transformer_total_p_kw"],
-            "matching_sig_id": best_match["sig_id"]
+            "matching_sig_id": best_match["sig_id"],
+            "matching_event": best_match["event"]
         }
+
+    def estimate_state(self, m: Dict[str, Any]) -> Dict[str, Any]:
+        """Alias matching report.ipynb integration."""
+        return self.estimate_latent_state(m)
+
+
+# --- Compatibility classes and aliases for src/report.ipynb integration ---
+
+class OpenDSSMicrogrid(MonteCarloMicrogridCampaign):
+    """Alias and wrapper class matching report.ipynb imports."""
+    def build_base_circuit(self):
+        self.build_fixed_plant()
+
+    def generate_random_downstream_network(self, num_buses: int, topology_type: str = "Radial") -> List[str]:
+        return self.generate_random_hidden_network(num_buses, topology_type)
+
+    def get_boundary_measurements(self) -> Dict[str, Any]:
+        meas = self.collect_boundary_measurements()
+        # Compatibility aliases for report.ipynb
+        meas["f1_voltage"] = meas["f1_voltage_v"]
+        meas["f2_voltage"] = meas["f2_voltage_v"]
+        meas["delta_theta"] = meas["delta_theta_deg"]
+        meas["p_total"] = meas["pcc_active_power_kw"]
+        meas["q_total"] = meas["pcc_reactive_power_kvar"]
+        meas["v_pcc"] = meas["pcc_voltage_v"]
+        return meas
 
 
 def run_full_campaign() -> Tuple[List[Dict[str, Any]], LatentNetworkStateEstimator]:
@@ -339,6 +385,11 @@ def run_full_campaign() -> Tuple[List[Dict[str, Any]], LatentNetworkStateEstimat
 
     estimator = LatentNetworkStateEstimator()
     return campaign.signature_db, estimator
+
+
+def run_pipeline_experiments() -> Tuple[List[Dict[str, Any]], LatentNetworkStateEstimator]:
+    """Alias function matching report.ipynb imports."""
+    return run_full_campaign()
 
 
 if __name__ == "__main__":
