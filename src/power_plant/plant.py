@@ -81,8 +81,8 @@ class MonteCarloMicrogridCampaign:
             dss.Text.Command(f"new line.line_{bus} bus1={parent} bus2={bus} phases=3 linecode={lc} length={length:.3f} units=km")
             elements.append(f"Line.line_{bus}")
 
-            # Random transformer location (e.g. 10% chance of adding a local distribution step-down xfmr)
-            if random.random() < 0.10:
+            # Random transformer location (e.g. 15% chance of adding a local distribution step-down xfmr)
+            if random.random() < 0.15:
                 dss.Text.Command(f"new transformer.xfmr_{bus} phases=3 windings=2 wdg=1 bus={bus} kv=0.415 kva=50 wdg=2 bus={bus}_sec kv=0.208 kva=50")
                 load_bus = f"{bus}_sec"
             else:
@@ -177,7 +177,7 @@ class MonteCarloMicrogridCampaign:
         }
 
     def capture_hidden_ground_truth(self, num_buses: int, topology: str) -> Dict[str, Any]:
-        """Captures true downstream state (hidden from the estimator but recorded as reference)."""
+        """Captures true downstream state including detailed measurements at sufficient transformer nodes."""
         all_loads = dss.Loads.AllNames()
         active_loads = 0
         total_hidden_demand_kw = 0.0
@@ -199,12 +199,32 @@ class MonteCarloMicrogridCampaign:
                 total_len += dss.Lines.Length()
         avg_electrical_distance = total_len / max(len(lines), 1)
 
+        # Retrieve measurements at downstream distribution transformer nodes
+        transformer_powers_kw = []
+        transformer_powers_kvar = []
+        all_transformers = dss.Transformers.AllNames()
+
+        for xfmr in all_transformers:
+            # Exclude the known PCC substation transformer
+            if xfmr != "sub_xfmr":
+                dss.Circuit.SetActiveElement(f"Transformer.{xfmr}")
+                powers = dss.CktElement.Powers()
+                # Wind 1 active and reactive powers
+                if len(powers) >= 6:
+                    active_p = sum(powers[0:6:2])
+                    reactive_q = sum(powers[1:6:2])
+                    transformer_powers_kw.append(float(active_p))
+                    transformer_powers_kvar.append(float(reactive_q))
+
         return {
             "num_buses": num_buses,
             "topology_type": topology,
             "active_loads": active_loads,
             "total_hidden_demand_kw": float(total_hidden_demand_kw),
-            "avg_electrical_distance_km": float(avg_electrical_distance)
+            "avg_electrical_distance_km": float(avg_electrical_distance),
+            "transformer_node_count": len(transformer_powers_kw),
+            "transformer_total_p_kw": float(sum(transformer_powers_kw)) if transformer_powers_kw else 0.0,
+            "transformer_total_q_kvar": float(sum(transformer_powers_kvar)) if transformer_powers_kvar else 0.0
         }
 
     def run_monte_carlo_campaign(self, num_realizations: int = 120):
@@ -229,7 +249,7 @@ class MonteCarloMicrogridCampaign:
             # Step 4: Collect PCC boundary measurements
             meas = self.collect_boundary_measurements()
 
-            # Step 5: Capture ground truth reference state
+            # Step 5: Capture ground truth reference state (including downstream xfmr nodes)
             gt = self.capture_hidden_ground_truth(num_buses, topology)
 
             # Define noise-robust derived signature features
@@ -306,6 +326,8 @@ class LatentNetworkStateEstimator:
             "estimated_active_loads": gt["active_loads"],
             "estimated_hidden_demand_kw": gt["total_hidden_demand_kw"],
             "estimated_electrical_distance_km": gt["avg_electrical_distance_km"],
+            "estimated_xfmr_nodes_count": gt["transformer_node_count"],
+            "estimated_xfmr_total_p_kw": gt["transformer_total_p_kw"],
             "matching_sig_id": best_match["sig_id"]
         }
 

@@ -23,34 +23,40 @@
       "topology_type": "Multi-drop",
       "active_loads": 16,
       "total_hidden_demand_kw": 289.96165294438845,
-      "avg_electrical_distance_km": 0.7953636363636364
+      "avg_electrical_distance_km": 0.7953636363636364,
+      "transformer_node_count": 0,
+      "transformer_total_p_kw": 0.0,
+      "transformer_total_q_kvar": 0.0
     }
   },
   {
     "sig_id": "S0002",
     "boundary": {
-      "pcc_voltage_v": 231.66006504363133,
+      "pcc_voltage_v": 231.8526421003046,
       "pcc_current_a": 0.0,
-      "pcc_active_power_kw": 6.119299823303482,
-      "pcc_reactive_power_kvar": 94.19842902307786,
+      "pcc_active_power_kw": 2.7362500521356177,
+      "pcc_reactive_power_kvar": 92.10071258410868,
       "frequency_hz": 49.98042627123576,
-      "pcc_phase_angle_deg": -30.014792643062403,
-      "f1_voltage_v": 185.77016932696984,
-      "f2_voltage_v": 224.5403954073264,
-      "delta_theta_deg": -2.0769542731821424
+      "pcc_phase_angle_deg": -29.94707244760052,
+      "f1_voltage_v": 187.14301408074525,
+      "f2_voltage_v": 224.72640810607163,
+      "delta_theta_deg": -1.955320866045085
     },
     "features": {
-      "feeder_phase_coupling": -2.0769542731821424,
-      "power_balance_pf": 0.06482516441726828,
-      "aggregate_impedance_proxy": 37.85727679237879,
-      "voltage_sensitivity_stiffness": 0.036925399539732055
+      "feeder_phase_coupling": -1.955320866045085,
+      "power_balance_pf": 0.0296962225061873,
+      "aggregate_impedance_proxy": 84.73368769263544,
+      "voltage_sensitivity_stiffness": 0.08048875528374304
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Multi-drop",
       "active_loads": 18,
       "total_hidden_demand_kw": 338.3020278590669,
-      "avg_electrical_distance_km": 0.7452272727272727
+      "avg_electrical_distance_km": 0.7452272727272727,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 1.4637745298462508,
+      "transformer_total_q_kvar": 0.49486010626910715
     }
   },
   {
@@ -77,34 +83,40 @@
       "topology_type": "Multi-drop",
       "active_loads": 17,
       "total_hidden_demand_kw": 408.77811642881284,
-      "avg_electrical_distance_km": 0.6991818181818182
+      "avg_electrical_distance_km": 0.6991818181818182,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 7.0898355498134205,
+      "transformer_total_q_kvar": 3.1817757990831144
     }
   },
   {
     "sig_id": "S0004",
     "boundary": {
-      "pcc_voltage_v": 216.80090063895014,
-      "pcc_current_a": 4.588921835117314e-15,
-      "pcc_active_power_kw": 45.18676744411597,
-      "pcc_reactive_power_kvar": 133.2755954755272,
+      "pcc_voltage_v": 219.21395264559865,
+      "pcc_current_a": -3.552713678800501e-15,
+      "pcc_active_power_kw": 34.732135946027924,
+      "pcc_reactive_power_kvar": 103.52397439807974,
       "frequency_hz": 50.0181992309743,
-      "pcc_phase_angle_deg": -30.791441802735488,
-      "f1_voltage_v": 158.23590194155358,
-      "f2_voltage_v": 201.66991512608328,
-      "delta_theta_deg": -1.1944846367160409
+      "pcc_phase_angle_deg": -30.60032181706281,
+      "f1_voltage_v": 170.36231090286552,
+      "f2_voltage_v": 203.89489231373204,
+      "delta_theta_deg": -2.161172592707601
     },
     "features": {
-      "feeder_phase_coupling": -1.1944846367160409,
-      "power_balance_pf": 0.3210940875972626,
-      "aggregate_impedance_proxy": 4.797884604363228,
-      "voltage_sensitivity_stiffness": 0.007539457979419988
+      "feeder_phase_coupling": -2.161172592707601,
+      "power_balance_pf": 0.31807459374977015,
+      "aggregate_impedance_proxy": 6.3115596079287215,
+      "voltage_sensitivity_stiffness": 0.008354137217517515
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Multi-drop",
       "active_loads": 18,
       "total_hidden_demand_kw": 385.89982798348956,
-      "avg_electrical_distance_km": 0.7710909090909088
+      "avg_electrical_distance_km": 0.7710909090909088,
+      "transformer_node_count": 4,
+      "transformer_total_p_kw": 11.259035383103587,
+      "transformer_total_q_kvar": 12.345166355053179
     }
   },
   {
@@ -131,34 +143,40 @@
       "topology_type": "Multi-drop",
       "active_loads": 20,
       "total_hidden_demand_kw": 417.20444682147536,
-      "avg_electrical_distance_km": 0.8384999999999999
+      "avg_electrical_distance_km": 0.8384999999999999,
+      "transformer_node_count": 2,
+      "transformer_total_p_kw": 6.28290324728844,
+      "transformer_total_q_kvar": 3.0836444060227173
     }
   },
   {
     "sig_id": "S0006",
     "boundary": {
-      "pcc_voltage_v": 223.4358285072452,
-      "pcc_current_a": 1.1842378929335002e-15,
-      "pcc_active_power_kw": -50.781843093244206,
-      "pcc_reactive_power_kvar": 55.88536230482,
+      "pcc_voltage_v": 223.60721418282222,
+      "pcc_current_a": 2.3684757858670005e-15,
+      "pcc_active_power_kw": -54.59580449593521,
+      "pcc_reactive_power_kvar": 54.02940865787026,
       "frequency_hz": 50.02325146998483,
-      "pcc_phase_angle_deg": -28.89544329554798,
-      "f1_voltage_v": 209.55974561546512,
-      "f2_voltage_v": 203.2007621486139,
-      "delta_theta_deg": 0.29818465021520524
+      "pcc_phase_angle_deg": -28.820489458049234,
+      "f1_voltage_v": 211.04946994004328,
+      "f2_voltage_v": 203.35490258592765,
+      "delta_theta_deg": 0.42547886743244234
     },
     "features": {
-      "feeder_phase_coupling": 0.29818465021520524,
-      "power_balance_pf": -0.6725057715211861,
-      "aggregate_impedance_proxy": 4.3999156095430205,
-      "voltage_sensitivity_stiffness": 0.0024976326782462956
+      "feeder_phase_coupling": 0.42547886743244234,
+      "power_balance_pf": -0.7107841204000186,
+      "aggregate_impedance_proxy": 4.095684863546346,
+      "voltage_sensitivity_stiffness": 0.002209459270495313
     },
     "ground_truth": {
       "num_buses": 10,
       "topology_type": "Multi-drop",
       "active_loads": 7,
       "total_hidden_demand_kw": 118.63082697816198,
-      "avg_electrical_distance_km": 0.6665
+      "avg_electrical_distance_km": 0.6665,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 1.2666517338932308,
+      "transformer_total_q_kvar": 0.5432571309790974
     }
   },
   {
@@ -185,34 +203,40 @@
       "topology_type": "Radial",
       "active_loads": 9,
       "total_hidden_demand_kw": 217.24970158187674,
-      "avg_electrical_distance_km": 0.5200833333333333
+      "avg_electrical_distance_km": 0.5200833333333333,
+      "transformer_node_count": 0,
+      "transformer_total_p_kw": 0.0,
+      "transformer_total_q_kvar": 0.0
     }
   },
   {
     "sig_id": "S0008",
     "boundary": {
-      "pcc_voltage_v": 223.11422847699342,
-      "pcc_current_a": 5.921189464667502e-15,
-      "pcc_active_power_kw": 154.46878060309746,
-      "pcc_reactive_power_kvar": 317.57788873235626,
+      "pcc_voltage_v": 223.2888371462865,
+      "pcc_current_a": -3.552713678800501e-15,
+      "pcc_active_power_kw": 150.7810303432916,
+      "pcc_reactive_power_kvar": 315.6175297557565,
       "frequency_hz": 49.999279356885815,
-      "pcc_phase_angle_deg": -33.08661911968624,
-      "f1_voltage_v": 137.311377975547,
-      "f2_voltage_v": 179.9531170977924,
-      "delta_theta_deg": -1.593814345591042
+      "pcc_phase_angle_deg": -33.00319227207064,
+      "f1_voltage_v": 138.6731562996309,
+      "f2_voltage_v": 180.09030320536297,
+      "delta_theta_deg": -1.3389533671038123
     },
     "features": {
-      "feeder_phase_coupling": -1.593814345591042,
-      "power_balance_pf": 0.4374002972418045,
-      "aggregate_impedance_proxy": 1.444396894708979,
-      "voltage_sensitivity_stiffness": 0.0027699400098501266
+      "feeder_phase_coupling": -1.3389533671038123,
+      "power_balance_pf": 0.43106809725334744,
+      "aggregate_impedance_proxy": 1.4808814819545326,
+      "voltage_sensitivity_stiffness": 0.002800055009065669
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 35,
       "total_hidden_demand_kw": 703.2345099811736,
-      "avg_electrical_distance_km": 0.8076190476190475
+      "avg_electrical_distance_km": 0.8076190476190475,
+      "transformer_node_count": 5,
+      "transformer_total_p_kw": 11.531355723848653,
+      "transformer_total_q_kvar": 9.993761992664087
     }
   },
   {
@@ -239,34 +263,40 @@
       "topology_type": "Multi-drop",
       "active_loads": 19,
       "total_hidden_demand_kw": 351.8297325254535,
-      "avg_electrical_distance_km": 0.7716363636363636
+      "avg_electrical_distance_km": 0.7716363636363636,
+      "transformer_node_count": 2,
+      "transformer_total_p_kw": 6.060960246411733,
+      "transformer_total_q_kvar": 3.013750035493666
     }
   },
   {
     "sig_id": "S0010",
     "boundary": {
-      "pcc_voltage_v": 237.5795598911735,
-      "pcc_current_a": 1.1842378929335002e-15,
-      "pcc_active_power_kw": 22.22624905260049,
-      "pcc_reactive_power_kvar": 157.52802842089557,
+      "pcc_voltage_v": 237.6104965003935,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": 22.197511054200703,
+      "pcc_reactive_power_kvar": 157.1788322265194,
       "frequency_hz": 50.026845800919745,
-      "pcc_phase_angle_deg": -30.280375907299533,
-      "f1_voltage_v": 201.01163693904684,
-      "f2_voltage_v": 206.75418647062193,
-      "delta_theta_deg": -0.597945209819553
+      "pcc_phase_angle_deg": -30.280154397463125,
+      "f1_voltage_v": 201.12738747745493,
+      "f2_voltage_v": 206.78096269974387,
+      "delta_theta_deg": -0.6141633846067194
     },
     "features": {
-      "feeder_phase_coupling": -0.597945209819553,
-      "power_balance_pf": 0.13971014517649902,
-      "aggregate_impedance_proxy": 10.689142762675635,
-      "voltage_sensitivity_stiffness": 0.007308993301592256
+      "feeder_phase_coupling": -0.6141633846067194,
+      "power_balance_pf": 0.13983696085228559,
+      "aggregate_impedance_proxy": 10.704375153404978,
+      "voltage_sensitivity_stiffness": 0.007296728500403557
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Radial",
       "active_loads": 71,
       "total_hidden_demand_kw": 1332.0836450261684,
-      "avg_electrical_distance_km": 0.8180609756097563
+      "avg_electrical_distance_km": 0.8180609756097563,
+      "transformer_node_count": 12,
+      "transformer_total_p_kw": 0.28530058578671896,
+      "transformer_total_q_kvar": 0.16892700027167412
     }
   },
   {
@@ -293,7 +323,10 @@
       "topology_type": "Radial",
       "active_loads": 70,
       "total_hidden_demand_kw": 1329.9380510845785,
-      "avg_electrical_distance_km": 0.890939024390244
+      "avg_electrical_distance_km": 0.890939024390244,
+      "transformer_node_count": 11,
+      "transformer_total_p_kw": 0.4652186170270303,
+      "transformer_total_q_kvar": 0.1853154432818597
     }
   },
   {
@@ -320,88 +353,100 @@
       "topology_type": "Multi-drop",
       "active_loads": 9,
       "total_hidden_demand_kw": 145.82227368035726,
-      "avg_electrical_distance_km": 0.5886666666666667
+      "avg_electrical_distance_km": 0.5886666666666667,
+      "transformer_node_count": 0,
+      "transformer_total_p_kw": 0.0,
+      "transformer_total_q_kvar": 0.0
     }
   },
   {
     "sig_id": "S0013",
     "boundary": {
-      "pcc_voltage_v": 229.775773063373,
-      "pcc_current_a": -2.3684757858670005e-15,
-      "pcc_active_power_kw": -21.64203221135159,
-      "pcc_reactive_power_kvar": 118.37550359403104,
+      "pcc_voltage_v": 229.77577086027568,
+      "pcc_current_a": 1.0362081563168128e-15,
+      "pcc_active_power_kw": -21.642041103105978,
+      "pcc_reactive_power_kvar": 118.37553044576926,
       "frequency_hz": 49.987063008823185,
-      "pcc_phase_angle_deg": -29.40452891943445,
-      "f1_voltage_v": 191.79706761627457,
-      "f2_voltage_v": 215.37260949328478,
-      "delta_theta_deg": 2.893170939928222
+      "pcc_phase_angle_deg": -29.404528695253447,
+      "f1_voltage_v": 191.7970658032008,
+      "f2_voltage_v": 215.37260280295354,
+      "delta_theta_deg": 2.893169053577168
     },
     "features": {
-      "feeder_phase_coupling": 2.893170939928222,
-      "power_balance_pf": -0.17984430845588956,
-      "aggregate_impedance_proxy": 10.617106573094619,
-      "voltage_sensitivity_stiffness": 0.009280345780705542
+      "feeder_phase_coupling": 2.893169053577168,
+      "power_balance_pf": -0.17984434048050307,
+      "aggregate_impedance_proxy": 10.617102109199722,
+      "voltage_sensitivity_stiffness": 0.009280342316888172
     },
     "ground_truth": {
       "num_buses": 10,
       "topology_type": "Radial",
       "active_loads": 8,
       "total_hidden_demand_kw": 210.6301715430389,
-      "avg_electrical_distance_km": 0.7300833333333334
+      "avg_electrical_distance_km": 0.7300833333333334,
+      "transformer_node_count": 2,
+      "transformer_total_p_kw": 1.189329184986068,
+      "transformer_total_q_kvar": 0.3536757766565285
     }
   },
   {
     "sig_id": "S0014",
     "boundary": {
-      "pcc_voltage_v": 202.34264169983314,
-      "pcc_current_a": 1.1842378929335002e-15,
-      "pcc_active_power_kw": 163.12065621701524,
-      "pcc_reactive_power_kvar": 311.58898754719996,
+      "pcc_voltage_v": 202.64961541702965,
+      "pcc_current_a": -3.552713678800501e-15,
+      "pcc_active_power_kw": 156.74264469401075,
+      "pcc_reactive_power_kvar": 307.75792420408084,
       "frequency_hz": 50.00520875339514,
-      "pcc_phase_angle_deg": -33.282853983792705,
-      "f1_voltage_v": 142.54783989156965,
-      "f2_voltage_v": 123.60097487591042,
-      "delta_theta_deg": 1.430414711408332
+      "pcc_phase_angle_deg": -33.13874831390932,
+      "f1_voltage_v": 144.65668958704234,
+      "f2_voltage_v": 124.32302386436122,
+      "delta_theta_deg": 1.7184941061039112
     },
     "features": {
-      "feeder_phase_coupling": 1.430414711408332,
-      "power_balance_pf": 0.46380032707133156,
-      "aggregate_impedance_proxy": 1.2404476854861926,
-      "voltage_sensitivity_stiffness": 0.0024892657622035646
+      "feeder_phase_coupling": 1.7184941061039112,
+      "power_balance_pf": 0.45383452839034716,
+      "aggregate_impedance_proxy": 1.2928811716795785,
+      "voltage_sensitivity_stiffness": 0.0025344971792989417
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Multi-drop",
       "active_loads": 72,
       "total_hidden_demand_kw": 1453.912865580626,
-      "avg_electrical_distance_km": 0.8339024390243903
+      "avg_electrical_distance_km": 0.8339024390243903,
+      "transformer_node_count": 14,
+      "transformer_total_p_kw": 6.399085241659325,
+      "transformer_total_q_kvar": 5.228252849701218
     }
   },
   {
     "sig_id": "S0015",
     "boundary": {
-      "pcc_voltage_v": 216.46567561993797,
-      "pcc_current_a": -4.736951571734001e-15,
-      "pcc_active_power_kw": 62.76139029468084,
-      "pcc_reactive_power_kvar": 136.76367953039335,
+      "pcc_voltage_v": 216.83776901657578,
+      "pcc_current_a": 3.552713678800501e-15,
+      "pcc_active_power_kw": 56.82493941807081,
+      "pcc_reactive_power_kvar": 132.33145798189761,
       "frequency_hz": 49.99774412559565,
-      "pcc_phase_angle_deg": -31.159606408145365,
-      "f1_voltage_v": 171.31596985627917,
-      "f2_voltage_v": 183.34772972714254,
-      "delta_theta_deg": 0.6716058264544458
+      "pcc_phase_angle_deg": -31.037814614852653,
+      "f1_voltage_v": 174.08767972911232,
+      "f2_voltage_v": 183.65625376785547,
+      "delta_theta_deg": 0.8959382714710955
     },
     "features": {
-      "feeder_phase_coupling": 0.6716058264544458,
-      "power_balance_pf": 0.41708323108691747,
-      "aggregate_impedance_proxy": 3.4490260836248208,
-      "voltage_sensitivity_stiffness": 0.0045598647994985544
+      "feeder_phase_coupling": 0.8959382714710955,
+      "power_balance_pf": 0.39457302717877935,
+      "aggregate_impedance_proxy": 3.8158908292954328,
+      "voltage_sensitivity_stiffness": 0.004832995261848601
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Multi-drop",
       "active_loads": 18,
       "total_hidden_demand_kw": 347.2892782549247,
-      "avg_electrical_distance_km": 0.8058181818181818
+      "avg_electrical_distance_km": 0.8058181818181818,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 3.402126216640691,
+      "transformer_total_q_kvar": 1.507863861465287
     }
   },
   {
@@ -428,7 +473,10 @@
       "topology_type": "Multi-drop",
       "active_loads": 19,
       "total_hidden_demand_kw": 360.7151475366833,
-      "avg_electrical_distance_km": 0.7170454545454545
+      "avg_electrical_distance_km": 0.7170454545454545,
+      "transformer_node_count": 4,
+      "transformer_total_p_kw": 3.356807877075185,
+      "transformer_total_q_kvar": 1.7538183706902775
     }
   },
   {
@@ -455,34 +503,40 @@
       "topology_type": "Radial",
       "active_loads": 9,
       "total_hidden_demand_kw": 163.46235432086863,
-      "avg_electrical_distance_km": 0.56725
+      "avg_electrical_distance_km": 0.56725,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 1.5375857691432409,
+      "transformer_total_q_kvar": 0.7064765478603461
     }
   },
   {
     "sig_id": "S0018",
     "boundary": {
-      "pcc_voltage_v": 223.98712243123705,
-      "pcc_current_a": 7.105427357601002e-15,
-      "pcc_active_power_kw": -88.66156012641929,
-      "pcc_reactive_power_kvar": 52.1231719977792,
+      "pcc_voltage_v": 224.37283937458918,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": -99.87461378014589,
+      "pcc_reactive_power_kvar": 48.30856167249692,
       "frequency_hz": 50.01032525970689,
-      "pcc_phase_angle_deg": -28.1293015618194,
-      "f1_voltage_v": 223.98719307591594,
-      "f2_voltage_v": 199.55310855898406,
-      "delta_theta_deg": 0.8143090556262749
+      "pcc_phase_angle_deg": -27.90841744141642,
+      "f1_voltage_v": 224.37291014092173,
+      "f2_voltage_v": 203.45644438113618,
+      "delta_theta_deg": 0.36884619473714864
     },
     "features": {
-      "feeder_phase_coupling": 0.8143090556262749,
-      "power_balance_pf": -0.8620645720208158,
-      "aggregate_impedance_proxy": 2.5263160222484915,
-      "voltage_sensitivity_stiffness": 0.0007525248597328053
+      "feeder_phase_coupling": 0.36884619473714864,
+      "power_balance_pf": -0.9002223659370271,
+      "aggregate_impedance_proxy": 2.2465452294209234,
+      "voltage_sensitivity_stiffness": 0.0006519461882897786
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Radial",
       "active_loads": 16,
       "total_hidden_demand_kw": 270.70459833038205,
-      "avg_electrical_distance_km": 0.8035909090909091
+      "avg_electrical_distance_km": 0.8035909090909091,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 3.8997464105873956,
+      "transformer_total_q_kvar": 1.6355444271468085
     }
   },
   {
@@ -509,88 +563,100 @@
       "topology_type": "Multi-drop",
       "active_loads": 17,
       "total_hidden_demand_kw": 391.2350620923147,
-      "avg_electrical_distance_km": 0.6854999999999998
+      "avg_electrical_distance_km": 0.6854999999999998,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 1.6737417426910988,
+      "transformer_total_q_kvar": 0.7289699869835351
     }
   },
   {
     "sig_id": "S0020",
     "boundary": {
-      "pcc_voltage_v": 217.01967874198613,
-      "pcc_current_a": -2.3684757858670005e-15,
-      "pcc_active_power_kw": 27.54468588070712,
-      "pcc_reactive_power_kvar": 131.36124974855562,
+      "pcc_voltage_v": 217.3650625603218,
+      "pcc_current_a": -1.0362081563168128e-15,
+      "pcc_active_power_kw": 19.73035406725903,
+      "pcc_reactive_power_kvar": 127.43594398425114,
       "frequency_hz": 50.012538199026224,
-      "pcc_phase_angle_deg": -30.421352486219522,
-      "f1_voltage_v": 170.42518769673936,
-      "f2_voltage_v": 194.21804818555526,
-      "delta_theta_deg": -1.6957710770623642
+      "pcc_phase_angle_deg": -30.2610905706167,
+      "f1_voltage_v": 173.45472061728478,
+      "f2_voltage_v": 194.52297049198384,
+      "delta_theta_deg": -1.3077594780613033
     },
     "features": {
-      "feeder_phase_coupling": -1.6957710770623642,
-      "power_balance_pf": 0.20522339285717472,
-      "aggregate_impedance_proxy": 7.878821773573737,
-      "voltage_sensitivity_stiffness": 0.010524536093624453
+      "feeder_phase_coupling": -1.3077594780613033,
+      "power_balance_pf": 0.153002705303125,
+      "aggregate_impedance_proxy": 11.016784128787526,
+      "voltage_sensitivity_stiffness": 0.01405306678378491
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Multi-drop",
       "active_loads": 16,
       "total_hidden_demand_kw": 350.8383796957759,
-      "avg_electrical_distance_km": 0.7198636363636365
+      "avg_electrical_distance_km": 0.7198636363636365,
+      "transformer_node_count": 7,
+      "transformer_total_p_kw": 7.631731429638884,
+      "transformer_total_q_kvar": 3.3126711932970196
     }
   },
   {
     "sig_id": "S0021",
     "boundary": {
-      "pcc_voltage_v": 242.53692407000395,
-      "pcc_current_a": 0.0,
-      "pcc_active_power_kw": 44.60688264654344,
-      "pcc_reactive_power_kvar": 100.27005218185525,
+      "pcc_voltage_v": 242.8388125806483,
+      "pcc_current_a": 4.736951571734001e-15,
+      "pcc_active_power_kw": 40.87697330682068,
+      "pcc_reactive_power_kvar": 97.01287450686209,
       "frequency_hz": 49.996327229697876,
-      "pcc_phase_angle_deg": -30.80930762130161,
-      "f1_voltage_v": 223.43709951628855,
-      "f2_voltage_v": 202.29070960314175,
-      "delta_theta_deg": 1.6213497884871018
+      "pcc_phase_angle_deg": -30.734585406893117,
+      "f1_voltage_v": 223.71278633361064,
+      "f2_voltage_v": 204.0431471294627,
+      "delta_theta_deg": 1.5345838128592533
     },
     "features": {
-      "feeder_phase_coupling": 1.6213497884871018,
-      "power_balance_pf": 0.4064611749867447,
-      "aggregate_impedance_proxy": 5.4372084360750454,
-      "voltage_sensitivity_stiffness": 0.0015471173887787466
+      "feeder_phase_coupling": 1.5345838128592533,
+      "power_balance_pf": 0.388294582613107,
+      "aggregate_impedance_proxy": 5.940723761937745,
+      "voltage_sensitivity_stiffness": 0.00166018623999034
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Multi-drop",
       "active_loads": 17,
       "total_hidden_demand_kw": 335.18047748701514,
-      "avg_electrical_distance_km": 0.6336363636363637
+      "avg_electrical_distance_km": 0.6336363636363637,
+      "transformer_node_count": 4,
+      "transformer_total_p_kw": 1.4841027356212044,
+      "transformer_total_q_kvar": 0.7665536576288152
     }
   },
   {
     "sig_id": "S0022",
     "boundary": {
-      "pcc_voltage_v": 250.45882936264226,
-      "pcc_current_a": -5.921189464667502e-15,
-      "pcc_active_power_kw": -102.08479113840664,
-      "pcc_reactive_power_kvar": 20.452429152623527,
+      "pcc_voltage_v": 250.62213797011069,
+      "pcc_current_a": -4.736951571734001e-15,
+      "pcc_active_power_kw": -108.48498405423851,
+      "pcc_reactive_power_kvar": 19.203018983754877,
       "frequency_hz": 50.032981270991236,
-      "pcc_phase_angle_deg": -27.916700284063353,
-      "f1_voltage_v": 243.87917483177168,
-      "f2_voltage_v": 244.23241246416742,
-      "delta_theta_deg": 0.22732983244892324
+      "pcc_phase_angle_deg": -27.790401500485757,
+      "f1_voltage_v": 245.66001073573184,
+      "f2_voltage_v": 244.40000136543196,
+      "delta_theta_deg": 0.45081294237054337
     },
     "features": {
-      "feeder_phase_coupling": 0.22732983244892324,
-      "power_balance_pf": -0.9805150932838204,
-      "aggregate_impedance_proxy": 2.453439186348834,
-      "voltage_sensitivity_stiffness": -0.0001583314039940569
+      "feeder_phase_coupling": 0.45081294237054337,
+      "power_balance_pf": -0.9846923695837266,
+      "aggregate_impedance_proxy": 2.310201156821922,
+      "voltage_sensitivity_stiffness": -0.00021738840682660943
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Radial",
       "active_loads": 32,
       "total_hidden_demand_kw": 614.6478321611902,
-      "avg_electrical_distance_km": 0.8226666666666667
+      "avg_electrical_distance_km": 0.8226666666666667,
+      "transformer_node_count": 5,
+      "transformer_total_p_kw": 8.029527875129531,
+      "transformer_total_q_kvar": 4.231314677585689
     }
   },
   {
@@ -617,115 +683,130 @@
       "topology_type": "Radial",
       "active_loads": 17,
       "total_hidden_demand_kw": 308.38244373321555,
-      "avg_electrical_distance_km": 0.8136363636363634
+      "avg_electrical_distance_km": 0.8136363636363634,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 0.8339349779205452,
+      "transformer_total_q_kvar": 0.45670129801582304
     }
   },
   {
     "sig_id": "S0024",
     "boundary": {
-      "pcc_voltage_v": 215.0967861949216,
-      "pcc_current_a": -4.736951571734001e-15,
-      "pcc_active_power_kw": 13.267769618272967,
-      "pcc_reactive_power_kvar": 156.2107119873322,
+      "pcc_voltage_v": 215.73599579993754,
+      "pcc_current_a": 2.3684757858670005e-15,
+      "pcc_active_power_kw": -1.1369524003560507,
+      "pcc_reactive_power_kvar": 149.04037908018384,
       "frequency_hz": 50.004965135882095,
-      "pcc_phase_angle_deg": -30.091420740466877,
-      "f1_voltage_v": 172.61376261547966,
-      "f2_voltage_v": 185.62954014976424,
-      "delta_theta_deg": 0.8132067368169551
+      "pcc_phase_angle_deg": -29.794665821052533,
+      "f1_voltage_v": 173.11950476820914,
+      "f2_voltage_v": 191.2252387289641,
+      "delta_theta_deg": 0.27762766523717985
     },
     "features": {
-      "feeder_phase_coupling": 0.8132067368169551,
-      "power_balance_pf": 0.08463036953395355,
-      "aggregate_impedance_proxy": 16.21197655457509,
-      "voltage_sensitivity_stiffness": 0.021162258316063352
+      "feeder_phase_coupling": 0.27762766523717985,
+      "power_balance_pf": -0.0076282636920375945,
+      "aggregate_impedance_proxy": 189.7491979287605,
+      "voltage_sensitivity_stiffness": 0.24510127683790162
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Radial",
       "active_loads": 67,
       "total_hidden_demand_kw": 1378.1970310682448,
-      "avg_electrical_distance_km": 0.8243536585365856
+      "avg_electrical_distance_km": 0.8243536585365856,
+      "transformer_node_count": 13,
+      "transformer_total_p_kw": 7.015385153838495,
+      "transformer_total_q_kvar": 5.93557089061912
     }
   },
   {
     "sig_id": "S0025",
     "boundary": {
-      "pcc_voltage_v": 246.63691738399257,
-      "pcc_current_a": -1.1842378929335002e-15,
-      "pcc_active_power_kw": -64.45466764847819,
-      "pcc_reactive_power_kvar": 60.58569150005222,
+      "pcc_voltage_v": 246.81959883657922,
+      "pcc_current_a": -5.921189464667502e-15,
+      "pcc_active_power_kw": -68.10127784052222,
+      "pcc_reactive_power_kvar": 58.81079240721454,
       "frequency_hz": 50.00560513419473,
-      "pcc_phase_angle_deg": -28.60835370826587,
-      "f1_voltage_v": 246.63699517232988,
-      "f2_voltage_v": 217.6705744922959,
-      "delta_theta_deg": 1.469799895162808
+      "pcc_phase_angle_deg": -28.536806417646265,
+      "f1_voltage_v": 246.81967668253358,
+      "f2_voltage_v": 218.9845727497675,
+      "delta_theta_deg": 1.3652951909439572
     },
     "features": {
-      "feeder_phase_coupling": 1.469799895162808,
-      "power_balance_pf": -0.7286372291174809,
-      "aggregate_impedance_proxy": 3.8265174975779788,
-      "voltage_sensitivity_stiffness": -0.00042904799809295686
+      "feeder_phase_coupling": 1.3652951909439572,
+      "power_balance_pf": -0.7568447008672027,
+      "aggregate_impedance_proxy": 3.6243019667013137,
+      "voltage_sensitivity_stiffness": -0.00041725089446703026
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Radial",
       "active_loads": 35,
       "total_hidden_demand_kw": 666.8436696431447,
-      "avg_electrical_distance_km": 0.8341190476190479
+      "avg_electrical_distance_km": 0.8341190476190479,
+      "transformer_node_count": 5,
+      "transformer_total_p_kw": 1.384755118565809,
+      "transformer_total_q_kvar": 0.48360805632343445
     }
   },
   {
     "sig_id": "S0026",
     "boundary": {
-      "pcc_voltage_v": 226.56172989445795,
-      "pcc_current_a": -1.1842378929335002e-15,
-      "pcc_active_power_kw": 69.60427509550641,
-      "pcc_reactive_power_kvar": 151.9429469338899,
+      "pcc_voltage_v": 227.2517333665312,
+      "pcc_current_a": 4.884981308350689e-15,
+      "pcc_active_power_kw": 52.041403444776606,
+      "pcc_reactive_power_kvar": 144.40339956054768,
       "frequency_hz": 50.007757775074154,
-      "pcc_phase_angle_deg": -31.293100414130322,
-      "f1_voltage_v": 190.2330950732069,
-      "f2_voltage_v": 183.58527798706197,
-      "delta_theta_deg": -1.3184654210198659
+      "pcc_phase_angle_deg": -30.926410708300406,
+      "f1_voltage_v": 194.0314425025921,
+      "f2_voltage_v": 186.46416068246185,
+      "delta_theta_deg": -1.3364877782722004
     },
     "features": {
-      "feeder_phase_coupling": -1.3184654210198659,
-      "power_balance_pf": 0.41647549149600605,
-      "aggregate_impedance_proxy": 3.2549972875744713,
-      "voltage_sensitivity_stiffness": 0.0029791575387855375
+      "feeder_phase_coupling": -1.3364877782722004,
+      "power_balance_pf": 0.3390434574261355,
+      "aggregate_impedance_proxy": 4.366748664665226,
+      "voltage_sensitivity_stiffness": 0.003680447487585512
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Multi-drop",
       "active_loads": 20,
       "total_hidden_demand_kw": 365.6995450364742,
-      "avg_electrical_distance_km": 0.6995454545454547
+      "avg_electrical_distance_km": 0.6995454545454547,
+      "transformer_node_count": 6,
+      "transformer_total_p_kw": 17.12054313438426,
+      "transformer_total_q_kvar": 12.52277138891525
     }
   },
   {
     "sig_id": "S0027",
     "boundary": {
-      "pcc_voltage_v": 232.06735969821383,
-      "pcc_current_a": -5.921189464667502e-15,
-      "pcc_active_power_kw": 6.977191199530929,
-      "pcc_reactive_power_kvar": 89.30003116715406,
+      "pcc_voltage_v": 232.505656900236,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": 1.182419579548033,
+      "pcc_reactive_power_kvar": 84.4156584323714,
       "frequency_hz": 50.030199707321366,
-      "pcc_phase_angle_deg": -30.03838226116567,
-      "f1_voltage_v": 201.81857941781934,
-      "f2_voltage_v": 210.1735864801558,
-      "delta_theta_deg": 0.19772669142817278
+      "pcc_phase_angle_deg": -29.924193529740716,
+      "f1_voltage_v": 202.7466079353118,
+      "f2_voltage_v": 212.43305210074047,
+      "delta_theta_deg": 0.03664926818548153
     },
     "features": {
-      "feeder_phase_coupling": 0.19772669142817278,
-      "power_balance_pf": 0.07789461573665725,
-      "aggregate_impedance_proxy": 33.26085236892507,
-      "voltage_sensitivity_stiffness": 0.022801328654304266
+      "feeder_phase_coupling": 0.03664926818548153,
+      "power_balance_pf": 0.014005737912680193,
+      "aggregate_impedance_proxy": 196.63532665264393,
+      "voltage_sensitivity_stiffness": 0.1312751736742715
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Radial",
       "active_loads": 38,
       "total_hidden_demand_kw": 701.2099620538321,
-      "avg_electrical_distance_km": 0.8342142857142857
+      "avg_electrical_distance_km": 0.8342142857142857,
+      "transformer_node_count": 6,
+      "transformer_total_p_kw": 9.106383785388541,
+      "transformer_total_q_kvar": 5.221130008146984
     }
   },
   {
@@ -752,34 +833,40 @@
       "topology_type": "Radial",
       "active_loads": 8,
       "total_hidden_demand_kw": 99.68205803734585,
-      "avg_electrical_distance_km": 0.7786666666666667
+      "avg_electrical_distance_km": 0.7786666666666667,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 1.7062100602104089,
+      "transformer_total_q_kvar": 0.7348180718442945
     }
   },
   {
     "sig_id": "S0029",
     "boundary": {
-      "pcc_voltage_v": 222.17594992440243,
-      "pcc_current_a": -2.3684757858670005e-15,
-      "pcc_active_power_kw": -49.09937897831014,
-      "pcc_reactive_power_kvar": 71.56816314708541,
+      "pcc_voltage_v": 222.33612166401096,
+      "pcc_current_a": 3.552713678800501e-15,
+      "pcc_active_power_kw": -53.6004554502873,
+      "pcc_reactive_power_kvar": 69.90597109199064,
       "frequency_hz": 49.98913045981718,
-      "pcc_phase_angle_deg": -28.905276309242385,
-      "f1_voltage_v": 200.39722321294266,
-      "f2_voltage_v": 205.83689369728538,
-      "delta_theta_deg": 0.5928193726369066
+      "pcc_phase_angle_deg": -28.8154736324454,
+      "f1_voltage_v": 200.5416941688029,
+      "f2_voltage_v": 207.4315548995103,
+      "delta_theta_deg": 0.40916371352603065
     },
     "features": {
-      "feeder_phase_coupling": 0.5928193726369066,
-      "power_balance_pf": -0.5657169462969408,
-      "aggregate_impedance_proxy": 4.525025571046918,
-      "voltage_sensitivity_stiffness": 0.0033607668776869854
+      "feeder_phase_coupling": 0.40916371352603065,
+      "power_balance_pf": -0.6084735586507197,
+      "aggregate_impedance_proxy": 4.148026647314479,
+      "voltage_sensitivity_stiffness": 0.0030673173050769172
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Radial",
       "active_loads": 15,
       "total_hidden_demand_kw": 251.08012572472992,
-      "avg_electrical_distance_km": 0.7601363636363637
+      "avg_electrical_distance_km": 0.7601363636363637,
+      "transformer_node_count": 6,
+      "transformer_total_p_kw": 5.031841566059493,
+      "transformer_total_q_kvar": 2.2786126167987892
     }
   },
   {
@@ -806,169 +893,190 @@
       "topology_type": "Radial",
       "active_loads": 8,
       "total_hidden_demand_kw": 150.60515842629266,
-      "avg_electrical_distance_km": 0.8141666666666668
+      "avg_electrical_distance_km": 0.8141666666666668,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 10.22472290536513,
+      "transformer_total_q_kvar": 17.620826730807917
     }
   },
   {
     "sig_id": "S0031",
     "boundary": {
-      "pcc_voltage_v": 213.1971761079426,
-      "pcc_current_a": -2.3684757858670005e-15,
-      "pcc_active_power_kw": 34.173028850731725,
-      "pcc_reactive_power_kvar": 178.92113444100906,
+      "pcc_voltage_v": 213.5568911701098,
+      "pcc_current_a": 1.4802973661668753e-16,
+      "pcc_active_power_kw": 24.682677249045256,
+      "pcc_reactive_power_kvar": 174.8911215286137,
       "frequency_hz": 50.00306333254967,
-      "pcc_phase_angle_deg": -30.512511721414047,
-      "f1_voltage_v": 167.21313536818002,
-      "f2_voltage_v": 177.73982285764714,
-      "delta_theta_deg": 1.4552841808531554
+      "pcc_phase_angle_deg": -30.31346222680166,
+      "f1_voltage_v": 167.48831133653692,
+      "f2_voltage_v": 181.17578163090465,
+      "delta_theta_deg": 1.0149359134670597
     },
     "features": {
-      "feeder_phase_coupling": 1.4552841808531554,
-      "power_balance_pf": 0.18760376982501242,
-      "aggregate_impedance_proxy": 6.238755446596069,
-      "voltage_sensitivity_stiffness": 0.008874794068811236
+      "feeder_phase_coupling": 1.0149359134670597,
+      "power_balance_pf": 0.13974678938202315,
+      "aggregate_impedance_proxy": 8.652095571450815,
+      "voltage_sensitivity_stiffness": 0.012240650428988578
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 34,
       "total_hidden_demand_kw": 622.228441896036,
-      "avg_electrical_distance_km": 0.9305238095238095
+      "avg_electrical_distance_km": 0.9305238095238095,
+      "transformer_node_count": 8,
+      "transformer_total_p_kw": 3.165488427200339,
+      "transformer_total_q_kvar": 1.176834476784557
     }
   },
   {
     "sig_id": "S0032",
     "boundary": {
-      "pcc_voltage_v": 229.2645352145289,
-      "pcc_current_a": 1.3322676295501878e-15,
-      "pcc_active_power_kw": 13.18904917118962,
-      "pcc_reactive_power_kvar": 122.3226117305652,
+      "pcc_voltage_v": 229.29820214176107,
+      "pcc_current_a": 5.921189464667502e-15,
+      "pcc_active_power_kw": 12.383412367417996,
+      "pcc_reactive_power_kvar": 121.96634469049019,
       "frequency_hz": 49.99625917055682,
-      "pcc_phase_angle_deg": -30.129444677266083,
-      "f1_voltage_v": 201.85798283436202,
-      "f2_voltage_v": 195.75257791971373,
-      "delta_theta_deg": -0.2628874415279405
+      "pcc_phase_angle_deg": -30.11294948376918,
+      "f1_voltage_v": 201.9280414135724,
+      "f2_voltage_v": 196.00096366156026,
+      "delta_theta_deg": -0.29285665009139805
     },
     "features": {
-      "feeder_phase_coupling": -0.2628874415279405,
-      "power_balance_pf": 0.10720050816086354,
-      "aggregate_impedance_proxy": 17.38294511270707,
-      "voltage_sensitivity_stiffness": 0.012049773824551076
+      "feeder_phase_coupling": -0.29285665009139805,
+      "power_balance_pf": 0.10101207522725242,
+      "aggregate_impedance_proxy": 18.51655883062643,
+      "voltage_sensitivity_stiffness": 0.012810132075067563
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Radial",
       "active_loads": 69,
       "total_hidden_demand_kw": 1460.9575791554673,
-      "avg_electrical_distance_km": 0.8329024390243901
+      "avg_electrical_distance_km": 0.8329024390243901,
+      "transformer_node_count": 16,
+      "transformer_total_p_kw": 5.332905169159207,
+      "transformer_total_q_kvar": 1.9080239070675624
     }
   },
   {
     "sig_id": "S0033",
     "boundary": {
-      "pcc_voltage_v": 233.51404582395344,
+      "pcc_voltage_v": 233.7292021028072,
       "pcc_current_a": 3.552713678800501e-15,
-      "pcc_active_power_kw": 66.55014402767004,
-      "pcc_reactive_power_kvar": 201.6194146090702,
+      "pcc_active_power_kw": 63.90271115059288,
+      "pcc_reactive_power_kvar": 199.28046122440594,
       "frequency_hz": 49.98479563579554,
-      "pcc_phase_angle_deg": -31.18956283959348,
-      "f1_voltage_v": 233.5141194733875,
-      "f2_voltage_v": 147.68583639677738,
-      "delta_theta_deg": 2.476877971507779
+      "pcc_phase_angle_deg": -31.13413197769671,
+      "f1_voltage_v": 233.7292758201006,
+      "f2_voltage_v": 148.93722320758422,
+      "delta_theta_deg": 2.3934900110579527
     },
     "features": {
-      "feeder_phase_coupling": 2.476877971507779,
-      "power_balance_pf": 0.313444293520199,
-      "aggregate_impedance_proxy": 3.5088435303463816,
-      "voltage_sensitivity_stiffness": 0.00040607728477500145
+      "feeder_phase_coupling": 2.3934900110579527,
+      "power_balance_pf": 0.3053520047447444,
+      "aggregate_impedance_proxy": 3.6575787511491202,
+      "voltage_sensitivity_stiffness": 0.0004088718074230449
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Multi-drop",
       "active_loads": 68,
       "total_hidden_demand_kw": 1287.4877459923478,
-      "avg_electrical_distance_km": 0.7825487804878049
+      "avg_electrical_distance_km": 0.7825487804878049,
+      "transformer_node_count": 12,
+      "transformer_total_p_kw": 2.838154112072087,
+      "transformer_total_q_kvar": 1.478019379378176
     }
   },
   {
     "sig_id": "S0034",
     "boundary": {
-      "pcc_voltage_v": 236.56656379325418,
+      "pcc_voltage_v": 236.960884492548,
       "pcc_current_a": -1.1842378929335002e-15,
-      "pcc_active_power_kw": 48.202447196841945,
-      "pcc_reactive_power_kvar": 167.76770480467258,
+      "pcc_active_power_kw": 43.620990323183165,
+      "pcc_reactive_power_kvar": 163.50039814096525,
       "frequency_hz": 50.01277514654308,
-      "pcc_phase_angle_deg": -30.82380203002664,
-      "f1_voltage_v": 201.86750705445914,
-      "f2_voltage_v": 196.39329547432317,
-      "delta_theta_deg": -0.4376598162600125
+      "pcc_phase_angle_deg": -30.729964262077875,
+      "f1_voltage_v": 202.40708308613833,
+      "f2_voltage_v": 198.4878323740255,
+      "delta_theta_deg": -0.5573463239553185
     },
     "features": {
-      "feeder_phase_coupling": -0.4376598162600125,
-      "power_balance_pf": 0.27614461151996983,
-      "aggregate_impedance_proxy": 4.907770717935302,
-      "voltage_sensitivity_stiffness": 0.0032962099066888577
+      "feeder_phase_coupling": -0.5573463239553185,
+      "power_balance_pf": 0.25777786841616274,
+      "aggregate_impedance_proxy": 5.432267293902852,
+      "voltage_sensitivity_stiffness": 0.003590866439674638
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Radial",
       "active_loads": 69,
       "total_hidden_demand_kw": 1460.5313379819584,
-      "avg_electrical_distance_km": 0.8136585365853658
+      "avg_electrical_distance_km": 0.8136585365853658,
+      "transformer_node_count": 11,
+      "transformer_total_p_kw": 1.9168884425672825,
+      "transformer_total_q_kvar": 1.319019201284961
     }
   },
   {
     "sig_id": "S0035",
     "boundary": {
-      "pcc_voltage_v": 227.7447401281174,
-      "pcc_current_a": -1.1842378929335002e-15,
-      "pcc_active_power_kw": -11.527398820520137,
-      "pcc_reactive_power_kvar": 141.90132652999432,
+      "pcc_voltage_v": 227.85560291639987,
+      "pcc_current_a": 1.0362081563168128e-15,
+      "pcc_active_power_kw": -13.428814140803777,
+      "pcc_reactive_power_kvar": 140.70433483227777,
       "frequency_hz": 50.040194259388336,
-      "pcc_phase_angle_deg": -29.584391770261004,
-      "f1_voltage_v": 196.58329365515115,
-      "f2_voltage_v": 199.03610203540657,
-      "delta_theta_deg": -1.5702532528716482
+      "pcc_phase_angle_deg": -29.545892347446188,
+      "f1_voltage_v": 197.39235643878843,
+      "f2_voltage_v": 199.13146923404247,
+      "delta_theta_deg": -1.515816167368527
     },
     "features": {
-      "feeder_phase_coupling": -1.5702532528716482,
-      "power_balance_pf": -0.08096858976791947,
-      "aggregate_impedance_proxy": 19.756817987930358,
-      "voltage_sensitivity_stiffness": 0.015693299956639675
+      "feeder_phase_coupling": -1.515816167368527,
+      "power_balance_pf": -0.09500822172243759,
+      "aggregate_impedance_proxy": 16.96766248751576,
+      "voltage_sensitivity_stiffness": 0.013220216847894503
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Radial",
       "active_loads": 34,
       "total_hidden_demand_kw": 748.1450100764126,
-      "avg_electrical_distance_km": 0.8658809523809523
+      "avg_electrical_distance_km": 0.8658809523809523,
+      "transformer_node_count": 12,
+      "transformer_total_p_kw": 1.8362802024736642,
+      "transformer_total_q_kvar": 1.0092897240113172
     }
   },
   {
     "sig_id": "S0036",
     "boundary": {
-      "pcc_voltage_v": 223.7711599361351,
-      "pcc_current_a": -7.105427357601002e-15,
-      "pcc_active_power_kw": -51.83117730743432,
-      "pcc_reactive_power_kvar": 51.75741568334142,
+      "pcc_voltage_v": 224.1532440843001,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": -62.23026607118785,
+      "pcc_reactive_power_kvar": 47.78058408437085,
       "frequency_hz": 49.99505671365491,
-      "pcc_phase_angle_deg": -28.880501306397207,
-      "f1_voltage_v": 206.4650405487789,
-      "f2_voltage_v": 208.16132794893846,
-      "delta_theta_deg": 0.18844916694989067
+      "pcc_phase_angle_deg": -28.6749623063747,
+      "f1_voltage_v": 206.8142985340736,
+      "f2_voltage_v": 211.86983860331338,
+      "delta_theta_deg": -0.2187889747167624
     },
     "features": {
-      "feeder_phase_coupling": 0.18844916694989067,
-      "power_balance_pf": -0.7076100968460449,
-      "aggregate_impedance_proxy": 4.31730798417984,
-      "voltage_sensitivity_stiffness": 0.0026958483730511584
+      "feeder_phase_coupling": -0.2187889747167624,
+      "power_balance_pf": -0.7931709531550891,
+      "aggregate_impedance_proxy": 3.601997141164149,
+      "voltage_sensitivity_stiffness": 0.002221969511232362
     },
     "ground_truth": {
       "num_buses": 10,
       "topology_type": "Multi-drop",
       "active_loads": 8,
       "total_hidden_demand_kw": 179.19570219756906,
-      "avg_electrical_distance_km": 0.6968333333333333
+      "avg_electrical_distance_km": 0.6968333333333333,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 3.525593372314484,
+      "transformer_total_q_kvar": 1.1839398009277466
     }
   },
   {
@@ -995,34 +1103,40 @@
       "topology_type": "Multi-drop",
       "active_loads": 9,
       "total_hidden_demand_kw": 199.464884415568,
-      "avg_electrical_distance_km": 0.6341666666666667
+      "avg_electrical_distance_km": 0.6341666666666667,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 11.559339110752699,
+      "transformer_total_q_kvar": 11.47464418994863
     }
   },
   {
     "sig_id": "S0038",
     "boundary": {
-      "pcc_voltage_v": 6.284854467907601,
-      "pcc_current_a": -7.401486830834377e-17,
-      "pcc_active_power_kw": 0.007722267054882762,
-      "pcc_reactive_power_kvar": -0.008264270025554594,
+      "pcc_voltage_v": 0.0,
+      "pcc_current_a": -4.2643e-320,
+      "pcc_active_power_kw": 0.0,
+      "pcc_reactive_power_kvar": 0.0,
       "frequency_hz": 49.99741181024293,
-      "pcc_phase_angle_deg": 65.21814741999108,
-      "f1_voltage_v": 0.8153682197421027,
-      "f2_voltage_v": 6.284854467907601,
-      "delta_theta_deg": 9.140330880643418
+      "pcc_phase_angle_deg": 60.76353667761458,
+      "f1_voltage_v": 20.0,
+      "f2_voltage_v": 20.0,
+      "delta_theta_deg": 14.999999999259291
     },
     "features": {
-      "feeder_phase_coupling": 9.140330880643418,
-      "power_balance_pf": 0.6826805987994053,
-      "aggregate_impedance_proxy": 813.7559433393183,
-      "voltage_sensitivity_stiffness": 129.03899675302236
+      "feeder_phase_coupling": 14.999999999259291,
+      "power_balance_pf": 0.0,
+      "aggregate_impedance_proxy": 0.0,
+      "voltage_sensitivity_stiffness": 916666.6666666666
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 31,
       "total_hidden_demand_kw": 676.5465975220645,
-      "avg_electrical_distance_km": 0.8478095238095238
+      "avg_electrical_distance_km": 0.8478095238095238,
+      "transformer_node_count": 2,
+      "transformer_total_p_kw": 0.00017276102532809084,
+      "transformer_total_q_kvar": -0.00013812590681527232
     }
   },
   {
@@ -1049,34 +1163,40 @@
       "topology_type": "Multi-drop",
       "active_loads": 8,
       "total_hidden_demand_kw": 153.46714167434453,
-      "avg_electrical_distance_km": 0.77775
+      "avg_electrical_distance_km": 0.77775,
+      "transformer_node_count": 0,
+      "transformer_total_p_kw": 0.0,
+      "transformer_total_q_kvar": 0.0
     }
   },
   {
     "sig_id": "S0040",
     "boundary": {
-      "pcc_voltage_v": 243.3642931703605,
-      "pcc_current_a": 1.0658141036401503e-14,
-      "pcc_active_power_kw": 9.743385343225968,
-      "pcc_reactive_power_kvar": 92.61912763702557,
+      "pcc_voltage_v": 243.36429260919445,
+      "pcc_current_a": 5.921189464667502e-15,
+      "pcc_active_power_kw": 9.74338253135598,
+      "pcc_reactive_power_kvar": 92.61913415700305,
       "frequency_hz": 50.03839004416876,
-      "pcc_phase_angle_deg": -30.09190040855474,
-      "f1_voltage_v": 199.8039613417494,
-      "f2_voltage_v": 236.05444000337556,
-      "delta_theta_deg": -2.2301935784800797
+      "pcc_phase_angle_deg": -30.09190034262602,
+      "f1_voltage_v": 199.80395987456995,
+      "f2_voltage_v": 236.05443946079336,
+      "delta_theta_deg": -2.2301930854065475
     },
     "features": {
-      "feeder_phase_coupling": -2.2301935784800797,
-      "power_balance_pf": 0.10462110032169779,
-      "aggregate_impedance_proxy": 24.977383077861642,
-      "voltage_sensitivity_stiffness": 0.01718945431388127
+      "feeder_phase_coupling": -2.2301930854065475,
+      "power_balance_pf": 0.10462106317504115,
+      "aggregate_impedance_proxy": 24.977390228559095,
+      "voltage_sensitivity_stiffness": 0.017189459902058953
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Radial",
       "active_loads": 31,
       "total_hidden_demand_kw": 564.5987322169532,
-      "avg_electrical_distance_km": 0.7155
+      "avg_electrical_distance_km": 0.7155,
+      "transformer_node_count": 6,
+      "transformer_total_p_kw": 1.5965691968351945,
+      "transformer_total_q_kvar": 0.7843185681558242
     }
   },
   {
@@ -1103,88 +1223,100 @@
       "topology_type": "Multi-drop",
       "active_loads": 8,
       "total_hidden_demand_kw": 181.74666914834194,
-      "avg_electrical_distance_km": 0.8307500000000001
+      "avg_electrical_distance_km": 0.8307500000000001,
+      "transformer_node_count": 2,
+      "transformer_total_p_kw": 5.233989209585824,
+      "transformer_total_q_kvar": 2.076196654498564
     }
   },
   {
     "sig_id": "S0042",
     "boundary": {
-      "pcc_voltage_v": 218.705021801459,
-      "pcc_current_a": -3.552713678800501e-15,
-      "pcc_active_power_kw": -27.547467447791757,
-      "pcc_reactive_power_kvar": 113.5387784716732,
+      "pcc_voltage_v": 219.1227224515304,
+      "pcc_current_a": 5.921189464667502e-15,
+      "pcc_active_power_kw": -28.98695967088176,
+      "pcc_reactive_power_kvar": 108.4001538165073,
       "frequency_hz": 50.01563355439715,
-      "pcc_phase_angle_deg": -29.28803817668083,
-      "f1_voltage_v": 165.93601258881256,
-      "f2_voltage_v": 218.70510638052534,
-      "delta_theta_deg": -1.0592061637660741
+      "pcc_phase_angle_deg": -29.26551741455477,
+      "f1_voltage_v": 167.881211472726,
+      "f2_voltage_v": 219.12280719213277,
+      "delta_theta_deg": -1.3058370297212747
     },
     "features": {
-      "feeder_phase_coupling": -1.0592061637660741,
-      "power_balance_pf": -0.23578526801555968,
-      "aggregate_impedance_proxy": 7.939205819073756,
-      "voltage_sensitivity_stiffness": 0.011202479390491947
+      "feeder_phase_coupling": -1.3058370297212747,
+      "power_balance_pf": -0.2583303060857589,
+      "aggregate_impedance_proxy": 7.559354874747027,
+      "voltage_sensitivity_stiffness": 0.010366556039068657
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Multi-drop",
       "active_loads": 15,
       "total_hidden_demand_kw": 323.1112723389765,
-      "avg_electrical_distance_km": 0.7896363636363636
+      "avg_electrical_distance_km": 0.7896363636363636,
+      "transformer_node_count": 4,
+      "transformer_total_p_kw": 3.6245971202939242,
+      "transformer_total_q_kvar": 4.118777816292614
     }
   },
   {
     "sig_id": "S0043",
     "boundary": {
-      "pcc_voltage_v": 217.5371625195472,
-      "pcc_current_a": -4.884981308350689e-15,
-      "pcc_active_power_kw": 8.044839720358663,
-      "pcc_reactive_power_kvar": 125.9217403491536,
+      "pcc_voltage_v": 218.01334320454802,
+      "pcc_current_a": -3.552713678800501e-15,
+      "pcc_active_power_kw": 6.6276641625185455,
+      "pcc_reactive_power_kvar": 120.0348559518923,
       "frequency_hz": 49.98854854188478,
-      "pcc_phase_angle_deg": -30.017170933313494,
-      "f1_voltage_v": 181.85679452645263,
-      "f2_voltage_v": 189.40243163587206,
-      "delta_theta_deg": -0.011745757714972882
+      "pcc_phase_angle_deg": -29.994503577877026,
+      "f1_voltage_v": 182.2512967043965,
+      "f2_voltage_v": 191.67210508028055,
+      "delta_theta_deg": 0.23721879178849647
     },
     "features": {
-      "feeder_phase_coupling": -0.011745757714972882,
-      "power_balance_pf": 0.0637576299706033,
-      "aggregate_impedance_proxy": 27.04058042678672,
-      "voltage_sensitivity_stiffness": 0.030114127123324806
+      "feeder_phase_coupling": 0.23721879178849647,
+      "power_balance_pf": 0.05513052365383129,
+      "aggregate_impedance_proxy": 32.89444138449835,
+      "voltage_sensitivity_stiffness": 0.03630533395467702
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Radial",
       "active_loads": 33,
       "total_hidden_demand_kw": 650.7805584235971,
-      "avg_electrical_distance_km": 0.8198333333333335
+      "avg_electrical_distance_km": 0.8198333333333335,
+      "transformer_node_count": 4,
+      "transformer_total_p_kw": 1.3825516930665467,
+      "transformer_total_q_kvar": 2.1105512459410876
     }
   },
   {
     "sig_id": "S0044",
     "boundary": {
-      "pcc_voltage_v": 228.0822846727119,
-      "pcc_current_a": 2.3684757858670005e-15,
-      "pcc_active_power_kw": 116.6339461752336,
-      "pcc_reactive_power_kvar": 261.7537196108432,
+      "pcc_voltage_v": 228.51286949513988,
+      "pcc_current_a": -2.3684757858670005e-15,
+      "pcc_active_power_kw": 110.32843447818016,
+      "pcc_reactive_power_kvar": 257.0008859348195,
       "frequency_hz": 50.00237412829555,
-      "pcc_phase_angle_deg": -32.25135716277334,
-      "f1_voltage_v": 173.6056006475571,
-      "f2_voltage_v": 173.75480078787254,
-      "delta_theta_deg": -4.725340844603821
+      "pcc_phase_angle_deg": -32.11363546554357,
+      "f1_voltage_v": 176.41755225293898,
+      "f2_voltage_v": 174.07175534798725,
+      "delta_theta_deg": -4.465292177795796
     },
     "features": {
-      "feeder_phase_coupling": -4.725340844603821,
-      "power_balance_pf": 0.4070094551373265,
-      "aggregate_impedance_proxy": 1.9555394479622272,
-      "voltage_sensitivity_stiffness": 0.002371893752507091
+      "feeder_phase_coupling": -4.465292177795796,
+      "power_balance_pf": 0.39447864628414986,
+      "aggregate_impedance_proxy": 2.0712055645920335,
+      "voltage_sensitivity_stiffness": 0.0024012564346129
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 30,
       "total_hidden_demand_kw": 585.457369898297,
-      "avg_electrical_distance_km": 0.8605714285714287
+      "avg_electrical_distance_km": 0.8605714285714287,
+      "transformer_node_count": 8,
+      "transformer_total_p_kw": 9.174991690926346,
+      "transformer_total_q_kvar": 4.546509333443348
     }
   },
   {
@@ -1211,34 +1343,40 @@
       "topology_type": "Radial",
       "active_loads": 9,
       "total_hidden_demand_kw": 156.81110754643834,
-      "avg_electrical_distance_km": 0.72625
+      "avg_electrical_distance_km": 0.72625,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 4.0781744564979086,
+      "transformer_total_q_kvar": 2.124435529124966
     }
   },
   {
     "sig_id": "S0046",
     "boundary": {
-      "pcc_voltage_v": 0.0,
-      "pcc_current_a": -4.258e-320,
-      "pcc_active_power_kw": 0.0,
-      "pcc_reactive_power_kvar": 0.0,
+      "pcc_voltage_v": 228.51286949513988,
+      "pcc_current_a": 5.831015693994838e-07,
+      "pcc_active_power_kw": 51.77997788132564,
+      "pcc_reactive_power_kvar": -326.76372492717763,
       "frequency_hz": 50.008088336958544,
-      "pcc_phase_angle_deg": 43.88684195222294,
-      "f1_voltage_v": 0.0,
-      "f2_voltage_v": 0.0,
-      "delta_theta_deg": -3.606166302272314
+      "pcc_phase_angle_deg": -32.11363546554357,
+      "f1_voltage_v": 176.41755225293898,
+      "f2_voltage_v": 174.07175534798725,
+      "delta_theta_deg": -4.465292177795796
     },
     "features": {
-      "feeder_phase_coupling": -3.606166302272314,
-      "power_balance_pf": 0.0,
-      "aggregate_impedance_proxy": 0.0,
-      "voltage_sensitivity_stiffness": 1000000.0
+      "feeder_phase_coupling": -4.465292177795796,
+      "power_balance_pf": 0.15651020914339586,
+      "aggregate_impedance_proxy": 4.413151075609123,
+      "voltage_sensitivity_stiffness": 0.005116395783396112
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Radial",
       "active_loads": 37,
       "total_hidden_demand_kw": 737.0627764274993,
-      "avg_electrical_distance_km": 0.7387142857142854
+      "avg_electrical_distance_km": 0.7387142857142854,
+      "transformer_node_count": 5,
+      "transformer_total_p_kw": -8.971578479640076,
+      "transformer_total_q_kvar": -1142.6063675281505
     }
   },
   {
@@ -1265,7 +1403,10 @@
       "topology_type": "Multi-drop",
       "active_loads": 8,
       "total_hidden_demand_kw": 135.04368819854392,
-      "avg_electrical_distance_km": 0.6036666666666667
+      "avg_electrical_distance_km": 0.6036666666666667,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 0.7298669308040954,
+      "transformer_total_q_kvar": 0.3122504709555036
     }
   },
   {
@@ -1292,7 +1433,10 @@
       "topology_type": "Multi-drop",
       "active_loads": 75,
       "total_hidden_demand_kw": 1731.6240175941855,
-      "avg_electrical_distance_km": 0.7114634146341465
+      "avg_electrical_distance_km": 0.7114634146341465,
+      "transformer_node_count": 14,
+      "transformer_total_p_kw": 1.2929529643674424,
+      "transformer_total_q_kvar": 12.040122698092928
     }
   },
   {
@@ -1319,115 +1463,130 @@
       "topology_type": "Multi-drop",
       "active_loads": 8,
       "total_hidden_demand_kw": 176.57023024917447,
-      "avg_electrical_distance_km": 0.747
+      "avg_electrical_distance_km": 0.747,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 5.514638425473398,
+      "transformer_total_q_kvar": 1.6722981677063171
     }
   },
   {
     "sig_id": "S0050",
     "boundary": {
-      "pcc_voltage_v": 0.0,
-      "pcc_current_a": -5e-324,
-      "pcc_active_power_kw": 0.0,
-      "pcc_reactive_power_kvar": 0.0,
+      "pcc_voltage_v": 224.59684356416014,
+      "pcc_current_a": -2.220446049250313e-15,
+      "pcc_active_power_kw": -15.48712083405509,
+      "pcc_reactive_power_kvar": 179.66121804956666,
       "frequency_hz": 49.98532249701808,
-      "pcc_phase_angle_deg": 74.99999999596919,
-      "f1_voltage_v": 20.0,
-      "f2_voltage_v": 20.0,
-      "delta_theta_deg": 15.000000004447234
+      "pcc_phase_angle_deg": -29.44731803087843,
+      "f1_voltage_v": 201.73651718108022,
+      "f2_voltage_v": 180.27231287388713,
+      "delta_theta_deg": 0.3021649435262965
     },
     "features": {
-      "feeder_phase_coupling": 15.000000004447234,
-      "power_balance_pf": 0.0,
-      "aggregate_impedance_proxy": 0.0,
-      "voltage_sensitivity_stiffness": 916666.6666666666
+      "feeder_phase_coupling": 0.3021649435262965,
+      "power_balance_pf": -0.08588330387800591,
+      "aggregate_impedance_proxy": 14.502168057481637,
+      "voltage_sensitivity_stiffness": 0.010294435604011836
     },
     "ground_truth": {
       "num_buses": 10,
       "topology_type": "Multi-drop",
       "active_loads": 9,
       "total_hidden_demand_kw": 184.61758816364775,
-      "avg_electrical_distance_km": 0.6942500000000001
+      "avg_electrical_distance_km": 0.6942500000000001,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 0.0,
+      "transformer_total_q_kvar": 0.0
     }
   },
   {
     "sig_id": "S0051",
     "boundary": {
-      "pcc_voltage_v": 231.72381382479173,
-      "pcc_current_a": -7.105427357601002e-15,
-      "pcc_active_power_kw": -76.08522987184838,
-      "pcc_reactive_power_kvar": 99.36760107770792,
+      "pcc_voltage_v": 234.92611201135358,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": -98.10773367566787,
+      "pcc_reactive_power_kvar": 63.13753534285287,
       "frequency_hz": 50.01335556566599,
-      "pcc_phase_angle_deg": -28.30150424709109,
-      "f1_voltage_v": 195.6334993566767,
-      "f2_voltage_v": 231.72391444304128,
-      "delta_theta_deg": 1.2820623062441179
+      "pcc_phase_angle_deg": -27.915997959136373,
+      "f1_voltage_v": 211.52070061047502,
+      "f2_voltage_v": 234.92621402009308,
+      "delta_theta_deg": 0.38945415758157864
     },
     "features": {
-      "feeder_phase_coupling": 1.2820623062441179,
-      "power_balance_pf": -0.6079453075885267,
-      "aggregate_impedance_proxy": 3.0455820554068898,
-      "voltage_sensitivity_stiffness": 0.002429649187219315
+      "feeder_phase_coupling": 0.38945415758157864,
+      "power_balance_pf": -0.8409121596331248,
+      "aggregate_impedance_proxy": 2.3945727906978025,
+      "voltage_sensitivity_stiffness": 0.0012095248947357911
     },
     "ground_truth": {
       "num_buses": 10,
       "topology_type": "Radial",
       "active_loads": 9,
       "total_hidden_demand_kw": 227.36326577723474,
-      "avg_electrical_distance_km": 0.65475
+      "avg_electrical_distance_km": 0.65475,
+      "transformer_node_count": 4,
+      "transformer_total_p_kw": 14.151033481402727,
+      "transformer_total_q_kvar": 17.44621448388227
     }
   },
   {
     "sig_id": "S0052",
     "boundary": {
-      "pcc_voltage_v": 219.6123844270321,
-      "pcc_current_a": -8.585724723767877e-15,
-      "pcc_active_power_kw": 113.43011133515517,
-      "pcc_reactive_power_kvar": 233.38811671550124,
+      "pcc_voltage_v": 219.61238331899526,
+      "pcc_current_a": 2.3684757858670005e-15,
+      "pcc_active_power_kw": 113.43010696144964,
+      "pcc_reactive_power_kvar": 233.38812997178795,
       "frequency_hz": 50.01439787359072,
-      "pcc_phase_angle_deg": -32.192260932430685,
-      "f1_voltage_v": 130.26508000106705,
-      "f2_voltage_v": 201.74980186113248,
-      "delta_theta_deg": -1.1381691575101058
+      "pcc_phase_angle_deg": -32.19226083092801,
+      "f1_voltage_v": 130.26507650134482,
+      "f2_voltage_v": 201.7498008523364,
+      "delta_theta_deg": -1.1381676765634552
     },
     "features": {
-      "feeder_phase_coupling": -1.1381691575101058,
-      "power_balance_pf": 0.43712273946063973,
-      "aggregate_impedance_proxy": 1.9361030321308081,
-      "voltage_sensitivity_stiffness": 0.004030929917250723
+      "feeder_phase_coupling": -1.1381676765634552,
+      "power_balance_pf": 0.4371227057421824,
+      "aggregate_impedance_proxy": 1.9361030970157653,
+      "voltage_sensitivity_stiffness": 0.0040309302012342
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 37,
       "total_hidden_demand_kw": 751.2633878378493,
-      "avg_electrical_distance_km": 0.7999761904761906
+      "avg_electrical_distance_km": 0.7999761904761906,
+      "transformer_node_count": 11,
+      "transformer_total_p_kw": 12.036546930237748,
+      "transformer_total_q_kvar": 8.102643620355472
     }
   },
   {
     "sig_id": "S0053",
     "boundary": {
-      "pcc_voltage_v": 212.45597141794426,
-      "pcc_current_a": -3.552713678800501e-15,
-      "pcc_active_power_kw": 218.5178579001106,
-      "pcc_reactive_power_kvar": 318.557072446145,
+      "pcc_voltage_v": 213.23711569811192,
+      "pcc_current_a": -2.3684757858670005e-15,
+      "pcc_active_power_kw": 211.05926362077025,
+      "pcc_reactive_power_kvar": 309.1209188987076,
       "frequency_hz": 50.025973819767636,
-      "pcc_phase_angle_deg": -34.5396632974768,
-      "f1_voltage_v": 112.35958570136415,
-      "f2_voltage_v": 166.02671438109044,
-      "delta_theta_deg": -4.869473573837524
+      "pcc_phase_angle_deg": -34.36643601170805,
+      "f1_voltage_v": 114.50748556764712,
+      "f2_voltage_v": 168.9025760299651,
+      "delta_theta_deg": -5.063455758613884
     },
     "features": {
-      "feeder_phase_coupling": -4.869473573837524,
-      "power_balance_pf": 0.5656669562957658,
-      "aggregate_impedance_proxy": 0.9722590752413633,
-      "voltage_sensitivity_stiffness": 0.0024338288058220587
+      "feeder_phase_coupling": -5.063455758613884,
+      "power_balance_pf": 0.5638747261959832,
+      "aggregate_impedance_proxy": 1.0103186708304648,
+      "voltage_sensitivity_stiffness": 0.00247743437247821
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Multi-drop",
       "active_loads": 67,
       "total_hidden_demand_kw": 1303.8187008490922,
-      "avg_electrical_distance_km": 0.8300975609756096
+      "avg_electrical_distance_km": 0.8300975609756096,
+      "transformer_node_count": 12,
+      "transformer_total_p_kw": 5.537740135124978,
+      "transformer_total_q_kvar": 2.9202477393677935
     }
   },
   {
@@ -1454,88 +1613,100 @@
       "topology_type": "Radial",
       "active_loads": 68,
       "total_hidden_demand_kw": 1344.5847607580126,
-      "avg_electrical_distance_km": 0.8224024390243904
+      "avg_electrical_distance_km": 0.8224024390243904,
+      "transformer_node_count": 10,
+      "transformer_total_p_kw": 1.4907659742074974e-14,
+      "transformer_total_q_kvar": 2.2265945748802024e-05
     }
   },
   {
     "sig_id": "S0055",
     "boundary": {
-      "pcc_voltage_v": 207.75963055858014,
-      "pcc_current_a": -3.2566542055671257e-15,
-      "pcc_active_power_kw": 121.23435114112237,
-      "pcc_reactive_power_kvar": 244.16296008179563,
+      "pcc_voltage_v": 208.48154486145816,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": 117.79752453013806,
+      "pcc_reactive_power_kvar": 235.18768805018402,
       "frequency_hz": 49.993207923639865,
-      "pcc_phase_angle_deg": -32.35969940939103,
-      "f1_voltage_v": 114.62173282515523,
-      "f2_voltage_v": 186.23107683741173,
-      "delta_theta_deg": 0.24670047534600315
+      "pcc_phase_angle_deg": -32.2874062087661,
+      "f1_voltage_v": 118.15007596908858,
+      "f2_voltage_v": 186.8695958254191,
+      "delta_theta_deg": -0.23326050879357751
     },
     "features": {
-      "feeder_phase_coupling": 0.24670047534600315,
-      "power_balance_pf": 0.4447258376060087,
-      "aggregate_impedance_proxy": 1.7137026501922357,
-      "voltage_sensitivity_stiffness": 0.0043090876252115775
+      "feeder_phase_coupling": -0.23326050879357751,
+      "power_balance_pf": 0.447832955195009,
+      "aggregate_impedance_proxy": 1.769829577685984,
+      "voltage_sensitivity_stiffness": 0.004310005787562737
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Multi-drop",
       "active_loads": 69,
       "total_hidden_demand_kw": 1388.6106008944644,
-      "avg_electrical_distance_km": 0.808109756097561
+      "avg_electrical_distance_km": 0.808109756097561,
+      "transformer_node_count": 9,
+      "transformer_total_p_kw": 5.562481645160342,
+      "transformer_total_q_kvar": 5.301614903036108
     }
   },
   {
     "sig_id": "S0056",
     "boundary": {
-      "pcc_voltage_v": 223.38705209502655,
-      "pcc_current_a": -3.552713678800501e-15,
-      "pcc_active_power_kw": -63.592282457759374,
-      "pcc_reactive_power_kvar": 57.51010665038341,
+      "pcc_voltage_v": 223.83178210394124,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": -74.28210198716671,
+      "pcc_reactive_power_kvar": 52.81499689537693,
       "frequency_hz": 49.98153741606813,
-      "pcc_phase_angle_deg": -28.631109377204623,
-      "f1_voltage_v": 215.9702019682371,
-      "f2_voltage_v": 199.26167122327297,
-      "delta_theta_deg": 0.3933494053657185
+      "pcc_phase_angle_deg": -28.42096651776545,
+      "f1_voltage_v": 216.39852280049936,
+      "f2_voltage_v": 203.27875780530897,
+      "delta_theta_deg": 0.006647110292163916
     },
     "features": {
-      "feeder_phase_coupling": 0.3933494053657185,
-      "power_balance_pf": -0.7416852701400034,
-      "aggregate_impedance_proxy": 3.512801238587532,
-      "voltage_sensitivity_stiffness": 0.001574470250501154
+      "feeder_phase_coupling": 0.006647110292163916,
+      "power_balance_pf": -0.8149958928548994,
+      "aggregate_impedance_proxy": 3.0132666295488613,
+      "voltage_sensitivity_stiffness": 0.0013238651623560275
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Radial",
       "active_loads": 17,
       "total_hidden_demand_kw": 322.179008242903,
-      "avg_electrical_distance_km": 0.8581363636363637
+      "avg_electrical_distance_km": 0.8581363636363637,
+      "transformer_node_count": 7,
+      "transformer_total_p_kw": 10.640683023803703,
+      "transformer_total_q_kvar": 15.438779915553644
     }
   },
   {
     "sig_id": "S0057",
     "boundary": {
-      "pcc_voltage_v": 216.25327696116233,
-      "pcc_current_a": -1.3322676295501878e-15,
-      "pcc_active_power_kw": 12.273029392340643,
-      "pcc_reactive_power_kvar": 141.77322543688118,
+      "pcc_voltage_v": 216.42597083497267,
+      "pcc_current_a": 2.3684757858670005e-15,
+      "pcc_active_power_kw": 9.025267468280164,
+      "pcc_reactive_power_kvar": 139.7923240721302,
       "frequency_hz": 50.01345386650189,
-      "pcc_phase_angle_deg": -30.08741694417958,
-      "f1_voltage_v": 180.4963240618545,
-      "f2_voltage_v": 183.62448793148192,
-      "delta_theta_deg": 3.009786582008225
+      "pcc_phase_angle_deg": -30.021155029105273,
+      "f1_voltage_v": 181.9099828951239,
+      "f2_voltage_v": 183.7683346139975,
+      "delta_theta_deg": 3.1166913061460626
     },
     "features": {
-      "feeder_phase_coupling": 3.009786582008225,
-      "power_balance_pf": 0.08624547368135069,
-      "aggregate_impedance_proxy": 17.62020218707531,
-      "voltage_sensitivity_stiffness": 0.02020136634146492
+      "feeder_phase_coupling": 3.1166913061460626,
+      "power_balance_pf": 0.06442783098587057,
+      "aggregate_impedance_proxy": 23.980003652590998,
+      "voltage_sensitivity_stiffness": 0.02681823136759351
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Multi-drop",
       "active_loads": 16,
       "total_hidden_demand_kw": 365.9617002937725,
-      "avg_electrical_distance_km": 0.6703636363636364
+      "avg_electrical_distance_km": 0.6703636363636364,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 4.653439496755945,
+      "transformer_total_q_kvar": 2.165986951549783
     }
   },
   {
@@ -1562,88 +1733,100 @@
       "topology_type": "Radial",
       "active_loads": 10,
       "total_hidden_demand_kw": 202.34955783211686,
-      "avg_electrical_distance_km": 0.7102499999999999
+      "avg_electrical_distance_km": 0.7102499999999999,
+      "transformer_node_count": 2,
+      "transformer_total_p_kw": 4.8858603323419505,
+      "transformer_total_q_kvar": 4.207030327863475
     }
   },
   {
     "sig_id": "S0059",
     "boundary": {
-      "pcc_voltage_v": 224.92737112144252,
-      "pcc_current_a": 1.1842378929335002e-15,
-      "pcc_active_power_kw": 97.94504308134069,
-      "pcc_reactive_power_kvar": 170.53688540569834,
+      "pcc_voltage_v": 226.75200089785213,
+      "pcc_current_a": -2.3684757858670005e-15,
+      "pcc_active_power_kw": 79.53318767847405,
+      "pcc_reactive_power_kvar": 149.35235217789995,
       "frequency_hz": 50.03667927184102,
-      "pcc_phase_angle_deg": -31.886159262070517,
-      "f1_voltage_v": 149.15324086698737,
-      "f2_voltage_v": 211.75116305911615,
-      "delta_theta_deg": -5.025442805254407
+      "pcc_phase_angle_deg": -31.50591960782151,
+      "f1_voltage_v": 159.64338390872243,
+      "f2_voltage_v": 213.45713146810854,
+      "delta_theta_deg": -4.505317677204864
     },
     "features": {
-      "feeder_phase_coupling": -5.025442805254407,
-      "power_balance_pf": 0.4980366950940383,
-      "aggregate_impedance_proxy": 2.2964650557984996,
-      "voltage_sensitivity_stiffness": 0.003864699501690581
+      "feeder_phase_coupling": -4.505317677204864,
+      "power_balance_pf": 0.4700295642604005,
+      "aggregate_impedance_proxy": 2.8510362109902854,
+      "voltage_sensitivity_stiffness": 0.004209805230709637
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 34,
       "total_hidden_demand_kw": 613.1704000436819,
-      "avg_electrical_distance_km": 0.751857142857143
+      "avg_electrical_distance_km": 0.751857142857143,
+      "transformer_node_count": 12,
+      "transformer_total_p_kw": 20.06967648765937,
+      "transformer_total_q_kvar": 10.148404930422842
     }
   },
   {
     "sig_id": "S0060",
     "boundary": {
-      "pcc_voltage_v": 244.19852439560404,
-      "pcc_current_a": 0.0,
-      "pcc_active_power_kw": -16.453316447367847,
-      "pcc_reactive_power_kvar": 84.74110306131658,
+      "pcc_voltage_v": 244.2921518111109,
+      "pcc_current_a": 4.736951571734001e-15,
+      "pcc_active_power_kw": -17.10663011062789,
+      "pcc_reactive_power_kvar": 83.72145820122302,
       "frequency_hz": 50.021589831426624,
-      "pcc_phase_angle_deg": -29.558969960231053,
-      "f1_voltage_v": 212.08763385335556,
-      "f2_voltage_v": 232.30482193304215,
-      "delta_theta_deg": -0.3212251782176061
+      "pcc_phase_angle_deg": -29.546838108006924,
+      "f1_voltage_v": 212.5356865112767,
+      "f2_voltage_v": 232.39342875931754,
+      "delta_theta_deg": -0.3338289672324848
     },
     "features": {
-      "feeder_phase_coupling": -0.3212251782176061,
-      "power_balance_pf": -0.19060041250892762,
-      "aggregate_impedance_proxy": 14.841901955442438,
-      "voltage_sensitivity_stiffness": 0.007068576047538914
+      "feeder_phase_coupling": -0.3338289672324848,
+      "power_balance_pf": -0.20019164291071634,
+      "aggregate_impedance_proxy": 14.280552975701847,
+      "voltage_sensitivity_stiffness": 0.006689490104527469
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Radial",
       "active_loads": 37,
       "total_hidden_demand_kw": 661.6874790654342,
-      "avg_electrical_distance_km": 0.7803333333333332
+      "avg_electrical_distance_km": 0.7803333333333332,
+      "transformer_node_count": 8,
+      "transformer_total_p_kw": 1.4450094313129593,
+      "transformer_total_q_kvar": 0.834722598502546
     }
   },
   {
     "sig_id": "S0061",
     "boundary": {
-      "pcc_voltage_v": 228.13602857420815,
-      "pcc_current_a": 2.3684757858670005e-15,
-      "pcc_active_power_kw": -0.456600962312513,
-      "pcc_reactive_power_kvar": 136.54835861278085,
+      "pcc_voltage_v": 228.1655700452308,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": -2.9445572418185844,
+      "pcc_reactive_power_kvar": 136.34811787635078,
       "frequency_hz": 50.016987561998484,
-      "pcc_phase_angle_deg": -29.82507418763262,
-      "f1_voltage_v": 208.03617085635935,
-      "f2_voltage_v": 187.1140448879432,
-      "delta_theta_deg": -1.7415724102803054
+      "pcc_phase_angle_deg": -29.772873529422153,
+      "f1_voltage_v": 208.06286673500335,
+      "f2_voltage_v": 187.74309846374717,
+      "delta_theta_deg": -1.8949746990962097
     },
     "features": {
-      "feeder_phase_coupling": -1.7415724102803054,
-      "power_balance_pf": -0.003343858621834326,
-      "aggregate_impedance_proxy": 499.63873877980524,
-      "voltage_sensitivity_stiffness": 0.29168210481907997
+      "feeder_phase_coupling": -1.8949746990962097,
+      "power_balance_pf": -0.021590843071665318,
+      "aggregate_impedance_proxy": 77.48719886223537,
+      "voltage_sensitivity_stiffness": 0.04519230990722963
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Radial",
       "active_loads": 18,
       "total_hidden_demand_kw": 417.9534728828867,
-      "avg_electrical_distance_km": 0.9523636363636364
+      "avg_electrical_distance_km": 0.9523636363636364,
+      "transformer_node_count": 7,
+      "transformer_total_p_kw": 6.755959323149504,
+      "transformer_total_q_kvar": 11.08102345862223
     }
   },
   {
@@ -1670,7 +1853,10 @@
       "topology_type": "Radial",
       "active_loads": 74,
       "total_hidden_demand_kw": 1582.3365674757108,
-      "avg_electrical_distance_km": 0.8402560975609757
+      "avg_electrical_distance_km": 0.8402560975609757,
+      "transformer_node_count": 11,
+      "transformer_total_p_kw": 6.29101230635206,
+      "transformer_total_q_kvar": 2.172658130881133
     }
   },
   {
@@ -1697,7 +1883,10 @@
       "topology_type": "Radial",
       "active_loads": 10,
       "total_hidden_demand_kw": 270.5124887913863,
-      "avg_electrical_distance_km": 0.8615833333333334
+      "avg_electrical_distance_km": 0.8615833333333334,
+      "transformer_node_count": 0,
+      "transformer_total_p_kw": 0.0,
+      "transformer_total_q_kvar": 0.0
     }
   },
   {
@@ -1724,142 +1913,160 @@
       "topology_type": "Radial",
       "active_loads": 33,
       "total_hidden_demand_kw": 696.5624794007911,
-      "avg_electrical_distance_km": 0.7751904761904762
+      "avg_electrical_distance_km": 0.7751904761904762,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 3.888779697752631,
+      "transformer_total_q_kvar": 2.0253791008725055
     }
   },
   {
     "sig_id": "S0065",
     "boundary": {
-      "pcc_voltage_v": 224.51836223314635,
-      "pcc_current_a": 3.552713678800501e-15,
-      "pcc_active_power_kw": 49.71331628062656,
-      "pcc_reactive_power_kvar": 177.02017812048314,
+      "pcc_voltage_v": 224.66080646061422,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": 45.730964029923754,
+      "pcc_reactive_power_kvar": 175.49806962524698,
       "frequency_hz": 49.99809313324079,
-      "pcc_phase_angle_deg": -30.84767955966777,
-      "f1_voltage_v": 163.88696699197615,
-      "f2_voltage_v": 204.18567565593665,
-      "delta_theta_deg": 2.261833087323076
+      "pcc_phase_angle_deg": -30.76371464946155,
+      "f1_voltage_v": 163.98669031461108,
+      "f2_voltage_v": 205.5483447803159,
+      "delta_theta_deg": 2.074569207333237
     },
     "features": {
-      "feeder_phase_coupling": 2.261833087323076,
-      "power_balance_pf": 0.2703745667007981,
-      "aggregate_impedance_proxy": 4.516261929691058,
-      "voltage_sensitivity_stiffness": 0.006379329621944627
+      "feeder_phase_coupling": 2.074569207333237,
+      "power_balance_pf": 0.2521578648163367,
+      "aggregate_impedance_proxy": 4.9126627070653095,
+      "voltage_sensitivity_stiffness": 0.006925769519227846
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Multi-drop",
       "active_loads": 17,
       "total_hidden_demand_kw": 332.80454707262356,
-      "avg_electrical_distance_km": 0.8686363636363637
+      "avg_electrical_distance_km": 0.8686363636363637,
+      "transformer_node_count": 2,
+      "transformer_total_p_kw": 1.7883917763458812,
+      "transformer_total_q_kvar": 0.5058930397325924
     }
   },
   {
     "sig_id": "S0066",
     "boundary": {
-      "pcc_voltage_v": 235.02228948200388,
-      "pcc_current_a": 3.552713678800501e-15,
-      "pcc_active_power_kw": -38.152924278875275,
-      "pcc_reactive_power_kvar": 57.01091365637787,
+      "pcc_voltage_v": 236.32144497016625,
+      "pcc_current_a": -2.3684757858670005e-15,
+      "pcc_active_power_kw": -65.61166522348806,
+      "pcc_reactive_power_kvar": 43.63397175622294,
       "frequency_hz": 49.96601613406776,
-      "pcc_phase_angle_deg": -29.151886793873697,
-      "f1_voltage_v": 223.50046790031357,
-      "f2_voltage_v": 211.18631457402378,
-      "delta_theta_deg": 1.3474838879763773
+      "pcc_phase_angle_deg": -28.613024871729433,
+      "f1_voltage_v": 229.21453639661016,
+      "f2_voltage_v": 216.94953924163607,
+      "delta_theta_deg": 1.3237433999136634
     },
     "features": {
-      "feeder_phase_coupling": 1.3474838879763773,
-      "power_balance_pf": -0.5561692107974392,
-      "aggregate_impedance_proxy": 6.160007070601539,
-      "voltage_sensitivity_stiffness": 0.0018019077151451071
+      "feeder_phase_coupling": 1.3237433999136634,
+      "power_balance_pf": -0.832677301817892,
+      "aggregate_impedance_proxy": 3.601820508035909,
+      "voltage_sensitivity_stiffness": 0.0006849305050067967
     },
     "ground_truth": {
       "num_buses": 10,
       "topology_type": "Multi-drop",
       "active_loads": 9,
       "total_hidden_demand_kw": 156.19001899025346,
-      "avg_electrical_distance_km": 0.7522500000000001
+      "avg_electrical_distance_km": 0.7522500000000001,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 12.342701975523156,
+      "transformer_total_q_kvar": 5.954047152096294
     }
   },
   {
     "sig_id": "S0067",
     "boundary": {
-      "pcc_voltage_v": 224.1569788680442,
-      "pcc_current_a": 0.0,
-      "pcc_active_power_kw": -61.550294230193785,
-      "pcc_reactive_power_kvar": 47.67898703759918,
+      "pcc_voltage_v": 224.82063598111878,
+      "pcc_current_a": 3.552713678800501e-15,
+      "pcc_active_power_kw": -73.09580024331822,
+      "pcc_reactive_power_kvar": 40.29608585799914,
       "frequency_hz": 50.025329878713706,
-      "pcc_phase_angle_deg": -28.688972549809225,
-      "f1_voltage_v": 196.54803853718386,
-      "f2_voltage_v": 222.10188770053978,
-      "delta_theta_deg": -2.399362141275155
+      "pcc_phase_angle_deg": -28.466656677041332,
+      "f1_voltage_v": 201.54863269686962,
+      "f2_voltage_v": 222.75878861895868,
+      "delta_theta_deg": -2.082122430676641
     },
     "features": {
-      "feeder_phase_coupling": -2.399362141275155,
-      "power_balance_pf": -0.7905548907799675,
-      "aggregate_impedance_proxy": 3.6418505878763514,
-      "voltage_sensitivity_stiffness": 0.0029414942487487167
+      "feeder_phase_coupling": -2.082122430676641,
+      "power_balance_pf": -0.8757429831540398,
+      "aggregate_impedance_proxy": 3.075698359646477,
+      "voltage_sensitivity_stiffness": 0.0021918362984543562
     },
     "ground_truth": {
       "num_buses": 10,
       "topology_type": "Multi-drop",
       "active_loads": 8,
       "total_hidden_demand_kw": 155.72317967246224,
-      "avg_electrical_distance_km": 0.7374166666666665
+      "avg_electrical_distance_km": 0.7374166666666665,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 3.995762688436896,
+      "transformer_total_q_kvar": 2.1969723067876807
     }
   },
   {
     "sig_id": "S0068",
     "boundary": {
-      "pcc_voltage_v": 244.3976717597477,
-      "pcc_current_a": 0.0,
-      "pcc_active_power_kw": -25.277593796539545,
-      "pcc_reactive_power_kvar": 83.06992705235703,
+      "pcc_voltage_v": 245.16122644309962,
+      "pcc_current_a": 1.1842378929335002e-15,
+      "pcc_active_power_kw": -39.693436828033235,
+      "pcc_reactive_power_kvar": 75.42383234020116,
       "frequency_hz": 50.006626290844224,
-      "pcc_phase_angle_deg": -29.378893956801733,
-      "f1_voltage_v": 225.35759718254894,
-      "f2_voltage_v": 221.59909813158254,
-      "delta_theta_deg": -0.7831906608520285
+      "pcc_phase_angle_deg": -29.092778891583873,
+      "f1_voltage_v": 226.055584179897,
+      "f2_voltage_v": 227.02308990644292,
+      "delta_theta_deg": -1.1671630694861541
     },
     "features": {
-      "feeder_phase_coupling": -0.7831906608520285,
-      "power_balance_pf": -0.2911135700954576,
-      "aggregate_impedance_proxy": 9.66854931123452,
-      "voltage_sensitivity_stiffness": 0.002413600353611631
+      "feeder_phase_coupling": -1.1671630694861541,
+      "power_balance_pf": -0.4657159510353917,
+      "aggregate_impedance_proxy": 6.176366670612644,
+      "voltage_sensitivity_stiffness": 0.001463761663463892
     },
     "ground_truth": {
       "num_buses": 10,
       "topology_type": "Radial",
       "active_loads": 9,
       "total_hidden_demand_kw": 190.04440554226196,
-      "avg_electrical_distance_km": 0.8515
+      "avg_electrical_distance_km": 0.8515,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 14.037896232695452,
+      "transformer_total_q_kvar": 19.437346897472587
     }
   },
   {
     "sig_id": "S0069",
     "boundary": {
-      "pcc_voltage_v": 216.9508257231979,
-      "pcc_current_a": 2.5165055224836883e-15,
-      "pcc_active_power_kw": -28.866029932554667,
-      "pcc_reactive_power_kvar": 135.63567350848416,
+      "pcc_voltage_v": 216.9558026186935,
+      "pcc_current_a": 1.3322676295501878e-15,
+      "pcc_active_power_kw": -30.57595207331905,
+      "pcc_reactive_power_kvar": 135.69502394192435,
       "frequency_hz": 50.0230299329161,
-      "pcc_phase_angle_deg": -29.227779348856725,
-      "f1_voltage_v": 204.1006767118747,
-      "f2_voltage_v": 172.46893427105408,
-      "delta_theta_deg": -3.751183578011979
+      "pcc_phase_angle_deg": -29.191696718273647,
+      "f1_voltage_v": 204.1053243412708,
+      "f2_voltage_v": 172.8822367729208,
+      "delta_theta_deg": -3.8779477669836204
     },
     "features": {
-      "feeder_phase_coupling": -3.751183578011979,
-      "power_balance_pf": -0.20815852882434585,
-      "aggregate_impedance_proxy": 7.515783040283661,
-      "voltage_sensitivity_stiffness": 0.005181887113265282
+      "feeder_phase_coupling": -3.8779477669836204,
+      "power_balance_pf": -0.21981717799612094,
+      "aggregate_impedance_proxy": 7.095634994547783,
+      "voltage_sensitivity_stiffness": 0.004891463177595836
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Radial",
       "active_loads": 71,
       "total_hidden_demand_kw": 1455.0997305437204,
-      "avg_electrical_distance_km": 0.8651463414634147
+      "avg_electrical_distance_km": 0.8651463414634147,
+      "transformer_node_count": 7,
+      "transformer_total_p_kw": 0.5678187581748675,
+      "transformer_total_q_kvar": 0.14378026446120265
     }
   },
   {
@@ -1886,7 +2093,10 @@
       "topology_type": "Multi-drop",
       "active_loads": 68,
       "total_hidden_demand_kw": 1514.9921627725469,
-      "avg_electrical_distance_km": 0.8844024390243901
+      "avg_electrical_distance_km": 0.8844024390243901,
+      "transformer_node_count": 13,
+      "transformer_total_p_kw": 0.2099615173172752,
+      "transformer_total_q_kvar": 2.743598882317549
     }
   },
   {
@@ -1913,61 +2123,70 @@
       "topology_type": "Multi-drop",
       "active_loads": 70,
       "total_hidden_demand_kw": 1669.452922755343,
-      "avg_electrical_distance_km": 0.8150853658536588
+      "avg_electrical_distance_km": 0.8150853658536588,
+      "transformer_node_count": 9,
+      "transformer_total_p_kw": 0.16940590462428604,
+      "transformer_total_q_kvar": 2.5965640209533034
     }
   },
   {
     "sig_id": "S0072",
     "boundary": {
-      "pcc_voltage_v": 202.29433780939416,
-      "pcc_current_a": -3.552713678800501e-15,
-      "pcc_active_power_kw": 196.29658582160494,
-      "pcc_reactive_power_kvar": 312.40318815268284,
+      "pcc_voltage_v": 203.0348008944347,
+      "pcc_current_a": 1.1842378929335002e-15,
+      "pcc_active_power_kw": 182.09838819370896,
+      "pcc_reactive_power_kvar": 302.996442646092,
       "frequency_hz": 49.998128881489734,
-      "pcc_phase_angle_deg": -34.03376548572089,
-      "f1_voltage_v": 96.90368816061341,
-      "f2_voltage_v": 162.22538722286916,
-      "delta_theta_deg": 1.0697527194353285
+      "pcc_phase_angle_deg": -33.71081972739423,
+      "f1_voltage_v": 98.71911798419974,
+      "f2_voltage_v": 166.8619052777975,
+      "delta_theta_deg": 0.6607474857884839
     },
     "features": {
-      "feeder_phase_coupling": 1.0697527194353285,
-      "power_balance_pf": 0.5320333431051576,
-      "aggregate_impedance_proxy": 1.0305545352820629,
-      "voltage_sensitivity_stiffness": 0.0030374172180893345
+      "feeder_phase_coupling": 0.6607474857884839,
+      "power_balance_pf": 0.5151207052435242,
+      "aggregate_impedance_proxy": 1.1149730746846664,
+      "voltage_sensitivity_stiffness": 0.003232704826983929
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Multi-drop",
       "active_loads": 73,
       "total_hidden_demand_kw": 1381.9773477136278,
-      "avg_electrical_distance_km": 0.8360121951219514
+      "avg_electrical_distance_km": 0.8360121951219514,
+      "transformer_node_count": 11,
+      "transformer_total_p_kw": 12.736389518022355,
+      "transformer_total_q_kvar": 9.251873122552562
     }
   },
   {
     "sig_id": "S0073",
     "boundary": {
-      "pcc_voltage_v": 241.1323960985468,
-      "pcc_current_a": -4.736951571734001e-15,
-      "pcc_active_power_kw": 9.170073845745456,
-      "pcc_reactive_power_kvar": 117.95900505981871,
+      "pcc_voltage_v": 241.13489328583196,
+      "pcc_current_a": 1.3322676295501878e-15,
+      "pcc_active_power_kw": 9.12380920745062,
+      "pcc_reactive_power_kvar": 117.93330480574288,
       "frequency_hz": 49.966572247881516,
-      "pcc_phase_angle_deg": -30.050270524650845,
-      "f1_voltage_v": 212.40313917118237,
-      "f2_voltage_v": 213.57860282703305,
-      "delta_theta_deg": -0.2516902603849758
+      "pcc_phase_angle_deg": -30.049331602918915,
+      "f1_voltage_v": 212.42078529940764,
+      "f2_voltage_v": 213.5808025647597,
+      "delta_theta_deg": -0.2502550973285089
     },
     "features": {
-      "feeder_phase_coupling": -0.2516902603849758,
-      "power_balance_pf": 0.07750565021798365,
-      "aggregate_impedance_proxy": 26.295575571056816,
-      "voltage_sensitivity_stiffness": 0.012539365496392068
+      "feeder_phase_coupling": -0.2502550973285089,
+      "power_balance_pf": 0.0771336573801826,
+      "aggregate_impedance_proxy": 26.429187784826798,
+      "voltage_sensitivity_stiffness": 0.01259489094720118
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Radial",
       "active_loads": 67,
       "total_hidden_demand_kw": 1437.0270915218632,
-      "avg_electrical_distance_km": 0.8504999999999998
+      "avg_electrical_distance_km": 0.8504999999999998,
+      "transformer_node_count": 7,
+      "transformer_total_p_kw": 0.08645889547918895,
+      "transformer_total_q_kvar": 0.03532798522645817
     }
   },
   {
@@ -1994,34 +2213,40 @@
       "topology_type": "Radial",
       "active_loads": 16,
       "total_hidden_demand_kw": 325.26851875657354,
-      "avg_electrical_distance_km": 0.7039545454545455
+      "avg_electrical_distance_km": 0.7039545454545455,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 3.545134106012922,
+      "transformer_total_q_kvar": 1.9398717204980382
     }
   },
   {
     "sig_id": "S0075",
     "boundary": {
-      "pcc_voltage_v": 224.82399235506736,
-      "pcc_current_a": 4.736951571734001e-15,
-      "pcc_active_power_kw": -79.45426320251555,
-      "pcc_reactive_power_kvar": 40.796755424441585,
+      "pcc_voltage_v": 225.20317783776702,
+      "pcc_current_a": -4.736951571734001e-15,
+      "pcc_active_power_kw": -86.66360227806965,
+      "pcc_reactive_power_kvar": 36.66590328872591,
       "frequency_hz": 49.980520338508896,
-      "pcc_phase_angle_deg": -28.33677208578486,
-      "f1_voltage_v": 210.53783422531774,
-      "f2_voltage_v": 215.06588299304767,
-      "delta_theta_deg": -0.18405083641461673
+      "pcc_phase_angle_deg": -28.197996859117097,
+      "f1_voltage_v": 213.55438189644212,
+      "f2_voltage_v": 215.4269062877028,
+      "delta_theta_deg": 0.0022872727022296147
     },
     "features": {
-      "feeder_phase_coupling": -0.18405083641461673,
-      "power_balance_pf": -0.8895855811802384,
-      "aggregate_impedance_proxy": 2.8296025973134538,
-      "voltage_sensitivity_stiffness": 0.001545027511025513
+      "feeder_phase_coupling": 0.0022872727022296147,
+      "power_balance_pf": -0.9209652083591411,
+      "aggregate_impedance_proxy": 2.5985900576413608,
+      "voltage_sensitivity_stiffness": 0.0012714688896321824
     },
     "ground_truth": {
       "num_buses": 10,
       "topology_type": "Multi-drop",
       "active_loads": 7,
       "total_hidden_demand_kw": 112.14582015126149,
-      "avg_electrical_distance_km": 0.652
+      "avg_electrical_distance_km": 0.652,
+      "transformer_node_count": 2,
+      "transformer_total_p_kw": 7.009918289734189,
+      "transformer_total_q_kvar": 3.031845300943824
     }
   },
   {
@@ -2048,169 +2273,190 @@
       "topology_type": "Multi-drop",
       "active_loads": 68,
       "total_hidden_demand_kw": 1466.5329436065601,
-      "avg_electrical_distance_km": 0.9052073170731706
+      "avg_electrical_distance_km": 0.9052073170731706,
+      "transformer_node_count": 10,
+      "transformer_total_p_kw": 0.1527507677418128,
+      "transformer_total_q_kvar": 1.3864166929146766
     }
   },
   {
     "sig_id": "S0077",
     "boundary": {
-      "pcc_voltage_v": 206.80991267751338,
-      "pcc_current_a": 0.0,
-      "pcc_active_power_kw": 141.81181078090668,
-      "pcc_reactive_power_kvar": 255.79176090995935,
+      "pcc_voltage_v": 206.94326512189764,
+      "pcc_current_a": -7.105427357601002e-15,
+      "pcc_active_power_kw": 140.2514290038608,
+      "pcc_reactive_power_kvar": 254.13691116138057,
       "frequency_hz": 50.028450202604525,
-      "pcc_phase_angle_deg": -32.81106429146208,
-      "f1_voltage_v": 132.65254819480705,
-      "f2_voltage_v": 159.5316791860005,
-      "delta_theta_deg": 3.3131772580751147
+      "pcc_phase_angle_deg": -32.77684334280025,
+      "f1_voltage_v": 132.73808346401427,
+      "f2_voltage_v": 160.40510568396402,
+      "delta_theta_deg": 3.2750914972327436
     },
     "features": {
-      "feeder_phase_coupling": 3.3131772580751147,
-      "power_balance_pf": 0.48487270939451343,
-      "aggregate_impedance_proxy": 1.4583405294689138,
-      "voltage_sensitivity_stiffness": 0.0031540465041045695
+      "feeder_phase_coupling": 3.2750914972327436,
+      "power_balance_pf": 0.4831775972155073,
+      "aggregate_impedance_proxy": 1.47551625759681,
+      "voltage_sensitivity_stiffness": 0.0031865960455517003
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 34,
       "total_hidden_demand_kw": 779.9664112036411,
-      "avg_electrical_distance_km": 0.7740476190476189
+      "avg_electrical_distance_km": 0.7740476190476189,
+      "transformer_node_count": 6,
+      "transformer_total_p_kw": 5.639240640434753,
+      "transformer_total_q_kvar": 2.152571942326469
     }
   },
   {
     "sig_id": "S0078",
     "boundary": {
-      "pcc_voltage_v": 204.1089635825797,
-      "pcc_current_a": 2.3684757858670005e-15,
-      "pcc_active_power_kw": 257.3503910797819,
-      "pcc_reactive_power_kvar": 418.966935151047,
+      "pcc_voltage_v": 204.78999897864938,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": 248.35446318098718,
+      "pcc_reactive_power_kvar": 410.5385325901228,
       "frequency_hz": 50.00659846867057,
-      "pcc_phase_angle_deg": -35.50857346495702,
-      "f1_voltage_v": 107.96780347171291,
-      "f2_voltage_v": 123.9413548034463,
-      "delta_theta_deg": -0.822285306350139
+      "pcc_phase_angle_deg": -35.2892958507358,
+      "f1_voltage_v": 109.55892014798007,
+      "f2_voltage_v": 127.24205076763202,
+      "delta_theta_deg": -1.1010565246829884
     },
     "features": {
-      "feeder_phase_coupling": -0.822285306350139,
-      "power_balance_pf": 0.5233959380358028,
-      "aggregate_impedance_proxy": 0.793116971507482,
-      "voltage_sensitivity_stiffness": 0.002137685308171777
+      "feeder_phase_coupling": -1.1010565246829884,
+      "power_balance_pf": 0.5176053075906638,
+      "aggregate_impedance_proxy": 0.8245875493077894,
+      "voltage_sensitivity_stiffness": 0.002188422508030055
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Multi-drop",
       "active_loads": 73,
       "total_hidden_demand_kw": 1446.2709355301595,
-      "avg_electrical_distance_km": 0.7523658536585369
+      "avg_electrical_distance_km": 0.7523658536585369,
+      "transformer_node_count": 16,
+      "transformer_total_p_kw": 12.638686251944124,
+      "transformer_total_q_kvar": 10.226339516739005
     }
   },
   {
     "sig_id": "S0079",
     "boundary": {
-      "pcc_voltage_v": 220.5867033963599,
-      "pcc_current_a": 3.552713678800501e-15,
-      "pcc_active_power_kw": -11.109213228983332,
-      "pcc_reactive_power_kvar": 88.8470880785321,
+      "pcc_voltage_v": 221.2070654386159,
+      "pcc_current_a": 1.1842378929335002e-15,
+      "pcc_active_power_kw": -22.58613567292204,
+      "pcc_reactive_power_kvar": 81.81693932921961,
       "frequency_hz": 49.99743289002338,
-      "pcc_phase_angle_deg": -29.664118034352786,
-      "f1_voltage_v": 207.59709929450682,
-      "f2_voltage_v": 182.84111125708884,
-      "delta_theta_deg": 1.4298349265890593
+      "pcc_phase_angle_deg": -29.436237447308812,
+      "f1_voltage_v": 208.17681492437563,
+      "f2_voltage_v": 187.71140227609033,
+      "delta_theta_deg": 1.0247701756179666
     },
     "features": {
-      "feeder_phase_coupling": 1.4298349265890593,
-      "power_balance_pf": -0.12407132090558846,
-      "aggregate_impedance_proxy": 19.856193142883253,
-      "voltage_sensitivity_stiffness": 0.012153162545074444
+      "feeder_phase_coupling": 1.0247701756179666,
+      "power_balance_pf": -0.2661035707108743,
+      "aggregate_impedance_proxy": 9.793931057887184,
+      "voltage_sensitivity_stiffness": 0.0058707076115737415
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Multi-drop",
       "active_loads": 15,
       "total_hidden_demand_kw": 257.8684749888557,
-      "avg_electrical_distance_km": 0.8067272727272727
+      "avg_electrical_distance_km": 0.8067272727272727,
+      "transformer_node_count": 5,
+      "transformer_total_p_kw": 9.517050338229202,
+      "transformer_total_q_kvar": 4.405879838006176
     }
   },
   {
     "sig_id": "S0080",
     "boundary": {
-      "pcc_voltage_v": 219.230567580237,
-      "pcc_current_a": 5.921189464667502e-15,
-      "pcc_active_power_kw": 96.28515874359566,
-      "pcc_reactive_power_kvar": 238.3130561797728,
+      "pcc_voltage_v": 220.1691902046806,
+      "pcc_current_a": -7.105427357601002e-15,
+      "pcc_active_power_kw": 79.82898499139102,
+      "pcc_reactive_power_kvar": 227.62735339299044,
       "frequency_hz": 50.03196330613041,
-      "pcc_phase_angle_deg": -31.813354808542645,
-      "f1_voltage_v": 165.3600045136836,
-      "f2_voltage_v": 168.23267593804107,
-      "delta_theta_deg": -0.8016021279352259
+      "pcc_phase_angle_deg": -31.459244058597235,
+      "f1_voltage_v": 169.19664273477437,
+      "f2_voltage_v": 172.1857073981465,
+      "delta_theta_deg": -0.6799369275390141
     },
     "features": {
-      "feeder_phase_coupling": -0.8016021279352259,
-      "power_balance_pf": 0.3746080438265267,
-      "aggregate_impedance_proxy": 2.276888444325596,
-      "voltage_sensitivity_stiffness": 0.003229988733686148
+      "feeder_phase_coupling": -0.6799369275390141,
+      "power_balance_pf": 0.33093909460394666,
+      "aggregate_impedance_proxy": 2.758010608182149,
+      "voltage_sensitivity_stiffness": 0.0036955747958131633
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 32,
       "total_hidden_demand_kw": 641.1472923687727,
-      "avg_electrical_distance_km": 0.7334999999999999
+      "avg_electrical_distance_km": 0.7334999999999999,
+      "transformer_node_count": 10,
+      "transformer_total_p_kw": 15.0537504453504,
+      "transformer_total_q_kvar": 12.762689991757648
     }
   },
   {
     "sig_id": "S0081",
     "boundary": {
-      "pcc_voltage_v": 212.83291608904108,
-      "pcc_current_a": 0.0,
-      "pcc_active_power_kw": 40.55429587758479,
-      "pcc_reactive_power_kvar": 183.18197264323663,
+      "pcc_voltage_v": 213.13697874499482,
+      "pcc_current_a": -3.700743415417189e-15,
+      "pcc_active_power_kw": 31.443446818066477,
+      "pcc_reactive_power_kvar": 179.80893354560433,
       "frequency_hz": 50.001951099800515,
-      "pcc_phase_angle_deg": -30.64519383555969,
-      "f1_voltage_v": 150.76514956808774,
-      "f2_voltage_v": 191.1308772798935,
-      "delta_theta_deg": -1.7744296384091953
+      "pcc_phase_angle_deg": -30.453023209901243,
+      "f1_voltage_v": 153.8580376723951,
+      "f2_voltage_v": 191.40028314131345,
+      "delta_theta_deg": -1.221790982908189
     },
     "features": {
-      "feeder_phase_coupling": -1.7744296384091953,
-      "power_balance_pf": 0.21615424398514316,
-      "aggregate_impedance_proxy": 5.248097796677084,
-      "voltage_sensitivity_stiffness": 0.009168248630273816
+      "feeder_phase_coupling": -1.221790982908189,
+      "power_balance_pf": 0.17225745256153296,
+      "aggregate_impedance_proxy": 6.778422645576819,
+      "voltage_sensitivity_stiffness": 0.01141493277418068
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 36,
       "total_hidden_demand_kw": 693.9078580536147,
-      "avg_electrical_distance_km": 0.7557380952380951
+      "avg_electrical_distance_km": 0.7557380952380951,
+      "transformer_node_count": 6,
+      "transformer_total_p_kw": 5.763063319596545,
+      "transformer_total_q_kvar": 2.65227798852354
     }
   },
   {
     "sig_id": "S0082",
     "boundary": {
-      "pcc_voltage_v": 219.23374640795205,
-      "pcc_current_a": -5.921189464667502e-15,
-      "pcc_active_power_kw": 0.04828879459706013,
-      "pcc_reactive_power_kvar": 105.12317650074473,
+      "pcc_voltage_v": 219.48005977780178,
+      "pcc_current_a": 3.552713678800501e-15,
+      "pcc_active_power_kw": -3.7434612351711296,
+      "pcc_reactive_power_kvar": 102.26391916994415,
       "frequency_hz": 49.994880617207535,
-      "pcc_phase_angle_deg": -29.875199471937773,
-      "f1_voltage_v": 177.75218461243756,
-      "f2_voltage_v": 203.77730233996078,
-      "delta_theta_deg": -3.3737570220564166
+      "pcc_phase_angle_deg": -29.799789282680475,
+      "f1_voltage_v": 179.52941121578058,
+      "f2_voltage_v": 204.0042772529166,
+      "delta_theta_deg": -3.2534159696179366
     },
     "features": {
-      "feeder_phase_coupling": -3.3737570220564166,
-      "power_balance_pf": 0.00045935435600864306,
-      "aggregate_impedance_proxy": 4539.960218039505,
-      "voltage_sensitivity_stiffness": 5.371029212536078
+      "feeder_phase_coupling": -3.2534159696179366,
+      "power_balance_pf": -0.03658138319940541,
+      "aggregate_impedance_proxy": 58.63023211926924,
+      "voltage_sensitivity_stiffness": 0.06730688618510827
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Multi-drop",
       "active_loads": 17,
       "total_hidden_demand_kw": 311.3019239000668,
-      "avg_electrical_distance_km": 0.905
+      "avg_electrical_distance_km": 0.905,
+      "transformer_node_count": 2,
+      "transformer_total_p_kw": 2.3046149087428183,
+      "transformer_total_q_kvar": 0.7280201583766756
     }
   },
   {
@@ -2237,7 +2483,10 @@
       "topology_type": "Radial",
       "active_loads": 35,
       "total_hidden_demand_kw": 844.3306507494825,
-      "avg_electrical_distance_km": 0.7485952380952381
+      "avg_electrical_distance_km": 0.7485952380952381,
+      "transformer_node_count": 7,
+      "transformer_total_p_kw": 4.765800186661929,
+      "transformer_total_q_kvar": 2.3247544003286076
     }
   },
   {
@@ -2264,7 +2513,10 @@
       "topology_type": "Multi-drop",
       "active_loads": 74,
       "total_hidden_demand_kw": 1500.7465698523683,
-      "avg_electrical_distance_km": 0.7909024390243901
+      "avg_electrical_distance_km": 0.7909024390243901,
+      "transformer_node_count": 6,
+      "transformer_total_p_kw": 0.015516296825293418,
+      "transformer_total_q_kvar": 0.2715351995244665
     }
   },
   {
@@ -2291,7 +2543,10 @@
       "topology_type": "Multi-drop",
       "active_loads": 70,
       "total_hidden_demand_kw": 1384.3117641472293,
-      "avg_electrical_distance_km": 0.8352439024390248
+      "avg_electrical_distance_km": 0.8352439024390248,
+      "transformer_node_count": 15,
+      "transformer_total_p_kw": 0.06732717305345737,
+      "transformer_total_q_kvar": 1.9835213042911748
     }
   },
   {
@@ -2318,7 +2573,10 @@
       "topology_type": "Multi-drop",
       "active_loads": 20,
       "total_hidden_demand_kw": 402.6594366763866,
-      "avg_electrical_distance_km": 0.7964090909090907
+      "avg_electrical_distance_km": 0.7964090909090907,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 7.425219846738324,
+      "transformer_total_q_kvar": 4.038889633991884
     }
   },
   {
@@ -2345,61 +2603,70 @@
       "topology_type": "Radial",
       "active_loads": 30,
       "total_hidden_demand_kw": 669.0723740693157,
-      "avg_electrical_distance_km": 0.8665952380952382
+      "avg_electrical_distance_km": 0.8665952380952382,
+      "transformer_node_count": 10,
+      "transformer_total_p_kw": 0.14203772641271514,
+      "transformer_total_q_kvar": 2.216017856624036
     }
   },
   {
     "sig_id": "S0088",
     "boundary": {
-      "pcc_voltage_v": 215.0652544444931,
-      "pcc_current_a": 1.4802973661668755e-15,
-      "pcc_active_power_kw": 140.25649290611523,
-      "pcc_reactive_power_kvar": 287.0579323349399,
+      "pcc_voltage_v": 215.29319262233298,
+      "pcc_current_a": 3.848773152033876e-15,
+      "pcc_active_power_kw": 134.89873049554552,
+      "pcc_reactive_power_kvar": 284.4031693657635,
       "frequency_hz": 49.997769495646494,
-      "pcc_phase_angle_deg": -32.770451281813585,
-      "f1_voltage_v": 162.02205942644943,
-      "f2_voltage_v": 143.22692976955412,
-      "delta_theta_deg": 4.671013766869891
+      "pcc_phase_angle_deg": -32.65104728664203,
+      "f1_voltage_v": 162.1923352683885,
+      "f2_voltage_v": 145.11744841469053,
+      "delta_theta_deg": 4.304733656874973
     },
     "features": {
-      "feeder_phase_coupling": 4.671013766869891,
-      "power_balance_pf": 0.43900059453385204,
-      "aggregate_impedance_proxy": 1.5333711007238873,
-      "voltage_sensitivity_stiffness": 0.002316527931609456
+      "feeder_phase_coupling": 4.304733656874973,
+      "power_balance_pf": 0.42855706545575556,
+      "aggregate_impedance_proxy": 1.5959615797383695,
+      "voltage_sensitivity_stiffness": 0.00240327391854746
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 37,
       "total_hidden_demand_kw": 870.7527585324839,
-      "avg_electrical_distance_km": 0.7723095238095238
+      "avg_electrical_distance_km": 0.7723095238095238,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 2.01710744429754,
+      "transformer_total_q_kvar": 0.4271370934584112
     }
   },
   {
     "sig_id": "S0089",
     "boundary": {
-      "pcc_voltage_v": 239.03854981899744,
-      "pcc_current_a": -5.921189464667502e-15,
-      "pcc_active_power_kw": 47.65909805869359,
-      "pcc_reactive_power_kvar": 139.78067539759155,
+      "pcc_voltage_v": 240.13136586707344,
+      "pcc_current_a": 3.552713678800501e-15,
+      "pcc_active_power_kw": 30.151662674529423,
+      "pcc_reactive_power_kvar": 128.19989065159226,
       "frequency_hz": 49.985247164170104,
-      "pcc_phase_angle_deg": -30.83774191247423,
-      "f1_voltage_v": 207.88828407041055,
-      "f2_voltage_v": 201.5302399572191,
-      "delta_theta_deg": 0.7868146630453126
+      "pcc_phase_angle_deg": -30.479549510697634,
+      "f1_voltage_v": 211.1836304981164,
+      "f2_voltage_v": 206.39211851561097,
+      "delta_theta_deg": 0.7416412220014088
     },
     "features": {
-      "feeder_phase_coupling": 0.7868146630453126,
-      "power_balance_pf": 0.3227139329333292,
-      "aggregate_impedance_proxy": 5.015591031727529,
-      "voltage_sensitivity_stiffness": 0.0028074138835170216
+      "feeder_phase_coupling": 0.7416412220014088,
+      "power_balance_pf": 0.22894567267262644,
+      "aggregate_impedance_proxy": 7.96411662252402,
+      "voltage_sensitivity_stiffness": 0.003982141998992771
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Radial",
       "active_loads": 64,
       "total_hidden_demand_kw": 1265.80030802422,
-      "avg_electrical_distance_km": 0.8604146341463413
+      "avg_electrical_distance_km": 0.8604146341463413,
+      "transformer_node_count": 11,
+      "transformer_total_p_kw": 7.543768958074579,
+      "transformer_total_q_kvar": 3.2242152964466597
     }
   },
   {
@@ -2426,7 +2693,10 @@
       "topology_type": "Multi-drop",
       "active_loads": 9,
       "total_hidden_demand_kw": 135.9674702306332,
-      "avg_electrical_distance_km": 0.8289999999999998
+      "avg_electrical_distance_km": 0.8289999999999998,
+      "transformer_node_count": 0,
+      "transformer_total_p_kw": 0.0,
+      "transformer_total_q_kvar": 0.0
     }
   },
   {
@@ -2453,34 +2723,40 @@
       "topology_type": "Radial",
       "active_loads": 8,
       "total_hidden_demand_kw": 105.79369262744508,
-      "avg_electrical_distance_km": 0.7288333333333333
+      "avg_electrical_distance_km": 0.7288333333333333,
+      "transformer_node_count": 2,
+      "transformer_total_p_kw": 0.0,
+      "transformer_total_q_kvar": 0.0
     }
   },
   {
     "sig_id": "S0092",
     "boundary": {
-      "pcc_voltage_v": 229.6661874589481,
-      "pcc_current_a": -7.105427357601002e-15,
-      "pcc_active_power_kw": 0.8804729991788143,
-      "pcc_reactive_power_kvar": 118.24630224865885,
+      "pcc_voltage_v": 229.67969002301183,
+      "pcc_current_a": -3.700743415417189e-15,
+      "pcc_active_power_kw": 0.6437620072912262,
+      "pcc_reactive_power_kvar": 118.0996211143003,
       "frequency_hz": 50.01399038276455,
-      "pcc_phase_angle_deg": -29.87625473277504,
-      "f1_voltage_v": 187.52968691808846,
-      "f2_voltage_v": 214.44575922460066,
-      "delta_theta_deg": 1.2982293141168277
+      "pcc_phase_angle_deg": -29.871479547934545,
+      "f1_voltage_v": 187.6280202857627,
+      "f2_voltage_v": 214.45826886094915,
+      "delta_theta_deg": 1.305510770819577
     },
     "features": {
-      "feeder_phase_coupling": 1.2982293141168277,
-      "power_balance_pf": 0.007445886826039009,
-      "aggregate_impedance_proxy": 260.84380421585337,
-      "voltage_sensitivity_stiffness": 0.24830523639751934
+      "feeder_phase_coupling": 1.305510770819577,
+      "power_balance_pf": 0.005450927206804811,
+      "aggregate_impedance_proxy": 356.77677564829236,
+      "voltage_sensitivity_stiffness": 0.33897036591283725
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Radial",
       "active_loads": 34,
       "total_hidden_demand_kw": 812.0070854330223,
-      "avg_electrical_distance_km": 0.8922380952380952
+      "avg_electrical_distance_km": 0.8922380952380952,
+      "transformer_node_count": 7,
+      "transformer_total_p_kw": 0.2885523524157402,
+      "transformer_total_q_kvar": 0.1495227158023943
     }
   },
   {
@@ -2507,7 +2783,10 @@
       "topology_type": "Radial",
       "active_loads": 8,
       "total_hidden_demand_kw": 174.69798962288888,
-      "avg_electrical_distance_km": 0.8102499999999999
+      "avg_electrical_distance_km": 0.8102499999999999,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 2.9392028524574676e-14,
+      "transformer_total_q_kvar": 3.0351144793303752e-05
     }
   },
   {
@@ -2534,142 +2813,160 @@
       "topology_type": "Multi-drop",
       "active_loads": 39,
       "total_hidden_demand_kw": 779.6410477112795,
-      "avg_electrical_distance_km": 0.8158095238095238
+      "avg_electrical_distance_km": 0.8158095238095238,
+      "transformer_node_count": 6,
+      "transformer_total_p_kw": 9.26633172263606,
+      "transformer_total_q_kvar": 15.661780787050445
     }
   },
   {
     "sig_id": "S0095",
     "boundary": {
-      "pcc_voltage_v": 230.73264876383328,
-      "pcc_current_a": 3.552713678800501e-15,
-      "pcc_active_power_kw": -42.209690990102935,
-      "pcc_reactive_power_kvar": 108.44132023248318,
+      "pcc_voltage_v": 231.49171433395432,
+      "pcc_current_a": 1.1842378929335002e-15,
+      "pcc_active_power_kw": -56.959181202597975,
+      "pcc_reactive_power_kvar": 100.53604110934747,
       "frequency_hz": 49.98963980449515,
-      "pcc_phase_angle_deg": -28.98994846467619,
-      "f1_voltage_v": 208.9586888067918,
-      "f2_voltage_v": 206.89522362914377,
-      "delta_theta_deg": -3.170472304497917
+      "pcc_phase_angle_deg": -28.69606858601814,
+      "f1_voltage_v": 214.7932217736668,
+      "f2_voltage_v": 207.56737662364733,
+      "delta_theta_deg": -2.7310570003486596
     },
     "features": {
-      "feeder_phase_coupling": -3.170472304497917,
-      "power_balance_pf": -0.36273039298038073,
-      "aggregate_impedance_proxy": 5.466342867840259,
-      "voltage_sensitivity_stiffness": 0.0030641966463222266
+      "feeder_phase_coupling": -2.7310570003486596,
+      "power_balance_pf": -0.49293892197839284,
+      "aggregate_impedance_proxy": 4.064168504220479,
+      "voltage_sensitivity_stiffness": 0.0018439211826487775
     },
     "ground_truth": {
       "num_buses": 10,
       "topology_type": "Multi-drop",
       "active_loads": 8,
       "total_hidden_demand_kw": 186.43363066305227,
-      "avg_electrical_distance_km": 0.6665
+      "avg_electrical_distance_km": 0.6665,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 4.907995548408497,
+      "transformer_total_q_kvar": 2.428324758739708
     }
   },
   {
     "sig_id": "S0096",
     "boundary": {
-      "pcc_voltage_v": 218.28742701249914,
-      "pcc_current_a": 2.3684757858670005e-15,
-      "pcc_active_power_kw": -7.633423183878907,
-      "pcc_reactive_power_kvar": 117.45602408180382,
+      "pcc_voltage_v": 218.2910347761026,
+      "pcc_current_a": 1.4802973661668753e-16,
+      "pcc_active_power_kw": -7.8359299033516905,
+      "pcc_reactive_power_kvar": 117.42349019620951,
       "frequency_hz": 49.99505015416399,
-      "pcc_phase_angle_deg": -29.69898240045998,
-      "f1_voltage_v": 186.3534228758489,
-      "f2_voltage_v": 191.98285877235858,
-      "delta_theta_deg": -1.6849056177039117
+      "pcc_phase_angle_deg": -29.69478601856002,
+      "f1_voltage_v": 186.35647050174933,
+      "f2_voltage_v": 192.0413192204894,
+      "delta_theta_deg": -1.69675109543293
     },
     "features": {
-      "feeder_phase_coupling": -1.6849056177039117,
-      "power_balance_pf": -0.06485281282927158,
-      "aggregate_impedance_proxy": 28.596265811285868,
-      "voltage_sensitivity_stiffness": 0.029282717598221823
+      "feeder_phase_coupling": -1.69675109543293,
+      "power_balance_pf": -0.06658412591105273,
+      "aggregate_impedance_proxy": 27.857702864982155,
+      "voltage_sensitivity_stiffness": 0.028524333483735332
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Radial",
       "active_loads": 60,
       "total_hidden_demand_kw": 1198.5588499220466,
-      "avg_electrical_distance_km": 0.8056341463414634
+      "avg_electrical_distance_km": 0.8056341463414634,
+      "transformer_node_count": 11,
+      "transformer_total_p_kw": 1.7129035351019368,
+      "transformer_total_q_kvar": 0.8733549024971062
     }
   },
   {
     "sig_id": "S0097",
     "boundary": {
-      "pcc_voltage_v": 207.29434659944,
-      "pcc_current_a": 3.552713678800501e-15,
-      "pcc_active_power_kw": 114.98954103376933,
-      "pcc_reactive_power_kvar": 250.09437850789868,
+      "pcc_voltage_v": 207.51673943474816,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": 110.2405542553698,
+      "pcc_reactive_power_kvar": 247.4046121550113,
       "frequency_hz": 50.04036585404146,
-      "pcc_phase_angle_deg": -32.21967660519787,
-      "f1_voltage_v": 142.65194400552653,
-      "f2_voltage_v": 157.41420924823578,
-      "delta_theta_deg": 3.352449248113512
+      "pcc_phase_angle_deg": -32.11601592036928,
+      "f1_voltage_v": 144.56549436285073,
+      "f2_voltage_v": 157.58069126857617,
+      "delta_theta_deg": 3.597333377359085
     },
     "features": {
-      "feeder_phase_coupling": 3.352449248113512,
-      "power_balance_pf": 0.41774406590669916,
-      "aggregate_impedance_proxy": 1.8027234732230104,
-      "voltage_sensitivity_stiffness": 0.0035274242579195077
+      "feeder_phase_coupling": 3.597333377359085,
+      "power_balance_pf": 0.40701061907236824,
+      "aggregate_impedance_proxy": 1.8823992581862476,
+      "voltage_sensitivity_stiffness": 0.0036070552490142034
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 33,
       "total_hidden_demand_kw": 694.6480230404953,
-      "avg_electrical_distance_km": 0.8686666666666667
+      "avg_electrical_distance_km": 0.8686666666666667,
+      "transformer_node_count": 5,
+      "transformer_total_p_kw": 6.636629272971933,
+      "transformer_total_q_kvar": 4.0869820969719965
     }
   },
   {
     "sig_id": "S0098",
     "boundary": {
-      "pcc_voltage_v": 230.55235685861257,
-      "pcc_current_a": 5.921189464667502e-15,
-      "pcc_active_power_kw": 2.4102847249145762,
-      "pcc_reactive_power_kvar": 107.60325431013334,
+      "pcc_voltage_v": 231.15365655147386,
+      "pcc_current_a": 2.3684757858670005e-15,
+      "pcc_active_power_kw": -6.402235947242883,
+      "pcc_reactive_power_kvar": 100.97394170033776,
       "frequency_hz": 49.9932347230686,
-      "pcc_phase_angle_deg": -29.921403541895796,
-      "f1_voltage_v": 206.96652783487602,
-      "f2_voltage_v": 198.8287329447106,
-      "delta_theta_deg": -0.9250071498311954
+      "pcc_phase_angle_deg": -29.746092887519353,
+      "f1_voltage_v": 211.0097468608882,
+      "f2_voltage_v": 199.3433696514843,
+      "delta_theta_deg": -0.7231500652198477
     },
     "features": {
-      "feeder_phase_coupling": -0.9250071498311954,
-      "power_balance_pf": 0.022394120580557102,
-      "aggregate_impedance_proxy": 95.65353786708572,
-      "voltage_sensitivity_stiffness": 0.05710504191761803
+      "feeder_phase_coupling": -0.7231500652198477,
+      "power_balance_pf": -0.06327776653167612,
+      "aggregate_impedance_proxy": 36.105139259336525,
+      "voltage_sensitivity_stiffness": 0.018867268176474643
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Radial",
       "active_loads": 17,
       "total_hidden_demand_kw": 324.02279739710013,
-      "avg_electrical_distance_km": 0.7947272727272728
+      "avg_electrical_distance_km": 0.7947272727272728,
+      "transformer_node_count": 6,
+      "transformer_total_p_kw": 12.729504718992086,
+      "transformer_total_q_kvar": 6.841465205409903
     }
   },
   {
     "sig_id": "S0099",
     "boundary": {
-      "pcc_voltage_v": 221.3801731564205,
+      "pcc_voltage_v": 221.75842820977937,
       "pcc_current_a": 1.1842378929335002e-15,
-      "pcc_active_power_kw": 129.71961121029787,
-      "pcc_reactive_power_kvar": 212.11257830117842,
+      "pcc_active_power_kw": 125.61761094891492,
+      "pcc_reactive_power_kvar": 207.67210669143057,
       "frequency_hz": 50.027553193904296,
-      "pcc_phase_angle_deg": -32.55564409742422,
-      "f1_voltage_v": 159.85755681995485,
-      "f2_voltage_v": 177.57497947290236,
-      "delta_theta_deg": 0.36199080246443316
+      "pcc_phase_angle_deg": -32.467726064369565,
+      "f1_voltage_v": 160.12701261498273,
+      "f2_voltage_v": 179.9102476741053,
+      "delta_theta_deg": 0.2550884724887865
     },
     "features": {
-      "feeder_phase_coupling": 0.36199080246443316,
-      "power_balance_pf": 0.5217289285152091,
-      "aggregate_impedance_proxy": 1.7066052648810348,
-      "voltage_sensitivity_stiffness": 0.0025742202038205944
+      "feeder_phase_coupling": 0.2550884724887865,
+      "power_balance_pf": 0.5175654480579995,
+      "aggregate_impedance_proxy": 1.7653450401521895,
+      "voltage_sensitivity_stiffness": 0.0026493427867390162
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 34,
       "total_hidden_demand_kw": 670.1306556210486,
-      "avg_electrical_distance_km": 0.7251428571428571
+      "avg_electrical_distance_km": 0.7251428571428571,
+      "transformer_node_count": 7,
+      "transformer_total_p_kw": 5.636363309908646,
+      "transformer_total_q_kvar": 2.3338616050705836
     }
   },
   {
@@ -2696,34 +2993,40 @@
       "topology_type": "Multi-drop",
       "active_loads": 32,
       "total_hidden_demand_kw": 613.8566276390065,
-      "avg_electrical_distance_km": 0.8627142857142858
+      "avg_electrical_distance_km": 0.8627142857142858,
+      "transformer_node_count": 4,
+      "transformer_total_p_kw": 0.06626384265176095,
+      "transformer_total_q_kvar": 1.1596172848114001
     }
   },
   {
     "sig_id": "S0101",
     "boundary": {
-      "pcc_voltage_v": 212.09655507060086,
-      "pcc_current_a": 2.3684757858670005e-15,
-      "pcc_active_power_kw": 84.77726859776263,
-      "pcc_reactive_power_kvar": 190.72544911682377,
+      "pcc_voltage_v": 212.36281552322234,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": 78.60140008889465,
+      "pcc_reactive_power_kvar": 187.58266267304202,
       "frequency_hz": 50.00110170820778,
-      "pcc_phase_angle_deg": -31.591362553767016,
-      "f1_voltage_v": 186.1707226087199,
-      "f2_voltage_v": 143.09468031753286,
-      "delta_theta_deg": 3.8824320366383986
+      "pcc_phase_angle_deg": -31.460270211771668,
+      "f1_voltage_v": 186.4007397500052,
+      "f2_voltage_v": 145.3673554608561,
+      "delta_theta_deg": 3.490635683959674
     },
     "features": {
-      "feeder_phase_coupling": 3.8824320366383986,
-      "power_balance_pf": 0.40618008184372884,
-      "aggregate_impedance_proxy": 2.501809224063502,
-      "voltage_sensitivity_stiffness": 0.002645622545538075
+      "feeder_phase_coupling": 3.490635683959674,
+      "power_balance_pf": 0.3864661669162103,
+      "aggregate_impedance_proxy": 2.701768830851368,
+      "voltage_sensitivity_stiffness": 0.0028413011466432844
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 31,
       "total_hidden_demand_kw": 569.0046611494158,
-      "avg_electrical_distance_km": 0.7647857142857142
+      "avg_electrical_distance_km": 0.7647857142857142,
+      "transformer_node_count": 5,
+      "transformer_total_p_kw": 8.017808976634065,
+      "transformer_total_q_kvar": 2.099519726102474
     }
   },
   {
@@ -2750,34 +3053,40 @@
       "topology_type": "Multi-drop",
       "active_loads": 9,
       "total_hidden_demand_kw": 213.5407636950427,
-      "avg_electrical_distance_km": 0.8378333333333333
+      "avg_electrical_distance_km": 0.8378333333333333,
+      "transformer_node_count": 2,
+      "transformer_total_p_kw": 3.7371605446716707,
+      "transformer_total_q_kvar": 2.2466566515399746
     }
   },
   {
     "sig_id": "S0103",
     "boundary": {
-      "pcc_voltage_v": 210.00691450452834,
-      "pcc_current_a": -2.0724163126336257e-15,
-      "pcc_active_power_kw": 100.99900595757171,
-      "pcc_reactive_power_kvar": 216.44619626356285,
+      "pcc_voltage_v": 210.34687042524624,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": 93.04431510157728,
+      "pcc_reactive_power_kvar": 212.3925310248278,
       "frequency_hz": 49.99731853804867,
-      "pcc_phase_angle_deg": -31.92831750147641,
-      "f1_voltage_v": 151.84560203736666,
-      "f2_voltage_v": 163.9416924623648,
-      "delta_theta_deg": -0.9526766100536221
+      "pcc_phase_angle_deg": -31.75730512527942,
+      "f1_voltage_v": 154.84870780621875,
+      "f2_voltage_v": 164.1981816253576,
+      "delta_theta_deg": -0.49711474768962916
     },
     "features": {
-      "feeder_phase_coupling": -0.9526766100536221,
-      "power_balance_pf": 0.42285376855802065,
-      "aggregate_impedance_proxy": 2.0792968250940262,
-      "voltage_sensitivity_stiffness": 0.003636768346299425
+      "feeder_phase_coupling": -0.49711474768962916,
+      "power_balance_pf": 0.4012625045836693,
+      "aggregate_impedance_proxy": 2.26071703504821,
+      "voltage_sensitivity_stiffness": 0.0038132049938449423
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 34,
       "total_hidden_demand_kw": 734.5459621866999,
-      "avg_electrical_distance_km": 0.8468095238095237
+      "avg_electrical_distance_km": 0.8468095238095237,
+      "transformer_node_count": 5,
+      "transformer_total_p_kw": 3.814142355875832,
+      "transformer_total_q_kvar": 1.4818831549674505
     }
   },
   {
@@ -2804,7 +3113,10 @@
       "topology_type": "Multi-drop",
       "active_loads": 18,
       "total_hidden_demand_kw": 329.9016463849436,
-      "avg_electrical_distance_km": 0.7610454545454547
+      "avg_electrical_distance_km": 0.7610454545454547,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 3.6825424674883074,
+      "transformer_total_q_kvar": 1.7532704858816883
     }
   },
   {
@@ -2831,7 +3143,10 @@
       "topology_type": "Radial",
       "active_loads": 8,
       "total_hidden_demand_kw": 130.8833252321549,
-      "avg_electrical_distance_km": 0.6955
+      "avg_electrical_distance_km": 0.6955,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 7.166328008040755,
+      "transformer_total_q_kvar": 2.449960745467836
     }
   },
   {
@@ -2858,7 +3173,10 @@
       "topology_type": "Radial",
       "active_loads": 67,
       "total_hidden_demand_kw": 1285.938605024151,
-      "avg_electrical_distance_km": 0.8382804878048783
+      "avg_electrical_distance_km": 0.8382804878048783,
+      "transformer_node_count": 11,
+      "transformer_total_p_kw": 2.924821611154,
+      "transformer_total_q_kvar": 1.5354641969293779
     }
   },
   {
@@ -2885,7 +3203,10 @@
       "topology_type": "Multi-drop",
       "active_loads": 39,
       "total_hidden_demand_kw": 806.1983525466566,
-      "avg_electrical_distance_km": 0.7738333333333333
+      "avg_electrical_distance_km": 0.7738333333333333,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 0.4843451765094722,
+      "transformer_total_q_kvar": 0.16302276764326837
     }
   },
   {
@@ -2912,88 +3233,100 @@
       "topology_type": "Multi-drop",
       "active_loads": 35,
       "total_hidden_demand_kw": 795.0173792522668,
-      "avg_electrical_distance_km": 0.8514285714285712
+      "avg_electrical_distance_km": 0.8514285714285712,
+      "transformer_node_count": 4,
+      "transformer_total_p_kw": 2.764152013426534,
+      "transformer_total_q_kvar": 2.974987911099273
     }
   },
   {
     "sig_id": "S0109",
     "boundary": {
-      "pcc_voltage_v": 231.1887355125307,
-      "pcc_current_a": 1.1842378929335002e-15,
-      "pcc_active_power_kw": -15.71200749956872,
-      "pcc_reactive_power_kvar": 101.14763670643168,
+      "pcc_voltage_v": 232.18295564615792,
+      "pcc_current_a": 4.736951571734001e-15,
+      "pcc_active_power_kw": -21.61796078482411,
+      "pcc_reactive_power_kvar": 89.69384711384667,
       "frequency_hz": 50.01238453241678,
-      "pcc_phase_angle_deg": -29.552166039257443,
-      "f1_voltage_v": 207.70865538356477,
-      "f2_voltage_v": 204.66533185096594,
-      "delta_theta_deg": -0.20439909185407856
+      "pcc_phase_angle_deg": -29.44531412915651,
+      "f1_voltage_v": 210.8487580265011,
+      "f2_voltage_v": 207.33354759492013,
+      "delta_theta_deg": -0.5498137067482389
     },
     "features": {
-      "feeder_phase_coupling": -0.20439909185407856,
-      "power_balance_pf": -0.15349649163137583,
-      "aggregate_impedance_proxy": 14.714142722038154,
-      "voltage_sensitivity_stiffness": 0.008563339896286335
+      "feeder_phase_coupling": -0.5498137067482389,
+      "power_balance_pf": -0.23430992608337298,
+      "aggregate_impedance_proxy": 10.740279678408498,
+      "voltage_sensitivity_stiffness": 0.005618638307899129
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Radial",
       "active_loads": 17,
       "total_hidden_demand_kw": 305.2559873311257,
-      "avg_electrical_distance_km": 0.7465
+      "avg_electrical_distance_km": 0.7465,
+      "transformer_node_count": 4,
+      "transformer_total_p_kw": 5.265375423418252,
+      "transformer_total_q_kvar": 4.737106542441309
     }
   },
   {
     "sig_id": "S0110",
     "boundary": {
-      "pcc_voltage_v": 244.36197211621285,
-      "pcc_current_a": -2.3684757858670005e-15,
-      "pcc_active_power_kw": -17.026776399190773,
-      "pcc_reactive_power_kvar": 82.92408898753438,
+      "pcc_voltage_v": 244.51221837750268,
+      "pcc_current_a": 0.0,
+      "pcc_active_power_kw": -18.993913269702325,
+      "pcc_reactive_power_kvar": 81.34848981122659,
       "frequency_hz": 50.01225703351398,
-      "pcc_phase_angle_deg": -29.54956475853901,
-      "f1_voltage_v": 234.35987793742552,
-      "f2_voltage_v": 210.8755801557113,
-      "delta_theta_deg": 0.9470459171456973
+      "pcc_phase_angle_deg": -29.511064230747262,
+      "f1_voltage_v": 234.51520958354448,
+      "f2_voltage_v": 211.75407379397043,
+      "delta_theta_deg": 0.9138068257690151
     },
     "features": {
-      "feeder_phase_coupling": 0.9470459171456973,
-      "power_balance_pf": -0.20113352316633462,
-      "aggregate_impedance_proxy": 14.351627814657785,
-      "voltage_sensitivity_stiffness": 0.0013802088347720561
+      "feeder_phase_coupling": 0.9138068257690151,
+      "power_balance_pf": -0.2273726431751922,
+      "aggregate_impedance_proxy": 12.873187427592548,
+      "voltage_sensitivity_stiffness": 0.001203190299660975
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Radial",
       "active_loads": 62,
       "total_hidden_demand_kw": 1396.2476286738465,
-      "avg_electrical_distance_km": 0.8181585365853659
+      "avg_electrical_distance_km": 0.8181585365853659,
+      "transformer_node_count": 19,
+      "transformer_total_p_kw": 11.77156171699959,
+      "transformer_total_q_kvar": 8.72233960209198
     }
   },
   {
     "sig_id": "S0111",
     "boundary": {
-      "pcc_voltage_v": 206.14584079035012,
-      "pcc_current_a": 1.0954200509634878e-14,
-      "pcc_active_power_kw": 121.76793897802722,
-      "pcc_reactive_power_kvar": 264.3472889638524,
+      "pcc_voltage_v": 207.36731629299257,
+      "pcc_current_a": -1.1842378929335002e-15,
+      "pcc_active_power_kw": 108.86091050860271,
+      "pcc_reactive_power_kvar": 249.30316556281616,
       "frequency_hz": 49.99158692607533,
-      "pcc_phase_angle_deg": -32.36432983590491,
-      "f1_voltage_v": 145.12587336760168,
-      "f2_voltage_v": 147.93791541003063,
-      "delta_theta_deg": -1.2474021290595942
+      "pcc_phase_angle_deg": -32.08470711371024,
+      "f1_voltage_v": 147.46030322590482,
+      "f2_voltage_v": 154.13463946641107,
+      "delta_theta_deg": -1.045384987083196
     },
     "features": {
-      "feeder_phase_coupling": -1.2474021290595942,
-      "power_balance_pf": 0.41838249746834977,
-      "aggregate_impedance_proxy": 1.692940201070567,
-      "voltage_sensitivity_stiffness": 0.003246411666647715
+      "feeder_phase_coupling": -1.045384987083196,
+      "power_balance_pf": 0.40017318505726845,
+      "aggregate_impedance_proxy": 1.904883152449127,
+      "voltage_sensitivity_stiffness": 0.0035419698820140107
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Multi-drop",
       "active_loads": 34,
       "total_hidden_demand_kw": 720.0026615213316,
-      "avg_electrical_distance_km": 0.8717380952380951
+      "avg_electrical_distance_km": 0.8717380952380951,
+      "transformer_node_count": 8,
+      "transformer_total_p_kw": 11.909887829073247,
+      "transformer_total_q_kvar": 8.597718040413833
     }
   },
   {
@@ -3020,88 +3353,100 @@
       "topology_type": "Radial",
       "active_loads": 18,
       "total_hidden_demand_kw": 363.4117927200634,
-      "avg_electrical_distance_km": 0.9753636363636361
+      "avg_electrical_distance_km": 0.9753636363636361,
+      "transformer_node_count": 5,
+      "transformer_total_p_kw": 4.612901540597928,
+      "transformer_total_q_kvar": 2.441959636156213
     }
   },
   {
     "sig_id": "S0113",
     "boundary": {
-      "pcc_voltage_v": 224.56263027072842,
-      "pcc_current_a": -1.3322676295501878e-15,
-      "pcc_active_power_kw": 27.132728561755286,
-      "pcc_reactive_power_kvar": 177.5512090477465,
+      "pcc_voltage_v": 224.577536805032,
+      "pcc_current_a": -4.884981308350689e-15,
+      "pcc_active_power_kw": 26.74025734586889,
+      "pcc_reactive_power_kvar": 177.39386452767593,
       "frequency_hz": 49.97703665227247,
-      "pcc_phase_angle_deg": -30.363014838102817,
-      "f1_voltage_v": 185.40320742363988,
-      "f2_voltage_v": 187.42001382757425,
-      "delta_theta_deg": 0.3935951752335711
+      "pcc_phase_angle_deg": -30.3547754079073,
+      "f1_voltage_v": 185.4399766247657,
+      "f2_voltage_v": 187.533745205803,
+      "delta_theta_deg": 0.38602316794263203
     },
     "features": {
-      "feeder_phase_coupling": 0.3935951752335711,
-      "power_balance_pf": 0.1510626623454227,
-      "aggregate_impedance_proxy": 8.276448182613326,
-      "voltage_sensitivity_stiffness": 0.008384214909785035
+      "feeder_phase_coupling": 0.38602316794263203,
+      "power_balance_pf": 0.14905553361901444,
+      "aggregate_impedance_proxy": 8.398480444738375,
+      "voltage_sensitivity_stiffness": 0.008501542049060408
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Radial",
       "active_loads": 69,
       "total_hidden_demand_kw": 1549.1658999201563,
-      "avg_electrical_distance_km": 0.8180365853658539
+      "avg_electrical_distance_km": 0.8180365853658539,
+      "transformer_node_count": 11,
+      "transformer_total_p_kw": 2.701877177708984,
+      "transformer_total_q_kvar": 1.2048127873235506
     }
   },
   {
     "sig_id": "S0114",
     "boundary": {
-      "pcc_voltage_v": 233.5185008602738,
-      "pcc_current_a": 9.473903143468002e-15,
-      "pcc_active_power_kw": -33.221208928681015,
-      "pcc_reactive_power_kvar": 74.58039932189628,
+      "pcc_voltage_v": 233.8661542112345,
+      "pcc_current_a": 7.105427357601002e-15,
+      "pcc_active_power_kw": -43.546997360782306,
+      "pcc_reactive_power_kvar": 71.18765392137853,
       "frequency_hz": 49.977680529669854,
-      "pcc_phase_angle_deg": -29.22726861280167,
-      "f1_voltage_v": 202.80020404761686,
-      "f2_voltage_v": 223.91185929911708,
-      "delta_theta_deg": -0.933412924482635
+      "pcc_phase_angle_deg": -29.01996116706094,
+      "f1_voltage_v": 206.13923137944843,
+      "f2_voltage_v": 224.24369702961576,
+      "delta_theta_deg": -0.4929692077187653
     },
     "features": {
-      "feeder_phase_coupling": -0.933412924482635,
-      "power_balance_pf": -0.4068989123251328,
-      "aggregate_impedance_proxy": 7.029199158055627,
-      "voltage_sensitivity_stiffness": 0.004665668412870789
+      "feeder_phase_coupling": -0.4929692077187653,
+      "power_balance_pf": -0.5218288787241004,
+      "aggregate_impedance_proxy": 5.370431097768852,
+      "voltage_sensitivity_stiffness": 0.003239868216635227
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Radial",
       "active_loads": 66,
       "total_hidden_demand_kw": 1304.322769251814,
-      "avg_electrical_distance_km": 0.7707926829268297
+      "avg_electrical_distance_km": 0.7707926829268297,
+      "transformer_node_count": 9,
+      "transformer_total_p_kw": 6.078991082867912,
+      "transformer_total_q_kvar": 1.9179395827535066
     }
   },
   {
     "sig_id": "S0115",
     "boundary": {
-      "pcc_voltage_v": 222.48089153947242,
-      "pcc_current_a": 5.921189464667502e-15,
-      "pcc_active_power_kw": 42.85105201946658,
-      "pcc_reactive_power_kvar": 201.56441519727468,
+      "pcc_voltage_v": 222.62138202020893,
+      "pcc_current_a": 2.3684757858670005e-15,
+      "pcc_active_power_kw": 40.34729719020552,
+      "pcc_reactive_power_kvar": 200.00807755004251,
       "frequency_hz": 50.04907691166048,
-      "pcc_phase_angle_deg": -30.676564102486704,
-      "f1_voltage_v": 166.32435909085456,
-      "f2_voltage_v": 193.617343069062,
-      "delta_theta_deg": 2.5173699986563527
+      "pcc_phase_angle_deg": -30.623949800570845,
+      "f1_voltage_v": 166.42656606841993,
+      "f2_voltage_v": 194.68596962563427,
+      "delta_theta_deg": 2.4298632730404535
     },
     "features": {
-      "feeder_phase_coupling": 2.5173699986563527,
-      "power_balance_pf": 0.207945179312255,
-      "aggregate_impedance_proxy": 5.191958560234279,
-      "voltage_sensitivity_stiffness": 0.007163927499797548
+      "feeder_phase_coupling": 2.4298632730404535,
+      "power_balance_pf": 0.19774491159262367,
+      "aggregate_impedance_proxy": 5.517627995082239,
+      "voltage_sensitivity_stiffness": 0.007597930678523964
     },
     "ground_truth": {
       "num_buses": 40,
       "topology_type": "Radial",
       "active_loads": 36,
       "total_hidden_demand_kw": 783.9363977327502,
-      "avg_electrical_distance_km": 0.8350476190476188
+      "avg_electrical_distance_km": 0.8350476190476188,
+      "transformer_node_count": 8,
+      "transformer_total_p_kw": 2.242077420867401,
+      "transformer_total_q_kvar": 0.829879790283874
     }
   },
   {
@@ -3128,7 +3473,10 @@
       "topology_type": "Multi-drop",
       "active_loads": 7,
       "total_hidden_demand_kw": 116.86210416008616,
-      "avg_electrical_distance_km": 1.0101666666666667
+      "avg_electrical_distance_km": 1.0101666666666667,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 3.050041011312503e-14,
+      "transformer_total_q_kvar": 4.376324421674025e-05
     }
   },
   {
@@ -3155,61 +3503,70 @@
       "topology_type": "Multi-drop",
       "active_loads": 17,
       "total_hidden_demand_kw": 323.18517281067204,
-      "avg_electrical_distance_km": 0.7050454545454546
+      "avg_electrical_distance_km": 0.7050454545454546,
+      "transformer_node_count": 1,
+      "transformer_total_p_kw": 2.3813285553460366,
+      "transformer_total_q_kvar": 1.3043030120783083
     }
   },
   {
     "sig_id": "S0118",
     "boundary": {
-      "pcc_voltage_v": 234.96724201980746,
-      "pcc_current_a": -3.552713678800501e-15,
-      "pcc_active_power_kw": 74.67895171554031,
-      "pcc_reactive_power_kvar": 184.87413415485366,
+      "pcc_voltage_v": 236.26983226143753,
+      "pcc_current_a": -1.4802973661668753e-16,
+      "pcc_active_power_kw": 63.88592467540376,
+      "pcc_reactive_power_kvar": 170.50014456921747,
       "frequency_hz": 50.00982223164545,
-      "pcc_phase_angle_deg": -31.377691555487942,
-      "f1_voltage_v": 218.6626619365433,
-      "f2_voltage_v": 167.43275857450612,
-      "delta_theta_deg": 1.0899005791990675
+      "pcc_phase_angle_deg": -31.156891564126195,
+      "f1_voltage_v": 222.08981063942736,
+      "f2_voltage_v": 171.9059580191381,
+      "delta_theta_deg": 1.5824866663098973
     },
     "features": {
-      "feeder_phase_coupling": 1.0899005791990675,
-      "power_balance_pf": 0.37454171485169896,
-      "aggregate_impedance_proxy": 3.1463649860600147,
-      "voltage_sensitivity_stiffness": 0.0011905037769216363
+      "feeder_phase_coupling": 1.5824866663098973,
+      "power_balance_pf": 0.35087482656579394,
+      "aggregate_impedance_proxy": 3.6983080351984636,
+      "voltage_sensitivity_stiffness": 0.0011681100056614997
     },
     "ground_truth": {
       "num_buses": 20,
       "topology_type": "Multi-drop",
       "active_loads": 19,
       "total_hidden_demand_kw": 362.8420478553798,
-      "avg_electrical_distance_km": 0.8917727272727274
+      "avg_electrical_distance_km": 0.8917727272727274,
+      "transformer_node_count": 3,
+      "transformer_total_p_kw": 5.328781571653339,
+      "transformer_total_q_kvar": 5.898215912468196
     }
   },
   {
     "sig_id": "S0119",
     "boundary": {
-      "pcc_voltage_v": 229.913616632984,
+      "pcc_voltage_v": 229.9289992004104,
       "pcc_current_a": 0.0,
-      "pcc_active_power_kw": -37.18303115498013,
-      "pcc_reactive_power_kvar": 117.83081715407012,
+      "pcc_active_power_kw": -37.41515656498781,
+      "pcc_reactive_power_kvar": 117.66453521554023,
       "frequency_hz": 49.986732918635475,
-      "pcc_phase_angle_deg": -29.08028064461243,
-      "f1_voltage_v": 203.52863525503417,
-      "f2_voltage_v": 207.3677573263443,
-      "delta_theta_deg": 0.08052226362280379
+      "pcc_phase_angle_deg": -29.075683845880537,
+      "f1_voltage_v": 203.54206312386205,
+      "f2_voltage_v": 207.47323698328967,
+      "delta_theta_deg": 0.07611732352090428
     },
     "features": {
-      "feeder_phase_coupling": 0.08052226362280379,
-      "power_balance_pf": -0.3009348579721725,
-      "aggregate_impedance_proxy": 6.18329391951405,
-      "voltage_sensitivity_stiffness": 0.004086918440037376
+      "feeder_phase_coupling": 0.07611732352090428,
+      "power_balance_pf": -0.30303038234090274,
+      "aggregate_impedance_proxy": 6.145343603084872,
+      "voltage_sensitivity_stiffness": 0.004060067635780673
     },
     "ground_truth": {
       "num_buses": 80,
       "topology_type": "Radial",
       "active_loads": 67,
       "total_hidden_demand_kw": 1388.3116042005372,
-      "avg_electrical_distance_km": 0.8118536585365855
+      "avg_electrical_distance_km": 0.8118536585365855,
+      "transformer_node_count": 10,
+      "transformer_total_p_kw": 0.20191088220624845,
+      "transformer_total_q_kvar": 0.2716687452478054
     }
   },
   {
@@ -3236,7 +3593,10 @@
       "topology_type": "Radial",
       "active_loads": 8,
       "total_hidden_demand_kw": 172.64361159764493,
-      "avg_electrical_distance_km": 0.6316666666666667
+      "avg_electrical_distance_km": 0.6316666666666667,
+      "transformer_node_count": 0,
+      "transformer_total_p_kw": 0.0,
+      "transformer_total_q_kvar": 0.0
     }
   }
 ]
