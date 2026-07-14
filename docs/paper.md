@@ -155,39 +155,46 @@ The interface layer regulates high-power bidirectional energy flow and Point of 
 
 
 
-### Multi-Feeder Solar–BESS Network State Realization & Anomaly Detection (Core Contribution)
-This research presents a framework for multi-feeder network state realization and latent state estimation using OpenDSS-based physics simulations of hidden downstream distribution networks.
+### Latent Distributed State Estimation and Network Realization (Core Contribution)
+The primary contribution of the second part of this work is the development of a **Latent Distributed State Estimation** framework. By utilizing unbuffered multi-feeder boundary measurements at the Point of Common Coupling (PCC), we estimate the internal, hidden state variables of an otherwise unobservable downstream distribution network without assuming direct communication or topological knowledge.
 
-#### 1. Physical Assumptions and System Constraints
-The network model is formulated under a specific set of observability constraints:
-* **Known/Fixed Parameters:** The plant location and its feeder interface parameters are fixed. The feeder branch impedances $Z_{feeders}$ are fully characterized and known. The types of consumer loads (e.g., constant power, constant impedance, constant current) and the distribution/interface transformers are known.
-* **Hidden/Unknown Downstream Parameters:** The downstream distribution network buses are completely unknown. The exact topological connections among these downstream buses are unknown. The consumer load magnitudes and switching events are continuously changing and unobserved.
+#### 1. Physical Assumptions, Observability Constraints, and Estimation Boundary
+The boundary state estimation is formulated under strict, realistic constraints that represent standard utility-scale solar-BESS interconnections:
+* **Known/Fixed Boundary Parameters:** The battery energy storage system (BESS), PV array, PCUs, step-up interface transformers, and the branch impedances of the outgoing main feeders ($Z_{feeders}$) are fully characterized and known. The general class of downstream consumer load models (e.g., constant power, constant impedance, constant current) is known.
+* **Latent/Unknown Downstream Network State:** The number of downstream distribution buses is completely unknown. The physical topology (radial vs. mesh connectivity) is unknown. The consumer load magnitudes, locations, local transformer arrangements, and switching events are continuously changing and entirely unobserved.
 
-The core challenge is therefore to infer downstream structural complexity and operational conditions from boundary measurements at the known plant feeder interface.
-
-#### 2. Network Signature Atlas and realization mapping
-Instead of mapping raw boundary quantities to a fixed lookup table, the model constructs a **Network Signature Atlas** consisting of derived, noise-robust features that capture the system's physics:
-* Feeder-to-feeder phase angle relationships ($\Delta \theta_{F_i - F_j}$)
-* Active/reactive power balance ($P_{total}, Q_{total}$)
-* Local voltage sensitivity to load step changes ($\partial V / \partial P$)
-* Aggregate network equivalent impedance ($Z_{eq}$)
-* Voltage regulation stiffness indices
-
-The latent state mapping is defined as:
+The estimator operates as a physical transfer function mapping known boundary measurements $M$ to estimated latent coordinates $X_R$:
 $$X_R = \Phi(M)$$
-where $M$ is the vector of boundary measurements and derived features, and $X_R$ represents the discovered latent state vector containing:
-* Effective electrical distance to active loads
-* Aggregate network loading factor
-* Feeder phase coupling indices
 
-#### 3. Experimental Validation Suite
-The realization framework is validated through three key physically-based experiments:
-* **Experiment 1: Hidden Bus Discovery (Baseline and Complexity Characterization):** Keeping the plant parameters fixed, the downstream complexity is varied (10, 20, 40, and 80 hidden buses). This experiment investigates how many electrically distinguishable states exist at the plant boundary, determining whether the measurements contain sufficient information to infer network complexity.
-* **Experiment 2: Topology Connectivity Experiment:** Keeping the number of downstream buses fixed, the structural connections are randomly permuted (e.g., Topology A: Radial branching vs. Topology B: Direct multi-drop) under identical total downstream demand. This test determines if the realization algorithm can distinguish hidden structures from boundary measurements alone.
-* **Experiment 3: Dynamic Load Switching:** Keeping the topology fixed, downstream loads are dynamically switched (plugging in/out consumer loads, motor starting, and feeder disconnecting events). The objective is to characterize how boundary measurements evolve and how transient disturbances excite the hidden network to make it observable.
+#### 2. Network Signature Atlas and Noise-Robust Physics Features
+To prevent overfitting and handle measurement noise, the model bypasses raw voltage/current maps in favor of a **Network Signature Atlas** populated with derived physical features:
+* **Feeder-to-Feeder Phase Angle Relationships ($\Delta \theta_{F_i - F_j}$):** Captures dynamic phase coupling dynamics between feeders under unbalanced flows.
+* **Active/Reactive Power Balance ($P_{tot}, Q_{tot}$):** Characterizes aggregate loading and power factor trends at the PCC.
+* **Voltage Sensitivity/Stiffness Indicators ($\partial V / \partial P$):** Infers structural network strength and local voltage regulation capability.
+* **Aggregate Network Equivalent Impedance ($Z_{eq}$):** Tracks equivalent system loading impedance.
+
+#### 3. Design of the Experimental Suite for Latent Property Identification
+The estimator's performance and resolution are validated through three key physical experiments. These experiments are designed to systematically excite different modes of the hidden network to make specific latent network properties observable:
+
+* **Experiment 1: Hidden Bus Discovery (Varying Complexity):**
+  * *Design:* Keeping the plant and known feeders fixed, the downstream complexity is programmatically scaled across 10, 20, 40, and 80 buses.
+  * *Role in Latent Estimation:* It maps how changing downstream complexity affects boundary impedance and phase angles. This establishes the baseline signature limits and determines whether the boundary measurements contain sufficient information to infer downstream network bus complexity ($N_{buses}$).
+
+* **Experiment 2: Topology Connectivity Experiment:**
+  * *Design:* Keeps the number of hidden buses fixed but randomly permutes the downstream line connections (cascaded radial branching vs. direct multi-drop) under identical consumer load demand.
+  * *Role in Latent Estimation:* Isolates the effect of line connectivity on phase angles and power factors. This evaluates if the realization algorithm can distinguish hidden structural topologies from boundary measurements alone, estimating the **effective electrical distance ($d_{eq}$)** to the active loads.
+
+* **Experiment 3: Dynamic Load Switching:**
+  * *Design:* Under a fixed topology, downstream loads are dynamically switched (plugging loads in/out, starting low-power-factor inductive motors, and tripping feeder branches).
+  * *Role in Latent Estimation:* Tracks how boundary measurements migrate in real-time as individual loads shift. This allows the estimator to map dynamic boundary trajectory drifts to estimate:
+    1. **Active downstream load counts ($N_{loads}$)**
+    2. **Total active/reactive power demand ($P_{tot}, Q_{tot}$)**
+    3. **Downstream distribution transformer power flows ($P_{xfmr}, Q_{xfmr}$)** measured programmatically at local transformer secondary nodes.
+
+This multi-stage experimental mapping establishes a rigorous physical basis for real-time latent distributed state estimation in coupled PV-BESS microgrids.
 
 
 3. RESEARCH SCOPE DECOMPOSITION
 This research maintains a clean separation between the physical plant and the partitioning algorithms:
 *   **Fixed Power Plant Model**: The NFPP Cell (DFN-informed electro-thermal proxy) and Utility-Scale Power Conditioning architecture are treated as the static environment.
-*   **Distribution network realization and anomaly detection layer**: The core contribution lies in realizing distribution network state through phase-aware feeder modeling and detecting anomalies using phase-differential and state-estimation techniques.
+*   **Distribution network realization and latent state estimation layer**: The core contribution lies in realizing distribution network state through phase-aware boundary modeling and estimating internal latent parameters using the Signature Atlas framework.
