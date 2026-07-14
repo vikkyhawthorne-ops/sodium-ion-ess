@@ -130,25 +130,24 @@ The plant model represents the physical hardware of the 16S1P sodium-ion battery
 *   Cell Core (heat source) → Cell Casing (poly) → Ambient (convection).
 
 1.3 Microgrid Capacity & Modeling
-The microgrid integrates diverse generation and storage assets to ensure reliable energy delivery.
+The microgrid integrates diverse generation and storage assets to ensure reliable energy delivery. This utility-scale hardware model represents the physical static plant:
 
 *   **Solar PV Subsystem**:
-    *   **Model**: Mono-crystalline Silicon PV (High-efficiency 250W modules).
-    *   **Configuration**: 400 modules in a series-parallel array (100 kWp nameplate capacity).
-    *   **Inverter**: Central 100kW three-phase grid-tied inverter with MPPT.
+    *   **Model**: High-efficiency Mono-crystalline Silicon PV (250W nominal rating per module).
+    *   **Configuration**: 400 modules connected in a series-parallel array to achieve a 100 kWp nameplate capacity at standard test conditions (STC).
+    *   **Inverter / PCU**: Central 100 kW three-phase grid-tied Power Conditioning Unit (PCU) with Integrated Maximum Power Point Tracking (MPPT).
 *   **Primary Generation Array**:
-    *   **Capacity**: 50 kW continuous generation capacity.
-    *   **Role**: Primary dispatchable energy asset providing a stable baseline power to complement the stochastic solar subsystem.
+    *   **Capacity**: 50 kW continuous, dispatchable generation capacity.
+    *   **Role**: Primary dispatchable energy asset acting as a baseline generation source to complement PV solar fluctuations.
 *   **Battery Energy Storage System (BESS)**:
-    *   **Capacity**: 100 kWh total energy, 50 kW power rating.
-    *   **Core Unit**: 16S1P NFPP Sodium-Ion pouch-cell modules (48V nominal, 10Ah).
-    *   **Configuration**: 208 modules (packs) connected in a series-parallel arrangement to achieve the 100 kWh nameplate capacity.
-    *   **Coupling**: AC-coupled via dedicated utility-scale BESS Power Conditioning Units (PCUs).
-
-The interface layer regulates high-power bidirectional energy flow and Point of Common Coupling (PCC) stability.
-*   **Architecture**: Multi-string Central Inverter → LV/MV Step-up Transformer → MV Switchgear → Utility Grid.
-
-*   **Interconnection**: 11kV/415V three-phase delta-wye transformer for galvanic isolation and grid impedance matching.
+    *   **Capacity**: 100 kWh nominal energy capacity and 50 kW power capability.
+    *   **Core Unit**: 16S1P NFPP Sodium-Ion pouch-cell modules (48V nominal, 10Ah nominal capacity).
+    *   **Configuration**: 208 modular packs arranged in a series-parallel network inside a 20ft containerized enclosure.
+    *   **Coupling**: AC-coupled to the microgrid PCC via dedicated, bidirectional PCUs.
+*   **Grid Interface & Interconnection**:
+    *   **Transformer**: 11kV/415V three-phase step-up transformer providing galvanic isolation and grid impedance matching.
+    *   **Point of Common Coupling (PCC)**: Centrally located plant PCC connecting the solar inverter, BESS PCUs, and continuous generators to the two known main feeders.
+    *   **Known Plant Feeders**: Feeders 1 and 2, which outgoing from the PCC with a characterized branch impedance of $Z_{feeders} = 0.15 + j0.15$ ohms per kilometer, connecting the fixed plant to the unknown downstream consumer distribution network.
   
 *   **Power Quality Analyzers**: PCC-mounted analyzers for total harmonic distortion (THD) monitoring and phase-angle tracking.
 *   **Fault Management**: Utility-scale protective relaying (ANSI 50/51, 27/59) for overcurrent and voltage-out-of-bounds containment.

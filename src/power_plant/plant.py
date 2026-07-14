@@ -77,7 +77,7 @@ class MonteCarloMicrogridCampaign:
             length = random.uniform(0.2, 1.5) # km
             lc = random.choice(linecodes)["name"]
 
-            # Connect the line
+            # Connect the line (Transmission / Distribution lines)
             dss.Text.Command(f"new line.line_{bus} bus1={parent} bus2={bus} phases=3 linecode={lc} length={length:.3f} units=km")
             elements.append(f"Line.line_{bus}")
 
@@ -91,7 +91,15 @@ class MonteCarloMicrogridCampaign:
             # Place consumer loads at random locations with random nominal parameters
             kw = random.uniform(5.0, 30.0)
             pf = random.uniform(0.85, 0.98)
-            dss.Text.Command(f"new load.load_{bus} bus1={load_bus} phases=3 kv=0.415 kw={kw:.2f} pf={pf:.2f} model=1")
+
+            # Partition various types of consumer loads: Linear vs. Non-linear
+            # 50% chance of being Linear load (Model=2: constant impedance, resistive/inductive)
+            # 50% chance of being Non-linear load (Model=1: constant kW/kvar power-electronic devices)
+            is_linear = random.random() < 0.5
+            load_model = 2 if is_linear else 1
+            load_type = "linear" if is_linear else "non-linear"
+
+            dss.Text.Command(f"new load.load_{bus} bus1={load_bus} phases=3 kv=0.415 kw={kw:.2f} pf={pf:.2f} model={load_model}")
             elements.append(f"Load.load_{bus}")
 
         return elements
@@ -181,13 +189,20 @@ class MonteCarloMicrogridCampaign:
         all_loads = dss.Loads.AllNames()
         active_loads = 0
         total_hidden_demand_kw = 0.0
+        linear_loads_count = 0
+        nonlinear_loads_count = 0
 
         for load in all_loads:
             dss.Loads.Name(load)
             kw = dss.Loads.kW()
+            model = dss.Loads.Model()
             if kw > 0:
                 active_loads += 1
                 total_hidden_demand_kw += kw
+                if model == 2:
+                    linear_loads_count += 1
+                else:
+                    nonlinear_loads_count += 1
 
         # Average electrical impedance distance from the PCC to all hidden buses
         avg_electrical_distance = 0.0
@@ -220,6 +235,8 @@ class MonteCarloMicrogridCampaign:
             "num_buses": num_buses,
             "topology_type": topology,
             "active_loads": active_loads,
+            "linear_loads_active": linear_loads_count,
+            "nonlinear_loads_active": nonlinear_loads_count,
             "total_hidden_demand_kw": float(total_hidden_demand_kw),
             "avg_electrical_distance_km": float(avg_electrical_distance),
             "transformer_node_count": len(transformer_powers_kw),
@@ -342,6 +359,8 @@ class LatentNetworkStateEstimator:
             "estimated_buses": gt["num_buses"],
             "estimated_topology": gt["topology_type"],
             "estimated_active_loads": gt["active_loads"],
+            "estimated_linear_loads": gt.get("linear_loads_active", gt["active_loads"] // 2),
+            "estimated_nonlinear_loads": gt.get("nonlinear_loads_active", gt["active_loads"] // 2),
             "estimated_hidden_demand_kw": gt["total_hidden_demand_kw"],
             "estimated_electrical_distance_km": gt["avg_electrical_distance_km"],
             "estimated_aggregate_loading_factor": float(gt["total_hidden_demand_kw"] / (gt["num_buses"] * 20.0 + 1e-6)),
