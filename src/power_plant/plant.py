@@ -18,30 +18,30 @@ def initialize_plant():
 
     # 1. Clear previous systems and define main circuit at swing bus
     dss.Basic.ClearAll()
-    dss("new circuit.FixedPlant basekv=11.0 pu=1.0 phases=3")
+    dss.run_command("new circuit.FixedPlant basekv=11.0 pu=1.0 phases=3")
 
     # 2. Substation Transformer (11kV to 0.415kV)
-    dss("new transformer.substation phases=3 windings=2 buses=[sourcebus, main_bus] conns=[delta, wye] kvs=[11.0, 0.415] kvas=[1500, 1500] %r=0.5 xhl=4.0")
+    dss.run_command("new transformer.substation phases=3 windings=2 buses=[sourcebus, main_bus] conns=[delta, wye] kvs=[11.0, 0.415] kvas=[1500, 1500] %r=0.5 xhl=4.0")
 
     # 3. Generator, PCU, and Switchgear
     # The Power Conditioning Unit (PCU) is 1 unit and does not include transformer/switchgear
     # Let's model a shared local Generator coupled at the main_bus via PCU
-    dss("new generator.shared_gen bus1=main_bus phases=3 kv=0.415 kw=100 pf=0.9 model=1")
+    dss.run_command("new generator.shared_gen bus1=main_bus phases=3 kv=0.415 kw=100 pf=0.9 model=1")
 
     # 4. Outgoing radial Feeders (Feeder 1, Feeder 2, Feeder 3)
     # Define line codes for the feeder impedances
-    dss("new linecode.feeder nphases=3 r1=0.115 x1=0.411 r0=0.29 x0=1.28 c1=10.0 c0=5.0 units=km")
+    dss.run_command("new linecode.feeder nphases=3 r1=0.115 x1=0.411 r0=0.29 x0=1.28 c1=10.0 c0=5.0 units=km")
 
     # Feeders extending from main_bus to the respective feeder head buses
-    dss("new line.feeder1 bus1=main_bus bus2=feeder1_head phases=3 linecode=feeder length=0.5 units=km")
-    dss("new line.feeder2 bus1=main_bus bus2=feeder2_head phases=3 linecode=feeder length=0.8 units=km")
-    dss("new line.feeder3 bus1=main_bus bus2=feeder3_head phases=3 linecode=feeder length=1.2 units=km")
+    dss.run_command("new line.feeder1 bus1=main_bus bus2=feeder1_head phases=3 linecode=feeder length=0.5 units=km")
+    dss.run_command("new line.feeder2 bus1=main_bus bus2=feeder2_head phases=3 linecode=feeder length=0.8 units=km")
+    dss.run_command("new line.feeder3 bus1=main_bus bus2=feeder3_head phases=3 linecode=feeder length=1.2 units=km")
 
     # 5. Fixed Set of Transformers (distribution transformers on each feeder branch)
     # Step-down from 0.415kV to 0.24kV secondary
-    dss("new transformer.trans1 phases=3 windings=2 buses=[feeder1_head, feeder1_sec] conns=[delta, wye] kvs=[0.415, 0.24] kvas=[500, 500] %r=0.8 xhl=5.0")
-    dss("new transformer.trans2 phases=3 windings=2 buses=[feeder2_head, feeder2_sec] conns=[delta, wye] kvs=[0.415, 0.24] kvas=[500, 500] %r=0.8 xhl=5.0")
-    dss("new transformer.trans3 phases=3 windings=2 buses=[feeder3_head, feeder3_sec] conns=[delta, wye] kvs=[0.415, 0.24] kvas=[500, 500] %r=0.8 xhl=5.0")
+    dss.run_command("new transformer.trans1 phases=3 windings=2 buses=[feeder1_head, feeder1_sec] conns=[delta, wye] kvs=[0.415, 0.24] kvas=[500, 500] %r=0.8 xhl=5.0")
+    dss.run_command("new transformer.trans2 phases=3 windings=2 buses=[feeder2_head, feeder2_sec] conns=[delta, wye] kvs=[0.415, 0.24] kvas=[500, 500] %r=0.8 xhl=5.0")
+    dss.run_command("new transformer.trans3 phases=3 windings=2 buses=[feeder3_head, feeder3_sec] conns=[delta, wye] kvs=[0.415, 0.24] kvas=[500, 500] %r=0.8 xhl=5.0")
 
     print("INFO: OpenDSS Plant Model Initialized with 3 Feeders and 3 Fixed Transformers.")
 
