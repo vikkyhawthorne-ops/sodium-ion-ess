@@ -103,7 +103,13 @@ class ParamTransform:
                 ocp = self.values_dict.get("Positive electrode OCP [V]")
                 boost = d["voltage_boost"]
                 if callable(ocp):
-                    self.values_dict["Positive electrode OCP [V]"] = lambda sto, b=boost, f=ocp: f(sto) + b
+                    from functools import wraps
+                    def make_ocp_wrapper(orig, b):
+                        @wraps(orig)
+                        def ocp_wrapper(*args, **kwargs):
+                            return orig(*args, **kwargs) + b
+                        return ocp_wrapper
+                    self.values_dict["Positive electrode OCP [V]"] = make_ocp_wrapper(ocp, boost)
                 else:
                     self.values_dict["Positive electrode OCP [V]"] += boost
                 for cut_off in ["Lower voltage cut-off [V]", "Upper voltage cut-off [V]"]:
@@ -177,7 +183,13 @@ class ParamTransform:
             original = self.values_dict.get(key)
             if original is None: continue
             if callable(original):
-                self.values_dict[key] = lambda *args, f=factor, orig=original, **kwargs: orig(*args, **kwargs) * f
+                from functools import wraps
+                def make_wrapper(orig, f):
+                    @wraps(orig)
+                    def wrapper(*args, **kwargs):
+                        return orig(*args, **kwargs) * f
+                    return wrapper
+                self.values_dict[key] = make_wrapper(original, factor)
             else:
                 self.values_dict[key] *= factor
 
