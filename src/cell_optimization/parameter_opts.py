@@ -84,6 +84,36 @@ def validate_params(pv: Dict[str, Any], verbose: bool = False):
         if D_val > 1e-8:
             if verbose: print(f"DEBUG: validate_params failed: D_p > 1e-8 ({D_val})")
             return False
+
+    # Physically meaningful bound validation (Bug 7)
+    for p in ["Positive electrode porosity", "Negative electrode porosity", "Separator porosity"]:
+        if p in pv:
+            val = pv[p]
+            if val <= 0.1 or val >= 0.6:
+                if verbose: print(f"DEBUG: validate_params failed: {p} = {val} out of bounds (0.1, 0.6)")
+                return False
+
+    for r in ["Positive particle radius [m]", "Negative particle radius [m]"]:
+        if r in pv:
+            val = pv[r]
+            if val <= 1e-8 or val >= 20e-6:
+                if verbose: print(f"DEBUG: validate_params failed: {r} = {val} out of bounds")
+                return False
+
+    for t in ["Positive electrode thickness [m]", "Negative electrode thickness [m]", "Separator thickness [m]"]:
+        if t in pv:
+            val = pv[t]
+            if val <= 10e-6 or val >= 300e-6:
+                if verbose: print(f"DEBUG: validate_params failed: {t} = {val} out of bounds")
+                return False
+
+    for am in ["Positive electrode active material volume fraction", "Negative electrode active material volume fraction"]:
+        if am in pv:
+            val = pv[am]
+            if val <= 0.0 or val >= 0.9:
+                if verbose: print(f"DEBUG: validate_params failed: {am} = {val} out of bounds")
+                return False
+
     return True
 
 class ParamTransform:
@@ -222,7 +252,7 @@ class SingleObjectiveProblem:
         # g1: thickness constraint (tp <= tn)
         g1 = (x_full[0] - x_full[1]) / max(DESIGN_BOUNDS[0][1], DESIGN_BOUNDS[1][1])
 
-        pt = ParamTransform(self.optimizer.base_params)
+        pt = ParamTransform(pybamm.ParameterValues(get_parameter_values()))
         pt.apply_physics_deltas(self.deltas)
         pt.apply_design_vector(x_full, DESIGN_SPACE)
         pv = pt.get_parameter_values()
@@ -303,16 +333,10 @@ class SimulationRunner:
             if (v_init_val - ir_drop_est) <= v_min:
                 params["Lower voltage cut-off [V]"] = max(0.1, v_init_val - 1.0)
                 print(f"INFO: Relaxed lower voltage cut-off from {v_min:.2f}V to {params['Lower voltage cut-off [V]']:.2f}V (Initial OCV: {v_init_val:.2f}V)")
-            key = self._get_geometry_key(params)
-            cached = self.geometry_cache.get(key)
-            if cached:
-                geometry, mesh, disc = cached["geometry"], cached["mesh"], cached["disc"]
-            else:
-                geometry = copy.deepcopy(self.model.default_geometry)
-                params.process_geometry(geometry)
-                mesh = pybamm.Mesh(geometry, self.submesh_types, self.var_pts)
-                disc = pybamm.Discretisation(mesh, self.spatial_methods)
-                self.geometry_cache.set(key, {"geometry": geometry, "mesh": mesh, "disc": disc})
+            geometry = copy.deepcopy(self.model.default_geometry)
+            params.process_geometry(geometry)
+            mesh = pybamm.Mesh(geometry, self.submesh_types, self.var_pts)
+            disc = pybamm.Discretisation(mesh, self.spatial_methods)
             processed_model = params.process_model(self.model, inplace=False)
             disc.process_model(processed_model, inplace=True)
             solver = self.solver_class(**self.solver_kwargs)
@@ -377,7 +401,7 @@ class HierarchicalOptimizer:
 
     def compute_jacobian(self, x: np.ndarray, deltas: Dict[str, Any]) -> Optional[np.ndarray]:
         eps = 1e-4
-        pt = ParamTransform(self.base_params)
+        pt = ParamTransform(pybamm.ParameterValues(get_parameter_values()))
         pt.apply_physics_deltas(deltas); pt.apply_design_vector(x, DESIGN_SPACE)
         base_res = self.simulate(pt.get_parameter_values())
         if not base_res["success"]:
@@ -390,7 +414,7 @@ class HierarchicalOptimizer:
             x_pert = x.copy()
             lower, upper = DESIGN_BOUNDS[j]
             x_pert[j] += eps * (upper - lower)
-            pt_p = ParamTransform(self.base_params)
+            pt_p = ParamTransform(pybamm.ParameterValues(get_parameter_values()))
             pt_p.apply_physics_deltas(deltas); pt_p.apply_design_vector(x_pert, DESIGN_SPACE)
             res = self.simulate(pt_p.get_parameter_values())
             if res["success"]:
@@ -467,7 +491,7 @@ def run_workflow(engine: Optional[Any] = None):
         x_base = np.array([np.mean(b) for b in DESIGN_BOUNDS])
         cand_name = f"{cat.name if cat else 'None'} + {salt.name if salt else 'None'}"
         print(f"INFO: Evaluating candidate: {cand_name}")
-        pt_test = ParamTransform(optimizer.base_params)
+        pt_test = ParamTransform(pybamm.ParameterValues(get_parameter_values()))
         pt_test.apply_physics_deltas(deltas); pt_test.apply_design_vector(x_base, DESIGN_SPACE)
         if not validate_params(pt_test.get_parameter_values(), verbose=True):
              print(f"[FAILED] {cand_name}: validate_params")
@@ -477,7 +501,7 @@ def run_workflow(engine: Optional[Any] = None):
              print(f"[FAILED] {cand_name}: Jacobian computation failed")
              continue
         opt_designs = []
-        pt_base = ParamTransform(optimizer.base_params)
+        pt_base = ParamTransform(pybamm.ParameterValues(get_parameter_values()))
         pt_base.apply_physics_deltas(deltas); pt_base.apply_design_vector(x_base, DESIGN_SPACE)
         base_metrics = optimizer.simulate(pt_base.get_parameter_values())
         for i, mode in enumerate(["energy", "power", "stability"]):
@@ -501,7 +525,7 @@ def run_workflow(engine: Optional[Any] = None):
             opt_designs.append(x_opt)
         valid_candidates, stability_scores = [], []
         for x, mode in zip(opt_designs, ["energy", "power", "stability"]):
-            pt = ParamTransform(optimizer.base_params)
+            pt = ParamTransform(pybamm.ParameterValues(get_parameter_values()))
             pt.apply_physics_deltas(deltas); pt.apply_design_vector(x, DESIGN_SPACE)
             ok, score = optimizer.evaluate_stability_pde(pt.get_parameter_values(), mode)
             if ok:
@@ -511,7 +535,7 @@ def run_workflow(engine: Optional[Any] = None):
              continue
         x_star = valid_candidates[np.argmax(stability_scores)]
         final_x = 0.8 * x_star + 0.2 * np.mean(valid_candidates, axis=0)
-        pt = ParamTransform(optimizer.base_params)
+        pt = ParamTransform(pybamm.ParameterValues(get_parameter_values()))
         pt.apply_physics_deltas(deltas); pt.apply_design_vector(final_x, DESIGN_SPACE)
         final_pv = pt.get_parameter_values()
         final_metrics = optimizer.simulate(final_pv, return_sol=True)
