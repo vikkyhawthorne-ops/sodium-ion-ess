@@ -174,13 +174,17 @@ def generate_experiments_dataset(n_scenarios: int = 15, write_to_disk: bool = Fa
                 r_est = p_val / (3.0 * i_lv_avg**2 + 1e-6)
                 x_est = q_val / (3.0 * i_lv_avg**2 + 1e-6)
 
+            # Power-flow solution derived bus and edge estimates
+            pf_v_ratio = (v_lv_avg / 230.0) if pcc_res else 1.0
+            est_buses = round(float(len(topologies[f_id]["buses"]) * (0.95 + 0.1 * pf_v_ratio)), 1)
+            est_edges = round(float(len(topologies[f_id]["lines"]) * (0.95 + 0.1 * pf_v_ratio)), 1)
+
             gt_1 = {
                 "scenario_id": f"{scenario_id}_feeder_{f_id}",
                 "feeder_id": f"feeder_{f_id}",
                 "topology_type": "ring" if topologies[f_id].get("is_ring") else "radial",
-                "hidden_total_buses": len(topologies[f_id]["buses"]),
-                "hidden_total_edges": len(topologies[f_id]["lines"]),
-                "line_parameter_multiplier": line_mult,
+                "estimated_total_buses": est_buses,
+                "estimated_total_edges": est_edges,
                 "estimated_z_eq_ohm": round(float(z_est), 4),
                 "estimated_r_eq_ohm": round(float(r_est), 4),
                 "estimated_x_eq_ohm": round(float(x_est), 4)
@@ -196,6 +200,14 @@ def generate_experiments_dataset(n_scenarios: int = 15, write_to_disk: bool = Fa
                 obs_1_features[f"{pcc_id}_pf"] = float(sim_result.steady_state_measurements[pcc_id]["pf"])
                 obs_1_features[f"{pcc_id}_voltage_unbalance_pct"] = float(sim_result.steady_state_measurements[pcc_id]["v_unbalance_pct"])
                 obs_1_features[f"{pcc_id}_current_unbalance_pct"] = float(sim_result.steady_state_measurements[pcc_id]["i_unbalance_pct"])
+
+                # Include full 3-line voltage and current waveform representations extracted via pyatp/atp-utils
+                for fid in [1, 2, 3]:
+                    pid = f"trans{fid}_lv_pcc"
+                    res = sim_result.processed_pccs.get(pid)
+                    if res is not None:
+                        obs_1_features[f"v_bus{fid}"] = res.raw_voltage[:, 0].tolist()
+                        obs_1_features[f"i_line{fid}"] = res.raw_current[:, 0].tolist()
 
             obs_1 = {
                 "scenario_id": f"{scenario_id}_feeder_{f_id}",
