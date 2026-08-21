@@ -1,9 +1,9 @@
 import numpy as np
 from opendssdirect import dss
 
-def compute_symmetrical_components(mags, angles_deg):
+def compute_symmetrical_components(mags: list[float], angles_deg: list[float]) -> dict:
     """
-    Computes symmetrical components (zero, positive, and negative sequence) from three-phase complex phasor inputs.
+    Computes zero-, positive-, and negative-sequence phasor quantities from 3-phase magnitudes and angles.
     """
     if len(mags) < 3 or len(angles_deg) < 3:
         return {
@@ -60,13 +60,12 @@ def extract_element_currents(element_name: str, terminal: int = 1):
     angles = currents_mag_ang[offset+1 : offset+6 : 2]
     return list(mags), list(angles)
 
-def extract_pcc_data(pcc: dict) -> dict:
+def extract_consumer_meter_data(meter: dict) -> dict:
     """
-    Extracts the electrical measurements at a given PCC from OpenDSS.
-    The PCC smart meter is instantiated in the unknown LV network.
+    Extracts electrical measurements at a given consumer meter or boundary meter from OpenDSS.
     """
-    branch_id = pcc["branch_id"] # e.g. "down_1_1" or "transformer.trans1"
-    bus_name = pcc["bus"]        # e.g. "f1_node1" or "feeder1_sec"
+    branch_id = meter.get("branch_id", meter.get("pcc_id", ""))
+    bus_name = meter["bus"]
 
     if branch_id.startswith("transformer.") or branch_id.startswith("line."):
         element_name = branch_id
@@ -75,16 +74,13 @@ def extract_pcc_data(pcc: dict) -> dict:
 
     dss.Circuit.SetActiveElement(element_name)
 
-    # Extract voltages
     v_mags, v_angs = extract_bus_voltages(bus_name)
     v_seq = compute_symmetrical_components(v_mags, v_angs)
 
-    # Extract currents (use terminal=2 for transformers)
     terminal = 2 if branch_id.startswith("transformer.") else 1
     i_mags, i_angs = extract_element_currents(element_name, terminal=terminal)
     i_seq = compute_symmetrical_components(i_mags, i_angs)
 
-    # Extract Powers
     powers = dss.CktElement.Powers()
     offset = 6 * (terminal - 1)
     if powers and len(powers) >= offset + 6:
@@ -94,7 +90,7 @@ def extract_pcc_data(pcc: dict) -> dict:
         p_total = 0.0
         q_total = 0.0
 
-    s_total = np.sqrt(p_total**2 + q_total**2)
+    s_total = float(np.sqrt(p_total**2 + q_total**2))
     pf = (p_total / (s_total + 1e-6)) if s_total > 0 else 1.0
 
     return {
@@ -120,15 +116,21 @@ def extract_pcc_data(pcc: dict) -> dict:
         "pf": pf
     }
 
-def get_pcc_measurements(metered_pccs: list[dict]) -> dict:
+# Alias for backward compatibility
+extract_pcc_data = extract_consumer_meter_data
+
+def get_consumer_measurements(metered_consumers: list[dict]) -> dict:
     """
-    Extracts electrical measurements from OpenDSS for the metered PCCs only,
-    instantiated inside the unknown LV network.
+    Extracts electrical measurements from OpenDSS for the metered consumer and boundary nodes.
     """
-    pcc_measurements = {}
-    for pcc in metered_pccs:
-        pcc_data = extract_pcc_data(pcc)
+    measurements = {}
+    for meter in metered_consumers:
+        m_id = meter.get("meter_id", meter.get("pcc_id"))
+        data = extract_consumer_meter_data(meter)
         freq = float(dss.Solution.Frequency())
-        pcc_data["frequency_hz"] = freq
-        pcc_measurements[pcc["pcc_id"]] = pcc_data
-    return pcc_measurements
+        data["frequency_hz"] = freq
+        measurements[m_id] = data
+    return measurements
+
+# Alias for backward compatibility
+get_pcc_measurements = get_consumer_measurements

@@ -4,7 +4,7 @@ from typing import Optional
 from opendssdirect import dss
 from src.power_plant.sources import configure_generator, apply_generator_profile
 from src.power_plant.transformers import get_distribution_transformer_spec
-from src.hidden_network.pcc_meters import extract_pcc_data
+from src.hidden_network.pcc_meters import extract_consumer_meter_data
 
 @dataclass
 class OperatingPoint:
@@ -33,7 +33,7 @@ def initialize_known_plant(use_baseline_transformers: bool = False):
     The known plant has standard distribution voltage levels:
     - Utility Grid Source (33 kV)
     - Injection Substation Transformer (33 kV to 11 kV, 7.5 MVA)
-    - Main Distribution Bus / PCC (11 kV)
+    - Main Distribution Bus (11 kV)
     - PCU / Shared Generator (coupled at 11 kV main_bus)
     - Medium-voltage Switchgear
     - Three 11 kV Feeders (Line 1, Line 2, Line 3)
@@ -108,22 +108,21 @@ def solve_operating_point(p_kw: float, q_kvar: float, time_s: float = 0.0) -> Op
     phase_voltages_v = {}
     phase_angles_deg = {}
 
-    # We use the three transformers (trans1, trans2, trans3) as our boundaries
     for idx in [1, 2, 3]:
-        pcc = {
+        meter = {
+            "meter_id": f"trans{idx}_lv_boundary_meter",
             "pcc_id": f"trans{idx}_lv_pcc",
             "bus": f"feeder{idx}_sec",
             "parent_bus": f"feeder{idx}_head",
             "branch_id": f"transformer.trans{idx}",
             "branch_type": "transformer"
         }
-        data = extract_pcc_data(pcc)
+        data = extract_consumer_meter_data(meter)
 
         feeder_p[f"feeder{idx}"] = data["p_kw"]
         feeder_q[f"feeder{idx}"] = data["q_kvar"]
         loading[f"transformer{idx}"] = (data["s_kva"] / 1500.0) * 100.0
-        # Use average voltage on secondary (LV) side in PU
-        v_avg_lv = np.mean(data["v_mags"])
+        v_avg_lv = float(np.mean(data["v_mags"]))
         v_nom_lv = 415.0 / np.sqrt(3.0)
         voltage_pu[f"transformer{idx}"] = v_avg_lv / v_nom_lv
 

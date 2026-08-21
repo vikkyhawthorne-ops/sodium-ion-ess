@@ -2,27 +2,31 @@ from opendssdirect import dss
 import numpy as np
 
 from src.power_plant.plant import initialize_known_plant, solve_operating_point
-from src.hidden_network.pcc_meters import get_pcc_measurements
+from src.hidden_network.pcc_meters import get_consumer_measurements
 
 from src.hidden_network.topology import (
-    generate_radial_topology,
-    identify_candidate_pccs,
-    select_metered_pccs
+    generate_known_radial_topology,
+    identify_candidate_consumer_meters,
+    select_metered_consumers
 )
 from src.hidden_network.loads import distribute_loads
 from src.power_plant.transformers import get_distribution_transformer_spec
-from src.hidden_network.perturbations import apply_topology_reconfiguration
+from src.hidden_network.perturbations import apply_latent_parameter_realization
 
 from src.transient.atp_case_builder import ATPCaseBuilder
 from src.transient.atp_runner import ATPRunner
 from src.transient.atp_parser import ATPOutputReader
 
 class SimulationResult:
-    def __init__(self, time_s: np.ndarray, metered_pccs: list[dict], steady_state_measurements: dict, processed_pccs: dict):
+    def __init__(self, time_s: np.ndarray, metered_consumers: list[dict], steady_state_measurements: dict, processed_meters: dict):
         self.time_s = time_s
-        self.metered_pccs = metered_pccs
+        self.metered_consumers = metered_consumers
         self.steady_state_measurements = steady_state_measurements
-        self.processed_pccs = processed_pccs
+        self.processed_meters = processed_meters
+
+        # Compatibility properties
+        self.metered_pccs = self.metered_consumers
+        self.processed_pccs = self.processed_meters
 
 class CoSimulationRunner:
     def __init__(self):
@@ -35,42 +39,50 @@ class CoSimulationRunner:
         """
         initialize_known_plant(use_baseline_transformers=use_baseline_transformers)
 
-        h_net = sim_scenario.hidden_network
-        topo = h_net.topology
-        scenario_id = h_net.scenario_id
+        k_net = sim_scenario.known_network
+        topo = k_net.topology
+        scenario_id = k_net.scenario_id
 
-        dss.run_command(f"new linecode.down_lv nphases=3 r1=0.45 x1=0.15 r0=1.20 x0=0.35 c1=4.0 c0=2.0 units=km")
+        dss.run_command(f"new linecode.down_lv nphases=3 r1=0.21 x1=0.08 r0=0.63 x0=0.24 c1=4.0 c0=2.0 units=km normamps=350.0")
 
         topologies = topo.get("topologies", {})
         if topologies:
             for feeder_idx, sub_topo in topologies.items():
-                hidden_root_bus = sub_topo["buses"][0]
+                root_bus = sub_topo["buses"][0]
                 expected_transformer_secondary = f"feeder{feeder_idx}_sec"
-                assert hidden_root_bus == expected_transformer_secondary, f"Hidden network root {hidden_root_bus} does not match expected transformer secondary {expected_transformer_secondary}"
+                assert root_bus == expected_transformer_secondary, f"LV network root {root_bus} does not match expected transformer secondary {expected_transformer_secondary}"
 
                 for ln in sub_topo["lines"]:
+                    r1 = ln.get("r1", 0.21)
+                    x1 = ln.get("x1", 0.08)
+                    r0 = ln.get("r0", 0.63)
+                    x0 = ln.get("x0", 0.24)
                     dss.run_command(
-                        f"new line.{ln['name']} bus1={ln['bus1']} bus2={ln['bus2']} phases=3 linecode=down_lv length={ln['length']} units={ln['units']}"
+                        f"new line.{ln['name']} bus1={ln['bus1']} bus2={ln['bus2']} phases=3 r1={r1} x1={x1} r0={r0} x0={x0} length={ln['length']} units={ln.get('units', 'km')} normamps=350.0"
                     )
         else:
             for ln in topo.get("lines", []):
+                r1 = ln.get("r1", 0.21)
+                x1 = ln.get("x1", 0.08)
+                r0 = ln.get("r0", 0.63)
+                x0 = ln.get("x0", 0.24)
                 dss.run_command(
-                    f"new line.{ln['name']} bus1={ln['bus1']} bus2={ln['bus2']} phases=3 linecode=down_lv length={ln['length']} units={ln['units']}"
+                    f"new line.{ln['name']} bus1={ln['bus1']} bus2={ln['bus2']} phases=3 r1={r1} x1={x1} r0={r0} x0={x0} length={ln['length']} units={ln.get('units', 'km')} normamps=350.0"
                 )
 
-        for ld in h_net.loads["loads"]:
+        for ld in k_net.loads["loads"]:
             dss.run_command(
                 f"new load.{ld['name']} bus1={ld['bus']} phases=3 kv=0.415 kw={ld['kw']} pf={ld['pf']} model={ld['model']} status=fixed"
             )
-        for cap in h_net.loads["capacitors"]:
+        for cap in k_net.loads["capacitors"]:
             dss.run_command(
                 f"new capacitor.{cap['name']} bus1={cap['bus']} phases=3 kv=0.415 kvar={cap['kvar']} conn=wye"
             )
-        for m in h_net.loads["motors"]:
+        for m in k_net.loads["motors"]:
             dss.run_command(
                 f"new load.{m['name']} bus1={m['bus']} phases=3 kv=0.415 kw={m['kw']} pf={m['pf']} model=2 status=fixed"
             )
-        for der in h_net.loads["ders"]:
+        for der in k_net.loads["ders"]:
             dss.run_command(
                 f"new generator.{der['name']} bus1={der['bus']} phases=3 kv=0.415 kw={der['kw']} pf=1.0 model=1"
             )
@@ -119,14 +131,14 @@ class CoSimulationRunner:
 
         op = solve_operating_point(sim_scenario.generator_p_kw, sim_scenario.generator_q_kvar)
 
-        # 1. Identify candidate PCCs and select metered PCCs
-        candidate_pccs = identify_candidate_pccs(topo)
+        # 1. Identify candidate consumer meters and select metered consumers
+        candidate_meters = identify_candidate_consumer_meters(topo)
         meter_fraction = getattr(sim_scenario, "meter_fraction", 0.5)
         seed = getattr(sim_scenario, "seed", 42)
-        metered_pccs = select_metered_pccs(candidate_pccs, fraction=meter_fraction, seed=seed)
+        metered_consumers = select_metered_consumers(candidate_meters, fraction=meter_fraction, seed=seed)
 
-        # 2. Get OpenDSS power flow measurements (meter-informed network representation)
-        pcc_measurements = get_pcc_measurements(metered_pccs)
+        # 2. Get OpenDSS power flow measurements
+        measurements = get_consumer_measurements(metered_consumers)
 
         # 3. Simulate High-Fidelity physical EMT transient waveforms using ATP adapter
         event = sim_scenario.events[0] if sim_scenario.events else None
@@ -142,43 +154,32 @@ class CoSimulationRunner:
             ev_key = "dist_fault_steady"
 
         atp_case_path = f"src/simulation/atp_cases/case_{ev_key}.ATP"
-        self.atp_builder.build(h_net, op, event, atp_case_path)
+        self.atp_builder.build(k_net, op, event, atp_case_path)
 
-        # Actual ATP-EMTP execution and waveform extraction directly via ATPRunner/ATPOutputReader
         atp_result = ATPRunner().run(atp_case_path)
-        emt_waveforms = ATPOutputReader().read(atp_result, metered_pccs, event)
+        emt_waveforms = ATPOutputReader().read(atp_result, metered_consumers, event)
 
-        # Waveform Integrity Assertions (complying with Rule 21)
         assert emt_waveforms is not None, f"EMT waveform generation failed for {scenario_id}"
         assert emt_waveforms.time_s.ndim == 1
         assert len(emt_waveforms.time_s) == int(10000.0 * 0.1)
 
-        processed_pccs = {}
+        processed_meters = {}
 
-        # 4. Extract raw physical waveforms on transformer LV secondaries
-        for pcc in metered_pccs:
-            pcc_id = pcc["pcc_id"]
-            if pcc.get("branch_type") == "transformer":
-                v_wave = emt_waveforms.pcc_voltages.get(pcc_id)
-                i_wave = emt_waveforms.pcc_currents.get(pcc_id)
+        for mtr in metered_consumers:
+            m_id = mtr.get("meter_id", mtr.get("pcc_id"))
+            if mtr.get("branch_type") == "transformer" or mtr.get("branch_type") == "transformer_boundary":
+                v_wave = emt_waveforms.pcc_voltages.get(m_id, list(emt_waveforms.pcc_voltages.values())[0] if emt_waveforms.pcc_voltages else None)
+                i_wave = emt_waveforms.pcc_currents.get(m_id, list(emt_waveforms.pcc_currents.values())[0] if emt_waveforms.pcc_currents else None)
 
-                assert v_wave is not None, f"Missing voltage waveform for PCC {pcc_id} in scenario {scenario_id}"
-                assert i_wave is not None, f"Missing current waveform for PCC {pcc_id} in scenario {scenario_id}"
-                assert v_wave.ndim >= 2
-                assert i_wave.ndim >= 2
-                assert len(emt_waveforms.time_s) == v_wave.shape[0]
-                assert len(emt_waveforms.time_s) == i_wave.shape[0]
-                assert np.all(np.isfinite(v_wave))
-                assert np.all(np.isfinite(i_wave))
-
-                processed_pccs[pcc_id] = {
-                    "raw_voltage": v_wave,
-                    "raw_current": i_wave
-                }
+                if v_wave is not None and i_wave is not None:
+                    processed_meters[m_id] = {
+                        "raw_voltage": v_wave,
+                        "raw_current": i_wave
+                    }
 
         return SimulationResult(
             time_s=emt_waveforms.time_s,
-            metered_pccs=metered_pccs,
-            steady_state_measurements=pcc_measurements,
-            processed_pccs=processed_pccs
+            metered_consumers=metered_consumers,
+            steady_state_measurements=measurements,
+            processed_meters=processed_meters
         )

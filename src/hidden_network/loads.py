@@ -2,7 +2,7 @@ import numpy as np
 
 def distribute_loads(buses: list, rng=None) -> dict:
     """
-    Distributes loads of different classes across the hidden buses.
+    Distributes consumer loads of different classes across known LV buses.
     Uses local seeded RNG for perfect reproducibility.
     """
     if rng is None:

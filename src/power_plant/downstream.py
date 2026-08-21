@@ -1,191 +1,80 @@
-import random
-import numpy as np
 from opendssdirect import dss
+from src.hidden_network.topology import generate_known_radial_topology
 
-def generate_topology(feeder_idx: int, num_buses: int, has_ring: bool, line_mult: float = 1.0) -> dict:
+def build_known_downstream_network(feeder_idx: int, topology: dict = None, loads_dict: dict = None):
     """
-    Generates a structured dictionary representing the hidden network topology.
+    Constructs the known LV distribution network in OpenDSS connected to the transformer secondary bus.
     """
-    root_bus = f"feeder{feeder_idx}_sec"
-    buses = [root_bus]
-    lines = []
-    loads = []
-    switches = []
-    motors = []
-    capacitors = []
-    ders = []
+    if topology is None:
+        topology = generate_known_radial_topology(feeder_idx)
 
-    # Iteratively build radial branches
-    for i in range(1, num_buses):
-        new_bus = f"f{feeder_idx}_node{i}"
-        parent_bus = random.choice(buses)
+    # 1. Define linecodes for LV distribution lines (150 mm2 AAC overhead conductor, 350 A rating)
+    dss.run_command(
+        f"new linecode.lv_line_{feeder_idx} "
+        f"nphases=3 "
+        f"r1=0.21 x1=0.08 r0=0.63 x0=0.24 "
+        f"c1=10.0 c0=5.0 units=km normamps=350.0"
+    )
 
-        l_km = random.uniform(0.03, 0.12) * line_mult
-        lines.append({
-            "name": f"down_{feeder_idx}_{i}",
-            "bus1": parent_bus,
-            "bus2": new_bus,
-            "length": round(l_km, 4),
-            "units": "km"
-        })
-        buses.append(new_bus)
+    # 2. Build LV lines
+    for ln in topology.get("lines", []):
+        r1 = ln.get("r1", 0.21)
+        x1 = ln.get("x1", 0.08)
+        r0 = ln.get("r0", 0.63)
+        x0 = ln.get("x0", 0.24)
+        length = ln.get("length", 0.05)
 
-    # Optional tie-line loop/ring
-    is_ring_formed = False
-    if has_ring and len(buses) > 5:
-        # Choose two buses far apart
-        bus_a = buses[3]
-        bus_b = buses[-1]
-        lines.append({
-            "name": f"tie_{feeder_idx}",
-            "bus1": bus_a,
-            "bus2": bus_b,
-            "length": round(0.15 * line_mult, 4),
-            "units": "km"
-        })
-        is_ring_formed = True
-
-    # Distribute loads
-    load_kw_total = 0.0
-    for bus in buses[1:]:
-        if random.random() < 0.6:
-            load_kw = random.uniform(5.0, 25.0)
-            l_model = random.choice([1, 2, 3]) # 1: Constant PQ, 2: Constant Z, 3: Constant I
-            pf = random.choice([0.85, 0.90, 0.95])
-            loads.append({
-                "name": f"l_{bus}",
-                "bus": bus,
-                "kw": round(load_kw, 2),
-                "pf": pf,
-                "model": l_model
-            })
-            load_kw_total += load_kw
-
-        # Place capacitors
-        if random.random() < 0.12:
-            cap_kvar = random.choice([15.0, 30.0, 45.0])
-            capacitors.append({
-                "name": f"c_{bus}",
-                "bus": bus,
-                "kvar": cap_kvar
-            })
-
-        # Place motors
-        if random.random() < 0.08:
-            motors.append({
-                "name": f"m_{bus}",
-                "bus": bus,
-                "kw": round(random.uniform(10.0, 30.0), 1),
-                "pf": 0.8
-            })
-
-        # Place DERs (PV or other distributed energy resources)
-        if random.random() < 0.05:
-            ders.append({
-                "name": f"der_{bus}",
-                "bus": bus,
-                "kw": round(random.uniform(5.0, 20.0), 1)
-            })
-
-    # Topology average degree/entropy calculation
-    num_edges = len(lines)
-    avg_degree = (2.0 * num_edges) / len(buses) if len(buses) > 0 else 0.0
-    topology_entropy = float(avg_degree * np.log2(avg_degree + 1e-3)) if avg_degree > 0 else 0.0
-
-    return {
-        "feeder_idx": feeder_idx,
-        "buses": buses,
-        "num_buses": len(buses),
-        "num_edges": num_edges,
-        "lines": lines,
-        "loads": loads,
-        "switches": switches,
-        "motors": motors,
-        "capacitors": capacitors,
-        "ders": ders,
-        "is_ring": is_ring_formed,
-        "total_r_ohm": round(sum(0.45 * ln["length"] for ln in lines), 4),
-        "total_x_ohm": round(sum(0.15 * ln["length"] for ln in lines), 4),
-        "load_kw_total": round(load_kw_total, 2),
-        "topology_entropy": round(topology_entropy, 3)
-    }
-
-def build_downstream_network(feeder_idx: int, topology: dict):
-    """
-    Attaches the independently generated LV network in OpenDSS based on topology dictionary.
-    """
-    # Define downstream line code for LV (0.415 kV)
-    dss.run_command(f"new linecode.down_lv_{feeder_idx} nphases=3 r1=0.45 x1=0.15 r0=1.20 x0=0.35 c1=4.0 c0=2.0 units=km")
-
-    # Build lines
-    for ln in topology["lines"]:
         dss.run_command(
             f"new line.{ln['name']} "
-            f"bus1={ln['bus1']} "
-            f"bus2={ln['bus2']} "
+            f"bus1={ln['bus1']} bus2={ln['bus2']} "
             f"phases=3 "
-            f"linecode=down_lv_{feeder_idx} "
-            f"length={ln['length']} "
-            f"units={ln['units']}"
+            f"r1={r1} x1={x1} r0={r0} x0={x0} "
+            f"length={length} units=km normamps=350.0"
         )
 
-    # Build loads
-    for ld in topology["loads"]:
-        dss.run_command(
-            f"new load.{ld['name']} "
-            f"bus1={ld['bus']} "
-            f"phases=3 "
-            f"kv=0.415 "
-            f"kw={ld['kw']} "
-            f"pf={ld['pf']} "
-            f"model={ld['model']} "
-            f"status=fixed"
-        )
+    # 3. Build consumer loads
+    if loads_dict:
+        for ld in loads_dict.get("loads", []):
+            dss.run_command(
+                f"new load.{ld['name']} "
+                f"bus1={ld['bus']} "
+                f"phases=3 "
+                f"kv=0.415 "
+                f"kw={ld['kw']} "
+                f"pf={ld['pf']} "
+                f"model={ld.get('model', 1)}"
+            )
 
-    # Build capacitors
-    for cap in topology["capacitors"]:
-        dss.run_command(
-            f"new capacitor.{cap['name']} "
-            f"bus1={cap['bus']} "
-            f"phases=3 "
-            f"kv=0.415 "
-            f"kvar={cap['kvar']} "
-            f"conn=wye"
-        )
+        for cap in loads_dict.get("capacitors", []):
+            dss.run_command(
+                f"new capacitor.{cap['name']} "
+                f"bus1={cap['bus']} "
+                f"phases=3 "
+                f"kvar={cap['kvar']} "
+                f"kv=0.415"
+            )
 
-    # Build motors (as actual OpenDSS loads with constant impedance model for starting proxy)
-    for m in topology["motors"]:
-        dss.run_command(
-            f"new load.{m['name']} "
-            f"bus1={m['bus']} "
-            f"phases=3 "
-            f"kv=0.415 "
-            f"kw={m['kw']} "
-            f"pf={m['pf']} "
-            f"model=2 "  # model=2 is constant impedance
-            f"status=fixed"
-        )
+        for mtr in loads_dict.get("motors", []):
+            dss.run_command(
+                f"new load.{mtr['name']} "
+                f"bus1={mtr['bus']} "
+                f"phases=3 "
+                f"kv=0.415 "
+                f"kw={mtr['kw']} "
+                f"pf={mtr['pf']} "
+                f"model=1"
+            )
 
-    # Build DERs (as actual OpenDSS generators)
-    for der in topology["ders"]:
-        dss.run_command(
-            f"new generator.{der['name']} "
-            f"bus1={der['bus']} "
-            f"phases=3 "
-            f"kv=0.415 "
-            f"kw={der['kw']} "
-            f"pf=1.0 "
-            f"model=1"
-        )
+# Alias for backward compatibility
+build_hidden_downstream_network = build_known_downstream_network
 
-def perturb_network(feeder_idx: int, topology: dict, load_scale: float = 1.0, cap_state: bool = True):
+def update_downstream_loads(topology: dict, load_scale: float = 1.0, cap_state: bool = True):
     """
-    Modifies operating state of loads and capacitors inside the OpenDSS system.
+    Updates the active power demands of consumer loads across the known network.
     """
-    for ld in topology["loads"]:
+    for ld in topology.get("loads", []):
         p_scaled = ld["kw"] * load_scale
         dss.run_command(f"edit load.{ld['name']} kw={round(p_scaled, 2)}")
 
-    for cap in topology["capacitors"]:
-        status = "enabled" if cap_state else "disabled"
+    for cap in topology.get("capacitors", []):
         dss.run_command(f"edit capacitor.{cap['name']} enabled={'yes' if cap_state else 'no'}")

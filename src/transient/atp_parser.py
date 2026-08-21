@@ -73,8 +73,9 @@ class ATPOutputReader:
                 pcc_voltages = {}
                 pcc_currents = {}
                 for pcc in metered_pccs:
-                    pcc_id = pcc["pcc_id"]
-                    if pcc.get("branch_type") == "transformer":
+                    pcc_id = pcc.get("meter_id", pcc.get("pcc_id"))
+                    b_type = pcc.get("branch_type", "")
+                    if b_type in ["transformer", "transformer_boundary"]:
                         pcc_voltages[pcc_id] = np.zeros((target_len, 3))
                         pcc_currents[pcc_id] = np.zeros((target_len, 3))
 
@@ -98,8 +99,9 @@ class ATPOutputReader:
         pcc_currents = {}
 
         for pcc in metered_pccs:
-            pcc_id = pcc["pcc_id"]
-            if pcc.get("branch_type") == "transformer":
+            pcc_id = pcc.get("meter_id", pcc.get("pcc_id"))
+            b_type = pcc.get("branch_type", "")
+            if b_type in ["transformer", "transformer_boundary"]:
                 pcc_voltages[pcc_id] = np.zeros((N, 3))
                 pcc_currents[pcc_id] = np.zeros((N, 3))
 
@@ -116,17 +118,23 @@ class ATPOutputReader:
             line = line.strip()
             if line.startswith("PL4:"):
                 parts = line.split()
-                t_val = float(parts[1])
-                pcc_id = parts[2]
-                phase = int(parts[3])
-                v_val = float(parts[4])
-                i_val = float(parts[5])
+                if len(parts) >= 6:
+                    t_val = float(parts[1])
+                    pcc_id = parts[2]
+                    phase = int(parts[3])
+                    v_val = float(parts[4])
+                    i_val = float(parts[5])
 
-                idx = int(round(t_val * 10000.0))
-                if 0 <= idx < N:
-                    if pcc_id in pcc_voltages:
-                        pcc_voltages[pcc_id][idx, phase] = v_val
-                        pcc_currents[pcc_id][idx, phase] = i_val
+                    idx = int(round(t_val * 10000.0))
+                    if 0 <= idx < N:
+                        if pcc_id in pcc_voltages:
+                            pcc_voltages[pcc_id][idx, phase] = v_val
+                            pcc_currents[pcc_id][idx, phase] = i_val
+                        # Also match transX_lv_pcc or transX_lv_boundary_meter
+                        for key in pcc_voltages:
+                            if key == pcc_id or (key.startswith("trans") and pcc_id.startswith("trans") and key[5] == pcc_id[5]):
+                                pcc_voltages[key][idx, phase] = v_val
+                                pcc_currents[key][idx, phase] = i_val
 
         event_metadata = {
             "event_type": getattr(event, "event_type", "no_event"),
